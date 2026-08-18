@@ -1,0 +1,85 @@
+[tools]
+python = "3.14.6"
+uv = "0.12.1"
+"github:sampleXbro/agentsmesh" = "0.32.0"
+biome = "2.5.6"
+tombi = "1.1.0"
+rumdl = "0.2.56"
+lefthook = "2.1.10"
+
+[env]
+UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
+
+[settings]
+python.uv_venv_auto = "source"
+
+[tasks."agents:lint"]
+description = "Lint canonical AgentsMesh configuration"
+run = "agentsmesh lint"
+
+[tasks."agents:generate"]
+description = "Generate native agent configuration"
+run = "agentsmesh generate"
+
+[tasks."agents:check"]
+description = "Check generated AgentsMesh drift"
+run = "agentsmesh check"
+
+[tasks."format:markdown"]
+description = "Auto-format Markdown with rumdl"
+run = "rumdl fmt ."
+
+[tasks."format:json"]
+description = "Auto-format JSON and JSONC with Biome"
+run = "biome format --write ."
+
+[tasks."format:toml"]
+description = "Auto-format TOML with Tombi"
+run = "tombi format ."
+
+[tasks.format]
+description = "Auto-format repository-owned text formats"
+run = """
+mise run format:markdown
+mise run format:json
+mise run format:toml
+"""
+
+[tasks."check:json"]
+description = "Check JSON and JSONC with Biome"
+run = "biome check ."
+
+[tasks."lint:toml"]
+description = "Lint TOML with Tombi"
+run = "tombi lint --error-on-warnings ."
+
+[tasks."test:smoke"]
+description = "Run the minimal local runtime smoke test"
+run = "uv run python -c 'import sys; assert sys.version_info[:2] == (3, 14)'"
+
+[tasks."git:setup"]
+description = "Configure repository-local Git defaults"
+run = "git config --local commit.template .gitmessage"
+
+[tasks."hooks:install"]
+description = "Install repository Git hooks"
+run = "lefthook install"
+
+[tasks.setup]
+description = "Set up the local workspace"
+run = """
+uv sync --locked
+git config --local commit.template .gitmessage
+lefthook install
+"""
+
+[tasks."ci:fast"]
+description = "Auto-fix and run cheap deterministic PR validation"
+run = """
+uv sync --locked
+mise run format
+lefthook validate
+agentsmesh lint
+agentsmesh check
+mise run test:smoke
+"""

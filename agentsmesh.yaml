@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://unpkg.com/agentsmesh@0.32.0/schemas/agentsmesh.json
+version: 1
+targets:
+  - copilot
+  - antigravity
+  - codex-cli
+features:
+  - rules
+  - skills
