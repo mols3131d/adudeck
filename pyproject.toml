@@ -1,0 +1,26 @@
+[project]
+name = "adudeck"
+version = "0.1.0"
+description = "Agentic Education Deck workspace."
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = []
+
+[tool.rumdl]
+editorconfig = true
+respect-gitignore = true
+force-exclude = true
+disable = ["MD009"]
+exclude = [
+  ".agents/**",
+  ".github/copilot-instructions.md",
+  ".github/instructions/**",
+  "AGENTS.md",
+  "decks/**/AGENTS.md",
+]
+
+[tool.rumdl.MD013]
+line-length = 120
+code-blocks = false
+tables = false
+reflow = true

@@ -1,0 +1,22 @@
+# Auto-generated. DO NOT EDIT MANUALLY.
+# Tracks the state of all config files for team conflict resolution.
+
+generated_at: 2026-08-18T17:11:48.236Z
+generated_by: runner
+lib_version: 0.32.0
+checksums:
+  rules/decks.md: sha256:688f17394c11e755b34a732d5f2c0e9713de3f80cf4d14261f0de3a9466eb0b6
+  rules/_root.md: sha256:0807d190011a4a1907dd396358d13ec88d5454c1aedc07c60952d0854c8625ad
+  rules/archive.md: sha256:0f3e3b3ab16d2f3a9171c8dbf49e7d87ded7fea1ee3810b2fd2fdd66e2376478
+extends: {}
+packs: {}
+outputs:
+  .github/copilot-instructions.md: sha256:86e695ba6dc0a1e555654886cec41728e26eff4d95bb1282715c678f8e550f49
+  .github/instructions/decks.instructions.md: sha256:77e9fe7d5221ffa8516ae8918f7b8557b5d16d02cffe89ec2972b32b705fae6b
+  .github/instructions/archive.instructions.md: sha256:28662f630f40834972a7bcbc36387427cd4e8a0380318916de76d81ca327660a
+  .agents/rules/general.md: sha256:86e695ba6dc0a1e555654886cec41728e26eff4d95bb1282715c678f8e550f49
+  .agents/rules/decks.md: sha256:dd8f9625c5164ca9c3a68dc535cc1b267e74952e9fc8bc4b50d066926708f124
+  .agents/rules/archive.md: sha256:f75fd07b8b82ab20bb86a254f71c33439076c40ef4316e149e99d30a9d638f86
+  AGENTS.md: sha256:86e695ba6dc0a1e555654886cec41728e26eff4d95bb1282715c678f8e550f49
+  decks/AGENTS.md: sha256:dd8f9625c5164ca9c3a68dc535cc1b267e74952e9fc8bc4b50d066926708f124
+  decks/archive/AGENTS.md: sha256:f75fd07b8b82ab20bb86a254f71c33439076c40ef4316e149e99d30a9d638f86
