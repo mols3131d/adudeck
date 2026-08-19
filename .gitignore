@@ -18,3 +18,9 @@ agentsmesh.local.yaml
 .agentsmeshcache
 .agentsmesh/.lock.tmp
 .agentsmesh/packs/
+
+# Local agent projections
+.agents/
+.codex/
+AGENTS.md
+AGENTS.override.md
