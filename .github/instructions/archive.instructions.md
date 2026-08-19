@@ -1,12 +1,13 @@
 ---
-description: Rules for inactive decks stored in the archive.
-applyTo: decks/archive/**/*
+description: Rules for inactive decks with no current planned work.
+applyTo: decks/_archive/**/*
 ---
 
 # Archive Rules
 
-Apply only to work under `decks/archive/`.
+Apply only to work under `decks/_archive/`.
 
-- Treat archived decks as inactive reference material, not current study work.
+- Treat archived decks as inactive material with no current planned work, not as permanently finished content.
 - Preserve archived content unless cleanup is explicitly requested.
-- When study resumes, move the deck out of `decks/archive/` instead of creating a second copy.
+- When follow-up work becomes intended, move the deck to `_backlog/` or directly to the active location instead of
+  creating a second copy.

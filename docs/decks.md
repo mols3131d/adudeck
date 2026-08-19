@@ -2,12 +2,16 @@
 
 Deck은 하나의 학습 주제를 독립적으로 다루는 이동 가능한 workspace unit이다.
 
-## Lifecycle
+## State
 
-- `decks/<name>/`에 있으면 active다.
-- 더 이상 현재 학습 대상이 아니면 directory 전체를 `decks/archive/`로 이동한다.
-- 학습을 재개하면 기존 directory를 active 위치로 되돌린다.
-- archive와 active에 같은 deck을 동시에 두지 않는다.
+Deck의 현재 상태는 directory 위치로 표현한다.
+
+- `decks/<name>/` — active. 현재 학습하거나 수정·확장 중이다.
+- `decks/_backlog/<name>/` — backlog. 현재 active는 아니지만 후속 학습, 보충, 변경 등의 작업 의도가 있다.
+- `decks/_archive/<name>/` — archive. 현재 예정된 작업이 없는 inactive deck이다.
+- Deck은 작업 의도가 바뀌면 세 상태 사이를 이동할 수 있다.
+- 같은 deck을 여러 상태에 동시에 두지 않는다.
+- `decks/` 직하위의 `_` prefix directory는 deck이 아닌 관리 namespace로 예약한다.
 
 ## Content
 

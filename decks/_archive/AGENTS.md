@@ -1,10 +1,3 @@
----
-root: false
-description: Rules for inactive decks with no current planned work.
-globs:
-  - decks/_archive/**/*
----
-
 # Archive Rules
 
 Apply only to work under `decks/_archive/`.
