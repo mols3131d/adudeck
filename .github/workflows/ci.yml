@@ -36,9 +36,7 @@ jobs:
           MISE_GITHUB_TOKEN: ""
         run: |
           mise run format
-          if ! agentsmesh check >/dev/null 2>&1; then
-            agentsmesh generate
-          fi
+          agentsmesh generate
 
       - name: Run cheap deterministic validation
         run: mise run ci:fast
