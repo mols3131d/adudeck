@@ -10,7 +10,9 @@ description: >-
   explicitly delegated by another active workflow.
 ---
 
-# Contract
+# Adudeck Textbook Write
+
+## Contract
 
 Write instructional material that can function as the learner's **primary explanation** for
 the supplied scope.
@@ -22,7 +24,7 @@ another without adding a new subject area.
 
 Use the `adudeck-textbook` contract as the quality baseline when it is available.
 
-# Authoring Procedure
+## Authoring Procedure
 
 1. Identify the learner level, scope, prerequisites, and outcomes from the supplied context.
 1. Determine the smallest coherent chapter or section sequence needed to teach that scope.
@@ -41,7 +43,7 @@ Use the `adudeck-textbook` contract as the quality baseline when it is available
 Do not ask for extra inputs when the supplied scope is sufficient to make a sound local
 teaching decision.
 
-# Exposition
+## Exposition
 
 Develop ideas instead of naming them.
 
@@ -58,7 +60,7 @@ Develop ideas instead of naming them.
 A short section may be correct. A shallow section is not acceptable merely because it is
 concise.
 
-# Worked Examples
+## Worked Examples
 
 A worked example should expose how an informed learner moves from problem to result.
 
@@ -78,7 +80,7 @@ mathematics, show transformations or derivations at the requested level instead 
 an unexplained formula. For systems and tools, explain state and data flow before listing
 commands.
 
-# Misconceptions and Boundaries
+## Misconceptions and Boundaries
 
 Actively repair likely wrong mental models.
 
@@ -94,7 +96,7 @@ Distinguish:
 - mathematical identity from programming notation;
 - conceptual behavior from a particular tool's interface.
 
-# Practice
+## Practice
 
 Build practice from local understanding toward transfer.
 
@@ -113,7 +115,7 @@ Avoid exercises that can be completed by copying the preceding sentence with dif
 Do not reveal complete solutions immediately unless requested. Supply hints, selected answer
 checks, or worked solutions when they improve independent study.
 
-# Revision from Thin Material
+## Revision from Thin Material
 
 When the input is an outline, summary, lecture note, or existing shallow chapter, do not merely
 polish or paraphrase it.
@@ -130,7 +132,7 @@ Preserve its valid scope and facts, then rebuild missing instructional layers:
 
 Do not mistake more headings, more bullets, or more examples for deeper teaching.
 
-# Final Review
+## Final Review
 
 Before finalizing, check that:
 
