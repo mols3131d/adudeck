@@ -19,7 +19,7 @@ agentsmesh.local.yaml
 .agentsmesh/.lock.tmp
 .agentsmesh/packs/
 
-# Local agent projections
+# Local AgentsMesh targets
 .agents/
 .codex/
 AGENTS.md
