@@ -22,8 +22,9 @@ description: Repository-wide contract for the adudeck agentic learning workspace
 - Use the AgentsMesh version pinned by the schema directive in `agentsmesh.yaml`; upgrade it intentionally before
   regenerating outputs.
 - Prefer the `mise run agents:*` tasks for repository-wide AgentsMesh operations when mise is available.
-- Commit the generated lock file and outputs produced by the shared `agentsmesh.yaml`; keep local-only projections
-  untracked.
+- Keep `.agentsmesh/.lock` untracked because it reflects the active local target set rather than repository authority.
+- Commit outputs selected by the shared `agentsmesh.yaml`; keep local-only projections untracked.
+- Use `agentsmesh generate --check` to validate canonical sources against the active generated outputs.
 
 ## Safety
 
