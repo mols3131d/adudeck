@@ -9,7 +9,9 @@ description: >-
   prose; use adudeck-textbook-write for authoring.
 ---
 
-# Contract
+# Adudeck Textbook
+
+## Contract
 
 Treat a textbook as a **primary learning resource**, not as a summary, outline, cheat sheet,
 lecture note, glossary, blog post, or step-by-step tutorial.
@@ -18,7 +20,7 @@ Own only the textbook contract: instructional structure, depth, progression, pra
 quality. Treat supplied scope, prerequisites, learning outcomes, and evidence as inputs from
 upstream work. Do not expand the curriculum or perform research to fill missing scope.
 
-# Textbook Model
+## Textbook Model
 
 A textbook should normally provide:
 
@@ -35,7 +37,7 @@ A textbook should normally provide:
 Do not require every artifact to use the same visible template. Preserve instructional
 responsibilities even when the presentation varies.
 
-# Chapter Contract
+## Chapter Contract
 
 For each major concept, develop enough of the following sequence for a learner to build and
 use the concept:
@@ -54,7 +56,7 @@ use the concept:
 Do not force all ten elements into every small section. Apply them at the narrowest level that
 creates a coherent learning progression.
 
-# Depth
+## Depth
 
 Make the material self-contained enough to serve as the main explanation for the defined
 scope.
@@ -68,7 +70,7 @@ scope.
 - Do not compress explanation merely to reduce length.
 - Do not inflate length with repeated summaries, decorative prose, or redundant examples.
 
-# Exercises and Assessment
+## Exercises and Assessment
 
 Exercises should measure understanding rather than transcription. Mix appropriate forms such
 as:
@@ -87,7 +89,7 @@ they support self-study without replacing the learner's work.
 
 Assessment should evaluate the stated learning outcomes, not incidental trivia.
 
-# Quality Gate
+## Quality Gate
 
 Reject or revise the artifact if it could reasonably be described as any of the following:
 
@@ -102,7 +104,7 @@ Reject or revise the artifact if it could reasonably be described as any of the 
 The material qualifies as a textbook only when a learner can use it as the primary explanation
 for the defined scope and can build competence through its examples and practice.
 
-# Routing
+## Routing
 
 Use `adudeck-textbook-write` when the task is to write or revise actual textbook prose,
 chapters, worked examples, exercises, labs, or assessments.
