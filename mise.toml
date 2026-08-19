@@ -26,8 +26,8 @@ description = "Check generated AgentsMesh drift"
 run = "agentsmesh check"
 
 [tasks."format:markdown"]
-description = "Auto-format Markdown with rumdl"
-run = "rumdl fmt ."
+description = "Auto-format repository-owned Markdown with rumdl"
+run = '''rumdl fmt --exclude "AGENTS.md,.github/copilot-instructions.md,.github/skills/**,.agents/rules/**,.agents/skills/**" .'''
 
 [tasks."format:json"]
 description = "Auto-format JSON and JSONC with Biome"
