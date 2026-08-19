@@ -16,14 +16,17 @@
 ## Authority
 
 - `.agentsmesh/` is the canonical source for portable agent Rules and Skills managed by AgentsMesh.
-- `agentsmesh.yaml` selects active targets and features.
+- `agentsmesh.yaml` selects shared targets and features whose generated outputs are tracked in Git.
+- `agentsmesh.local.yaml` may replace shared targets or features for local tools and must remain untracked.
 - `mise.toml` pins repository bootstrap tools and exposes repeatable repository tasks.
 - Treat generated vendor-native agent files as derived artifacts; change the canonical `.agentsmesh/` source instead.
 - Use the AgentsMesh version pinned by the schema directive in `agentsmesh.yaml`; upgrade it intentionally before
   regenerating outputs.
 - Prefer the `mise run agents:*` tasks for repository-wide AgentsMesh operations when mise is available.
-- When AgentsMesh generation is used, commit the generated lock file and target outputs with the canonical change so
-  drift remains reviewable.
+- Keep `.agentsmesh/.lock` untracked because it reflects the active local target set rather than repository authority.
+- Commit outputs selected by the shared `agentsmesh.yaml`; keep local-only projections untracked.
+- Use normal AgentsMesh generation to sync the active outputs; CI detects tracked shared-output drift from the resulting
+  Git tree.
 
 ## Safety
 
@@ -31,8 +34,8 @@ Anything recorded in Git or GitHub may remain accessible after it is changed or 
 
 - Apply these rules to intermediate, generated, and final content, including AI-generated content.
 - Do not record content in Git or GitHub first and plan to remove, rewrite, or sanitize it later.
-- Do not rely on file deletion, history rewriting, force-push, branch deletion, PR closure, or retention expiry to remove
-  content that fails the checks below.
+- Do not rely on file deletion, history rewriting, force-push, branch deletion, PR closure, or retention expiry to
+  remove content that fails the checks below.
 - These rules apply to files, commits, commit messages, branches, pull requests, issues, comments, uploads, CI logs, and
   CI artifacts.
 - Keep raw research, copied source material, and other temporary content outside Git and GitHub unless it passes the

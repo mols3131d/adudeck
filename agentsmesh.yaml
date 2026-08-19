@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://unpkg.com/agentsmesh@0.32.0/schemas/agentsmesh.json
 version: 1
+
+# Shared/cloud projections tracked in Git. Add local-only IDE targets in agentsmesh.local.yaml.
 targets:
   - copilot
-  - antigravity
   - codex-cli
 features:
   - rules

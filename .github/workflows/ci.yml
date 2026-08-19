@@ -30,17 +30,9 @@ jobs:
         with:
           cache: true
 
-      - name: Auto-fix repository-owned files
-        if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
+      - name: Run cheap deterministic validation
         env:
           MISE_GITHUB_TOKEN: ""
-        run: |
-          mise run format
-          if ! agentsmesh check >/dev/null 2>&1; then
-            agentsmesh generate
-          fi
-
-      - name: Run cheap deterministic validation
         run: mise run ci:fast
 
       - name: Build validated tree patch

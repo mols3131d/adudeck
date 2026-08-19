@@ -21,13 +21,9 @@ run = "agentsmesh lint"
 description = "Generate native agent configuration"
 run = "agentsmesh generate"
 
-[tasks."agents:check"]
-description = "Check generated AgentsMesh drift"
-run = "agentsmesh check"
-
 [tasks."format:markdown"]
-description = "Auto-format Markdown with rumdl"
-run = "rumdl fmt ."
+description = "Auto-format repository-owned Markdown with rumdl"
+run = '''rumdl fmt --exclude "AGENTS.md,**/AGENTS.md,AGENTS.override.md,**/AGENTS.override.md,.github/copilot-instructions.md,.github/instructions/**,.github/skills/**,.agents/**,.codex/**" .'''
 
 [tasks."format:json"]
 description = "Auto-format JSON and JSONC with Biome"
@@ -79,7 +75,7 @@ run = """
 uv sync --locked
 mise run format
 lefthook validate
-agentsmesh lint
-agentsmesh check
+mise run agents:lint
+mise run agents:generate
 mise run test:smoke
 """

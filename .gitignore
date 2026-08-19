@@ -16,5 +16,12 @@ __pycache__/
 # AgentsMesh
 agentsmesh.local.yaml
 .agentsmeshcache
+.agentsmesh/.lock
 .agentsmesh/.lock.tmp
 .agentsmesh/packs/
+
+# Local-only agent projections
+.agents/rules/
+.agents/workflows/
+.codex/
+AGENTS.override.md

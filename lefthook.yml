@@ -11,6 +11,7 @@ pre-commit:
               - ".agents/**"
               - ".github/copilot-instructions.md"
               - ".github/instructions/**"
+              - ".github/skills/**"
               - "AGENTS.md"
               - "decks/**/AGENTS.md"
             run: rumdl fmt {staged_files}
@@ -31,28 +32,5 @@ pre-commit:
               - ".agentsmesh/**"
               - "agentsmesh.yaml"
             exclude:
-              - ".agentsmesh/.lock"
               - ".agentsmesh/packs/**"
-            run: |
-              list_outputs() {
-                awk '
-                  /^outputs:$/ { outputs = 1; next }
-                  outputs && /^[^ ]/ { exit }
-                  outputs && /^  / {
-                    line = $0
-                    sub(/^  /, "", line)
-                    sub(/: sha256:.*/, "", line)
-                    print line
-                  }
-                ' .agentsmesh/.lock
-              }
-              before_outputs="$(list_outputs)"
-              agentsmesh generate
-              after_outputs="$(list_outputs)"
-              printf '%s\n%s\n' "$before_outputs" "$after_outputs" |
-                sed '/^$/d' |
-                sort -u |
-                while IFS= read -r path; do
-                  git add -A -- "$path"
-                done
-              git add -- .agentsmesh/.lock
+            run: agentsmesh lint
