@@ -14,22 +14,23 @@ Notion에서도 deck은 하나의 학습 주제를 다루는 하나의 workspace
 
 ## State
 
-Notion에서는 directory 이동 대신 deck의 `State` property로 상태를 표현한다.
+Notion에서는 directory 이동 대신 deck의 state property로 상태를 표현한다.
 
-`State`는 다음 값만 사용한다.
+새 schema를 구성할 때는 `State` property와 다음 값을 기본으로 사용한다.
 
 - `Active` — 현재 학습하거나 수정·확장 중이다.
 - `Backlog` — 현재 active는 아니지만 후속 학습, 보충, 변경 등의 작업 의도가 있다.
 - `Archive` — 현재 예정된 작업이 없는 inactive 상태다.
 
-State가 바뀌면 page를 복사하거나 별도 database로 이동하지 않고 `State` property를 변경한다.
+State가 바뀌면 page를 복사하거나 별도 database로 이동하지 않고 해당 state property를 변경한다.
 
 Notion view의 filter, group, sort는 presentation이다. view나 database 위치를 deck state의 source of truth로 사용하지
 않는다.
 
 ## Properties
 
-최소한 deck을 식별하는 title과 `State`만 요구한다. 다른 properties는 실제 학습 또는 운영 필요가 있을 때만 추가한다.
+새 schema에서는 최소한 deck을 식별하는 title과 `State`만 요구한다. 다른 properties는 실제 학습 또는 운영 필요가 있을 때만
+추가한다.
 
 기존 Notion database가 동일한 의미를 다른 property 이름이나 값으로 이미 표현하고 있다면, 불필요한 schema 변경보다 기존
 구조를 우선한다. 단, state 의미는 `Active / Backlog / Archive`와 대응되어야 한다.
