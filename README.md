@@ -11,7 +11,7 @@
 
 ```text
 .agentsmesh/         # canonical agent assets
-decks/               # learning decks
+decks/               # default filesystem deck storage
 docs/                # repository-wide human-facing docs
 mise.toml            # toolchain and repository tasks
 pyproject.toml       # uv-managed Python project
@@ -30,7 +30,10 @@ mise run agents:generate
 
 ## Working Model
 
-- 학습 content는 `decks/`에서 관리하고, 구조와 lifecycle은 [`docs/decks.md`](docs/decks.md)를 따른다.
+- 별도 지시가 없으면 deck은 `decks/`에서 filesystem으로 관리한다.
+- 다른 storage는 사용자가 현재 deck 또는 작업에 대해 명시적으로 지정한 경우에만 사용한다.
+- deck의 storage와 state 원칙은 [`docs/decks.md`](docs/decks.md)를 따른다.
+- Notion을 storage로 사용할 때는 [`docs/notion.md`](docs/notion.md)를 따른다.
 - directory 사용법은 가까운 `README.md`에, repository-wide 정책은 `docs/`에 둔다.
 - portable agent rules의 canonical source는 `.agentsmesh/`이며 generated target files는 직접 수정하지 않는다.
 
@@ -47,5 +50,6 @@ format 가능한 문제는 자동 수정하고, CI는 빠르고 결정적인 검
 ## Docs
 
 - [`docs/README.md`](docs/README.md) — 문서 배치와 정책 index
-- [`docs/decks.md`](docs/decks.md) — deck lifecycle과 content 원칙
+- [`docs/decks.md`](docs/decks.md) — deck storage, state, content 원칙
+- [`docs/notion.md`](docs/notion.md) — Notion deck storage와 property 기반 state 정책
 - [`docs/automation.md`](docs/automation.md) — local/CI/cloud automation 경계
