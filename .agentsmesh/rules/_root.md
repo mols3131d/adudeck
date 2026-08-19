@@ -30,8 +30,8 @@ Anything recorded in Git or GitHub may remain accessible after it is changed or 
 
 - Apply these rules to intermediate, generated, and final content, including AI-generated content.
 - Do not record content in Git or GitHub first and plan to remove, rewrite, or sanitize it later.
-- Do not rely on file deletion, history rewriting, force-push, branch deletion, PR closure, or retention expiry to remove
-  content that fails the checks below.
+- Do not rely on file deletion, history rewriting, force-push, branch deletion, PR closure, or retention expiry to
+  remove content that fails the checks below.
 - These rules apply to files, commits, commit messages, branches, pull requests, issues, comments, uploads, CI logs, and
   CI artifacts.
 - Keep raw research, copied source material, and other temporary content outside Git and GitHub unless it passes the
