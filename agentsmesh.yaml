@@ -1,5 +1,7 @@
 # yaml-language-server: $schema=https://unpkg.com/agentsmesh@0.32.0/schemas/agentsmesh.json
 version: 1
+
+# Shared/cloud projections tracked in Git. Use gitignored agentsmesh.local.yaml for local IDE/CLI targets.
 targets:
   - copilot
 features:
