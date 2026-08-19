@@ -2,8 +2,6 @@
 version: 1
 targets:
   - copilot
-  - antigravity
-  - codex-cli
 features:
   - rules
   - skills
