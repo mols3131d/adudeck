@@ -25,7 +25,8 @@
 - Prefer the `mise run agents:*` tasks for repository-wide AgentsMesh operations when mise is available.
 - Keep `.agentsmesh/.lock` untracked because it reflects the active local target set rather than repository authority.
 - Commit outputs selected by the shared `agentsmesh.yaml`; keep local-only projections untracked.
-- Use `agentsmesh generate --check` to validate canonical sources against the active generated outputs.
+- Use normal AgentsMesh generation to sync the active outputs; CI detects tracked shared-output drift from the resulting
+  Git tree.
 
 ## Safety
 
