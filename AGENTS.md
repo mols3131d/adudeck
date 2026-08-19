@@ -8,10 +8,20 @@
 
 ## Purpose
 
-- `adudeck` is a personal agentic learning workspace organized as a monorepo of decks.
+- `adudeck` is a personal agentic learning workspace. This repository is its default filesystem workspace and canonical
+  home for repository-managed policies and agent assets.
 - The workspace itself is the learning platform. Do not assume or introduce an application product unless explicitly
   requested.
 - Prefer small, reversible structures with a current responsibility. Avoid speculative directories and abstractions.
+
+## Storage
+
+- Default to filesystem deck storage under this repository's `decks/`.
+- Use another storage only when the user explicitly identifies or requests it for the current deck or task.
+- Do not infer, migrate, mirror, split, or synchronize a deck across storages without explicit instruction.
+- Preserve a deck as one cohesive learning workspace unit regardless of storage.
+- For Notion deck storage, follow `docs/notion.md` and represent deck state through properties rather than filesystem
+  paths.
 
 ## Authority
 

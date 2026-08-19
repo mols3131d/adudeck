@@ -6,7 +6,8 @@ Deck은 하나의 학습 주제를 독립적으로 다루는 하나의 workspace
 
 Filesystem은 기본 storage다. 별도 지시가 없으면 이 repository의 `decks/`에서 deck을 관리한다.
 
-다른 storage는 사용자가 현재 deck 또는 작업에 대해 명시적으로 지정한 경우에만 사용한다. Agent가 임의로 external storage를 선택하거나 deck을 이동, 복제, mirror, sync하지 않는다.
+다른 storage는 사용자가 현재 deck 또는 작업에 대해 명시적으로 지정한 경우에만 사용한다. Agent가 임의로 external
+storage를 선택하거나 deck을 이동, 복제, mirror, sync하지 않는다.
 
 Storage가 달라도 하나의 deck은 하나의 응집된 학습 자료 묶음으로 유지한다.
 
@@ -41,4 +42,5 @@ Filesystem이 아닌 storage를 사용하면 해당 storage의 policy에 따라 
 
 ## Boundary
 
-Deck content는 해당 deck의 목표와 학습 내용만 설명한다. repository 전체의 운영 정책은 `docs/`가 담당하고, agent 실행 규칙의 canonical source는 `.agentsmesh/`가 담당한다.
+Deck content는 해당 deck의 목표와 학습 내용만 설명한다. repository 전체의 운영 정책은 `docs/`가 담당하고, agent 실행
+규칙의 canonical source는 `.agentsmesh/`가 담당한다.

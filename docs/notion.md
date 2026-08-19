@@ -1,6 +1,7 @@
 # Notion Policy
 
-Notion은 사용자가 현재 deck 또는 작업의 storage로 명시적으로 지정한 경우에만 사용한다. 별도 지정이 없으면 filesystem이 기본이다.
+Notion은 사용자가 현재 deck 또는 작업의 storage로 명시적으로 지정한 경우에만 사용한다. 별도 지정이 없으면 filesystem이
+기본이다.
 
 ## Deck
 
@@ -23,14 +24,17 @@ Notion에서는 directory 이동 대신 deck의 `State` property로 상태를 �
 
 State가 바뀌면 page를 복사하거나 별도 database로 이동하지 않고 `State` property를 변경한다.
 
-Notion view의 filter, group, sort는 presentation이다. view나 database 위치를 deck state의 source of truth로 사용하지 않는다.
+Notion view의 filter, group, sort는 presentation이다. view나 database 위치를 deck state의 source of truth로 사용하지
+않는다.
 
 ## Properties
 
 최소한 deck을 식별하는 title과 `State`만 요구한다. 다른 properties는 실제 학습 또는 운영 필요가 있을 때만 추가한다.
 
-기존 Notion database가 동일한 의미를 다른 property 이름이나 값으로 이미 표현하고 있다면, 불필요한 schema 변경보다 기존 구조를 우선한다. 단, state 의미는 `Active / Backlog / Archive`와 대응되어야 한다.
+기존 Notion database가 동일한 의미를 다른 property 이름이나 값으로 이미 표현하고 있다면, 불필요한 schema 변경보다 기존
+구조를 우선한다. 단, state 의미는 `Active / Backlog / Archive`와 대응되어야 한다.
 
 ## Boundary
 
-Notion은 deck storage다. adudeck의 공통 deck 의미와 state semantics는 [`decks.md`](decks.md)를 따르고, Notion 특유의 표현 방식만 이 문서가 정의한다.
+Notion은 deck storage다. adudeck의 공통 deck 의미와 state semantics는 [`decks.md`](decks.md)를 따르고, Notion 특유의
+표현 방식만 이 문서가 정의한다.
