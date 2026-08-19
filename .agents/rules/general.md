@@ -25,6 +25,23 @@
 - When AgentsMesh generation is used, commit the generated lock file and target outputs with the canonical change so
   drift remains reviewable.
 
+## Safety
+
+Anything recorded in Git or GitHub may remain accessible after it is changed or deleted.
+
+- Apply these rules to intermediate, generated, and final content, including AI-generated content.
+- Do not record content in Git or GitHub first and plan to remove, rewrite, or sanitize it later.
+- Do not rely on file deletion, history rewriting, force-push, branch deletion, PR closure, or retention expiry to remove
+  content that fails the checks below.
+- These rules apply to files, commits, commit messages, branches, pull requests, issues, comments, uploads, CI logs, and
+  CI artifacts.
+- Keep raw research, copied source material, and other temporary content outside Git and GitHub unless it passes the
+  checks below.
+- Before recording content, check copyright and license restrictions, required attribution, personal or confidential
+  information, secrets or credentials, and access or redistribution restrictions.
+- If you cannot determine that required permission exists or that these checks pass, do not record the content in Git
+  or GitHub.
+
 ## Learning
 
 - Teach from fundamentals and make important prerequisites explicit.
