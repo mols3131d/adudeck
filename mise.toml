@@ -22,8 +22,8 @@ description = "Generate native agent configuration"
 run = "agentsmesh generate"
 
 [tasks."agents:check"]
-description = "Check generated AgentsMesh drift"
-run = "agentsmesh check"
+description = "Check generated AgentsMesh output against canonical sources"
+run = "agentsmesh generate --check"
 
 [tasks."format:markdown"]
 description = "Auto-format repository-owned Markdown with rumdl"
@@ -79,7 +79,7 @@ run = """
 uv sync --locked
 mise run format
 lefthook validate
-agentsmesh lint
-agentsmesh check
+mise run agents:lint
+mise run agents:check
 mise run test:smoke
 """
