@@ -23,7 +23,7 @@
 - Use the AgentsMesh version pinned by the schema directive in `agentsmesh.yaml`; upgrade it intentionally before
   regenerating outputs.
 - Prefer the `mise run agents:*` tasks for repository-wide AgentsMesh operations when mise is available.
-- Keep `../.agentsmesh/.lock` untracked because it reflects the active local target set rather than repository authority.
+- Keep `.agentsmesh/.lock` untracked because it reflects the active local target set rather than repository authority.
 - Commit outputs selected by the shared `agentsmesh.yaml`; keep local-only projections untracked.
 - Use normal AgentsMesh generation to sync the active outputs; CI detects tracked shared-output drift from the resulting
   Git tree.
