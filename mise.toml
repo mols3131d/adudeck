@@ -80,5 +80,6 @@ uv sync --locked
 mise run format
 lefthook validate
 mise run agents:lint
+mise run agents:check
 mise run test:smoke
 """
