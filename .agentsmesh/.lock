@@ -1,19 +1,19 @@
 # Auto-generated. DO NOT EDIT MANUALLY.
 # Tracks the state of all config files for team conflict resolution.
 
-generated_at: 2026-08-19T09:56:08.286Z
+generated_at: 2026-08-19T09:56:48.390Z
 generated_by: runner
 lib_version: 0.32.0
 checksums:
   rules/decks.md: sha256:688f17394c11e755b34a732d5f2c0e9713de3f80cf4d14261f0de3a9466eb0b6
-  rules/_root.md: sha256:b06c3e27507fa04be787ac2eda0f4f73bbc18f71ddcd652d6b7d03b609b5ee23
+  rules/_root.md: sha256:11da31f192d6c471fac166a221d6621f45ec79162179699a5da34948d922b35a
   rules/archive.md: sha256:0f3e3b3ab16d2f3a9171c8dbf49e7d87ded7fea1ee3810b2fd2fdd66e2376478
   skills/adudeck-textbook/SKILL.md: sha256:0030ac827888d5eeee9c609cfc99d074c5f307bc0d6ab3892195c7e41103f216
   skills/adudeck-textbook-write/SKILL.md: sha256:114f07799ead3cd9d70c8845e39425834ca55ac71d82d640038e07b96de2e6b6
 extends: {}
 packs: {}
 outputs:
-  .github/copilot-instructions.md: sha256:12e5080a825ffe87b43cf46523d84ef6cbee801727651679d2a312abba532e02
+  .github/copilot-instructions.md: sha256:a8ef102b89a53f53662c7172791b7777830feb1a8a13821b8b1e1926c7519a41
   .github/instructions/decks.instructions.md: sha256:77e9fe7d5221ffa8516ae8918f7b8557b5d16d02cffe89ec2972b32b705fae6b
   .github/instructions/archive.instructions.md: sha256:28662f630f40834972a7bcbc36387427cd4e8a0380318916de76d81ca327660a
   .github/skills/adudeck-textbook/SKILL.md: sha256:505c7aad6b23b08fcc704930eb912c0b49934ebb4bfc5b551d627ff019891748
