@@ -1,8 +1,15 @@
 # adudeck
 
-**Agentic Education Deck** — AI 에이전트를 활용해 공부하기 위한 개인 학습 workspace.
+**Agentic Education Deck** — AI 에이전트가 생성·보조한 학습 자료로 공부하고 기록하는 개인 학습 workspace.
 
 학습 주제를 deck 단위로 구성하고, 에이전트를 활용해 학습·탐구·복습한다.
+
+## Scope
+
+- 개인 학습과 실험을 위한 repository다.
+- 서비스, 사업, 교육 상품 또는 공식 교육과정을 제공하기 위한 프로젝트가 아니다.
+- 학습 자료는 AI-generated / AI-assisted content를 중심으로 만들며, 필요에 따라 외부 공개 자료를 참고한다.
+- repository에는 학습에 필요한 결과물을 중심으로 남기고, 조사 과정 자체를 기본 산출물로 취급하지 않는다.
 
 ## Layout
 
