@@ -23,7 +23,7 @@ uv.lock              # reproducible Python lock
 ```bash
 mise install
 mise run setup
-mise run agents:check
+mise run agents:generate
 ```
 
 `mise`가 repository toolchain을 고정하고, `uv`가 Python dependency와 `.venv`를 관리한다.
