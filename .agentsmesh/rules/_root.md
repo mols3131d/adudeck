@@ -15,14 +15,15 @@ description: Repository-wide contract for the adudeck agentic learning workspace
 ## Authority
 
 - `.agentsmesh/` is the canonical source for portable agent Rules and Skills managed by AgentsMesh.
-- `agentsmesh.yaml` selects active targets and features.
+- `agentsmesh.yaml` selects shared targets and features whose generated outputs are tracked in Git.
+- `agentsmesh.local.yaml` may replace shared targets or features for local tools and must remain untracked.
 - `mise.toml` pins repository bootstrap tools and exposes repeatable repository tasks.
 - Treat generated vendor-native agent files as derived artifacts; change the canonical `.agentsmesh/` source instead.
 - Use the AgentsMesh version pinned by the schema directive in `agentsmesh.yaml`; upgrade it intentionally before
   regenerating outputs.
 - Prefer the `mise run agents:*` tasks for repository-wide AgentsMesh operations when mise is available.
-- When AgentsMesh generation is used, commit the generated lock file and target outputs with the canonical change so
-  drift remains reviewable.
+- Commit the generated lock file and outputs produced by the shared `agentsmesh.yaml`; keep local-only projections
+  untracked.
 
 ## Safety
 
