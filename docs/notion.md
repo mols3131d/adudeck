@@ -29,8 +29,8 @@ Notion view의 filter, group, sort는 presentation이다. view나 database 위�
 
 ## Properties
 
-새 schema에서는 최소한 deck을 식별하는 title과 `State`만 요구한다. 다른 properties는 실제 학습 또는 운영 필요가 있을 때만
-추가한다.
+새 schema에서는 최소한 deck을 식별하는 title과 `State`만 요구한다. 다른 properties는 실제 학습 또는 운영 필요가 있을
+때만 추가한다.
 
 기존 Notion database가 동일한 의미를 다른 property 이름이나 값으로 이미 표현하고 있다면, 불필요한 schema 변경보다 기존
 구조를 우선한다. 단, state 의미는 `Active / Backlog / Archive`와 대응되어야 한다.
