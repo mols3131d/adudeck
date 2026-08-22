@@ -3,6 +3,8 @@ root: false
 description: Rules for inactive decks with no current planned work.
 globs:
   - decks/_archive/**/*
+agentsmd:
+  subprojectPath: decks/_archive
 ---
 
 # Archive Rules

@@ -58,4 +58,4 @@ Filesystem deck directory name은 다음 형식을 기본으로 한다.
 ## Boundary
 
 Deck content는 해당 deck의 목표와 학습 내용만 설명한다. repository 전체의 운영 정책은 `docs/`가 담당하고, agent 실행
-규칙의 canonical source는 `.agentsmesh/`가 담당한다.
+규칙의 canonical source는 `.rulesync/`가 담당한다.

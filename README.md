@@ -10,12 +10,13 @@
 ## Layout
 
 ```text
-.agentsmesh/         # canonical agent assets
+.rulesync/           # canonical agent assets
 decks/               # default filesystem deck storage
 docs/                # repository-wide human-facing docs
-mise.toml            # toolchain and repository tasks
-pyproject.toml       # uv-managed Python project
-uv.lock              # reproducible Python lock
+rulesync.jsonc        # shared agent projection configuration
+mise.toml             # toolchain and repository tasks
+pyproject.toml        # uv-managed Python project
+uv.lock               # reproducible Python lock
 ```
 
 ## Start
@@ -23,10 +24,10 @@ uv.lock              # reproducible Python lock
 ```bash
 mise install
 mise run setup
-mise run agents:generate
 ```
 
-`mise`가 repository toolchain을 고정하고, `uv`가 Python dependency와 `.venv`를 관리한다.
+`mise`가 repository toolchain을 관리하고, `uv`가 Python dependency와 `.venv`를 관리한다. Agent asset을 변경했을 때는
+`mise run rulesync:generate`로 projection을 갱신한다.
 
 ## Working Model
 
@@ -35,7 +36,7 @@ mise run agents:generate
 - deck의 storage와 state 원칙은 [`docs/decks.md`](docs/decks.md)를 따른다.
 - Notion을 storage로 사용할 때는 [`docs/notion.md`](docs/notion.md)를 따른다.
 - directory 사용법은 가까운 `README.md`에, repository-wide 정책은 `docs/`에 둔다.
-- portable agent rules의 canonical source는 `.agentsmesh/`이며 generated target files는 직접 수정하지 않는다.
+- portable agent Rules와 Skills의 canonical source는 `.rulesync/`이며 generated target files는 직접 수정하지 않는다.
 
 ## Automation
 

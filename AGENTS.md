@@ -1,8 +1,6 @@
-<!-- agentsmesh:root-generation-contract:start -->
-## AgentsMesh Generation Contract
+# Additional Conventions Beyond the Built-in Functions
 
-**NEVER edit generated files** (`.claude/`, `.cursor/`, `AGENTS.md`, `.github/copilot-instructions.md`, and similar target outputs) — `agentsmesh generate` overwrites them. **All changes MUST go through `.agentsmesh` first**: edit `rules/_root.md`, `rules/*.md`, `commands/*.md`, `agents/*.md`, `skills/*/SKILL.md` plus supporting files, `mcp.json`, `hooks.yaml`, `permissions.yaml`, and `ignore`; `agentsmesh.yaml` selects targets/features (`agentsmesh.local.yaml` overrides locally); if missing run `agentsmesh init`, use `agentsmesh import --from <tool>` for native configs, `agentsmesh install <source>` or `install --sync` for reusable packs, then run `agentsmesh generate`. Use `diff`, `lint`, `check`, `watch`, `matrix`, `merge`, and `refresh` as needed.
-<!-- agentsmesh:root-generation-contract:end -->
+As this project's AI coding tool, you must follow the additional conventions below, in addition to the built-in functions.
 
 # Repository Contract
 
@@ -25,18 +23,16 @@
 
 ## Authority
 
-- `.agentsmesh/` is the canonical source for portable agent Rules and Skills managed by AgentsMesh.
-- `agentsmesh.yaml` selects shared targets and features whose generated outputs are tracked in Git.
-- `agentsmesh.local.yaml` may replace shared targets or features for local tools and must remain untracked.
-- `mise.toml` pins repository bootstrap tools and exposes repeatable repository tasks.
-- Treat generated vendor-native agent files as derived artifacts; change the canonical `.agentsmesh/` source instead.
-- Use the AgentsMesh version pinned by the schema directive in `agentsmesh.yaml`; upgrade it intentionally before
-  regenerating outputs.
-- Prefer the `mise run agents:*` tasks for repository-wide AgentsMesh operations when mise is available.
-- Keep `.agentsmesh/.lock` untracked because it reflects the active local target set rather than repository authority.
-- Commit outputs selected by the shared `agentsmesh.yaml`; keep local-only projections untracked.
-- Use normal AgentsMesh generation to sync the active outputs; CI detects tracked shared-output drift from the resulting
-  Git tree.
+- `.rulesync/` is the canonical source for portable agent Rules and Skills managed by Rulesync.
+- `rulesync.jsonc` selects repository-shared targets and features whose generated outputs are tracked in Git.
+- `rulesync.local.jsonc` must remain untracked. If it defines `targets`, it replaces the shared target set, so include
+  the shared targets alongside any local additions.
+- `mise.toml` installs the repository toolchain and exposes repeatable Rulesync tasks.
+- Treat generated vendor-native agent files as derived artifacts; change the canonical `.rulesync/` source instead.
+- Prefer the `mise run rulesync:*` tasks for repository-wide Rulesync operations when mise is available.
+- Commit outputs selected by the shared `rulesync.jsonc`; keep local-only projections untracked.
+- Generate from canonical source after agent asset changes; CI detects tracked projection drift from the resulting Git
+  tree.
 
 ## Safety
 

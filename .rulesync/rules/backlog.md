@@ -3,6 +3,8 @@ root: false
 description: Rules for decks with intended follow-up work that is not currently active.
 globs:
   - decks/_backlog/**/*
+agentsmd:
+  subprojectPath: decks/_backlog
 ---
 
 # Backlog Rules

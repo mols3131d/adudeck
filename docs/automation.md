@@ -6,22 +6,24 @@
 
 | 영역 | 도구 | 책임 |
 | --- | --- | --- |
-| toolchain | mise | runtime과 CLI version pin, task entrypoint |
+| toolchain | mise | runtime과 CLI resolution, task entrypoint |
 | Python project | uv | dependency, lock, `.venv` |
 | Markdown | rumdl | auto-format |
 | JSON/JSONC | Biome | auto-format/check |
 | TOML | Tombi | auto-format/lint |
 | Git hooks | Lefthook | staged auto-fix와 local guard |
-| agent assets | AgentsMesh | canonical rule에서 target-native file 생성 |
+| agent assets | Rulesync | canonical Rule/Skill에서 target-native file 생성 |
 
 ## Local
 
 ```bash
 mise install
 mise run setup
-mise run format
 mise run ci:fast
 ```
+
+`ci:fast`는 format 이후 Rulesync projection을 생성·검증한다. 필요한 단계만 실행할 때는 `mise run format` 또는
+`mise run rulesync:generate` 같은 개별 task를 사용한다.
 
 local hook은 가능한 formatting 문제를 수정하고 수정된 file을 다시 stage한다.
 
@@ -31,6 +33,7 @@ fast CI는 다음 원칙만 가진다.
 
 - deterministic하고 저비용인 검증만 자동 실행한다.
 - formatter는 style drift를 실패시키기보다 먼저 auto-fix한다.
+- Rulesync canonical source를 진단하고 generated projection을 재생성한다.
 - write permission과 repository-defined command 실행을 분리한다.
 - persisted auto-fix는 read-only job이 검증한 Git tree와 동일할 때만 허용한다.
 - `main`과 manual validation은 auto-fix 결과를 repository에 persist하지 않는다.

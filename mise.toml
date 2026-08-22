@@ -1,7 +1,7 @@
 [tools]
 python = "3.14.6"
 uv = "0.12.1"
-"github:sampleXbro/agentsmesh" = "0.32.0"
+"github:dyoshikawa/rulesync" = "latest"
 biome = "2.5.6"
 tombi = "1.1.0"
 rumdl = "0.2.56"
@@ -13,13 +13,17 @@ UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
 [settings]
 python.uv_venv_auto = "source"
 
-[tasks."agents:lint"]
-description = "Lint canonical AgentsMesh configuration"
-run = "agentsmesh lint"
+[tasks."rulesync:doctor"]
+description = "Validate Rulesync configuration"
+run = "rulesync doctor --strict"
 
-[tasks."agents:generate"]
-description = "Generate native agent configuration"
-run = "agentsmesh generate"
+[tasks."rulesync:generate"]
+description = "Generate tracked agent projections from canonical Rulesync assets"
+run = "rulesync generate"
+
+[tasks."rulesync:check"]
+description = "Check generated Rulesync projections for drift"
+run = "rulesync generate --check"
 
 [tasks."format:markdown"]
 description = "Auto-format repository-owned Markdown with rumdl"
@@ -75,7 +79,8 @@ run = """
 uv sync --locked
 mise run format
 lefthook validate
-mise run agents:lint
-mise run agents:generate
+mise run rulesync:doctor
+mise run rulesync:generate
+mise run rulesync:check
 mise run test:smoke
 """

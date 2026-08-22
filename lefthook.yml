@@ -27,10 +27,8 @@ pre-commit:
             run: tombi format {staged_files}
             stage_fixed: true
 
-          - name: agentsmesh
+          - name: rulesync
             glob:
-              - ".agentsmesh/**"
-              - "agentsmesh.yaml"
-            exclude:
-              - ".agentsmesh/packs/**"
-            run: agentsmesh lint
+              - ".rulesync/**"
+              - "rulesync.jsonc"
+            run: rulesync doctor --strict
