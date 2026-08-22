@@ -2,7 +2,8 @@
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
   "targets": {
     "copilot": ["rules", "skills"],
-    "codexcli": ["rules", "skills"]
+    "agentsmd": ["rules"],
+    "codexcli": ["skills"]
   },
   "outputRoots": ["."],
   "delete": true
