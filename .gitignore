@@ -13,12 +13,10 @@ lefthook-local.yml
 __pycache__/
 *.py[cod]
 
-# AgentsMesh
-agentsmesh.local.yaml
-.agentsmeshcache
-.agentsmesh/.lock
-.agentsmesh/.lock.tmp
-.agentsmesh/packs/
+# Rulesync
+rulesync.local.jsonc
+.rulesync/rules/.curated/
+.rulesync/skills/.curated/
 
 # Local-only agent projections
 .agents/rules/

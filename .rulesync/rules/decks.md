@@ -3,6 +3,8 @@ root: false
 description: Rules for learning decks and their state.
 globs:
   - decks/**/*
+agentsmd:
+  subprojectPath: decks
 ---
 
 # Deck Rules
