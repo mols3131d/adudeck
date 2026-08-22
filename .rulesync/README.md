@@ -18,7 +18,11 @@ derived projection이며 직접 편집하지 않는다.
 - `codexcli` — Skills를 Codex-compatible skill surface로 생성한다.
 
 Codex의 Rule context는 별도 vendor rule directory가 아니라 `agentsmd` projection을 사용한다. Directory-scoped Rule은
-`globs`로 Copilot scope를 표현하고 `agentsmd.subprojectPath`로 nested `AGENTS.md` scope를 보존한다.
+`globs`로 Copilot scope를 표현하고 `agentsmd.subprojectPath`로 nested `AGENTS.md` scope를 보존한다. `agentsmd`는
+`ruleDiscoveryMode: none`을 사용해 root의 별도 routing table 없이 native `AGENTS.md` hierarchy에 맡긴다.
+
+`rulesync.local.jsonc`에서 `targets`를 정의하면 shared target set 전체를 교체한다. Local target을 추가할 때 repository의
+shared target도 함께 적는다.
 
 ## Commands
 
