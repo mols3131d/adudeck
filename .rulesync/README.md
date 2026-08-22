@@ -1,6 +1,7 @@
 # Rulesync
 
-`.rulesync/`는 repository-owned portable agent Rules와 Skills의 canonical authoring source다. Generated target files는 derived projection이며 직접 편집하지 않는다.
+`.rulesync/`는 repository-owned portable agent Rules와 Skills의 canonical authoring source다. Generated target files는
+derived projection이며 직접 편집하지 않는다.
 
 ## Layout
 
@@ -10,9 +11,11 @@
 └── skills/    # portable agent skills
 ```
 
-`rulesync.jsonc`는 shared target과 feature를 정의한다. 현재 target은 `copilot`, `codexcli`이고 `rules`, `skills`만 생성한다.
+`rulesync.jsonc`는 shared target과 feature를 정의한다. 현재 target은 `copilot`, `codexcli`이고 `rules`, `skills`만
+생성한다.
 
-Directory-scoped Rule은 `globs`로 Copilot scope를 표현하고 `agentsmd.subprojectPath`로 Codex의 nested `AGENTS.md` scope를 보존한다.
+Directory-scoped Rule은 `globs`로 Copilot scope를 표현하고 `agentsmd.subprojectPath`로 Codex의 nested `AGENTS.md`
+scope를 보존한다.
 
 ## Commands
 

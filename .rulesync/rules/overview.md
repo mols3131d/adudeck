@@ -31,7 +31,8 @@ description: Repository-wide contract for the adudeck agentic learning workspace
 - Treat generated vendor-native agent files as derived artifacts; change the canonical `.rulesync/` source instead.
 - Prefer the `mise run rulesync:*` tasks for repository-wide Rulesync operations when mise is available.
 - Commit outputs selected by the shared `rulesync.jsonc`; keep local-only projections untracked.
-- Generate from canonical source after agent asset changes; CI detects tracked projection drift from the resulting Git tree.
+- Generate from canonical source after agent asset changes; CI detects tracked projection drift from the resulting Git
+  tree.
 
 ## Safety
 
