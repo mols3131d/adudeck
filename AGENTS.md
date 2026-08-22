@@ -1,3 +1,20 @@
+Please also reference the following rules as needed. The list below is provided in TOON format, and `@` stands for the project root directory.
+
+rules[3]:
+  - path: @decks/_archive/AGENTS.md
+    description: Rules for inactive decks with no current planned work.
+    applyTo[1]: decks/_archive/**/*
+  - path: @decks/_backlog/AGENTS.md
+    description: Rules for decks with intended follow-up work that is not currently active.
+    applyTo[1]: decks/_backlog/**/*
+  - path: @decks/AGENTS.md
+    description: Rules for learning decks and their state.
+    applyTo[1]: decks/**/*
+
+# Additional Conventions Beyond the Built-in Functions
+
+As this project's AI coding tool, you must follow the additional conventions below, in addition to the built-in functions.
+
 # Repository Contract
 
 ## Purpose
@@ -60,32 +77,3 @@ Anything recorded in Git or GitHub may remain accessible after it is changed or 
 
 - Do not commit ordinary change work directly to `main`.
 - Keep repository guidance concise and colocated with its real responsibility.
-
-# Archive Rules
-
-Apply only to work under `decks/_archive/`.
-
-- Treat archived decks as inactive material with no current planned work, not as permanently finished content.
-- Preserve archived content unless cleanup is explicitly requested.
-- When follow-up work becomes intended, move the deck to `_backlog/` or directly to the active location instead of
-  creating a second copy.
-
-# Backlog Rules
-
-Apply only to work under `decks/_backlog/`.
-
-- Treat backlog decks as inactive for now but carrying explicit intent for future study, supplementation, or change.
-- Do not assume a backlog deck is new or never studied; it may have moved from active or archive.
-- When the work becomes current, move the deck to the active location instead of creating a second copy.
-
-# Deck Rules
-
-Apply only to work under `decks/`.
-
-- Treat each directory directly under `decks/` that does not start with `_` as an active learning deck.
-- Treat `_backlog/` and `_archive/` as management namespaces, not decks.
-- Keep a deck self-contained and focused on its learning scope.
-- Prefer relative links within a deck so moving it between state locations preserves internal references.
-- Do not create new decks or management namespaces without a concrete learning need.
-- Move the whole deck directory when its state changes; do not keep copies in multiple states.
-- Defer `_backlog/` and `_archive/` behavior to their state-specific rules.
