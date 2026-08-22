@@ -21,7 +21,8 @@
 
 - `.rulesync/` is the canonical source for portable agent Rules and Skills managed by Rulesync.
 - `rulesync.jsonc` selects repository-shared targets and features whose generated outputs are tracked in Git.
-- `rulesync.local.jsonc` may override generation for local tools and must remain untracked.
+- `rulesync.local.jsonc` must remain untracked. If it defines `targets`, it replaces the shared target set, so include
+  the shared targets alongside any local additions.
 - `mise.toml` installs the repository toolchain and exposes repeatable Rulesync tasks.
 - Treat generated vendor-native agent files as derived artifacts; change the canonical `.rulesync/` source instead.
 - Prefer the `mise run rulesync:*` tasks for repository-wide Rulesync operations when mise is available.
