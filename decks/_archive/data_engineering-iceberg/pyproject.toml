@@ -1,0 +1,17 @@
+[project]
+name = "iceberg-basic"
+version = "0.1.0"
+description = "로컬에서 Iceberg의 snapshot과 metadata 변화를 관찰하는 최소 튜토리얼"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "pyarrow>=20",
+  "pyiceberg[sql-sqlite]>=0.11,<0.12",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/iceberg_basic"]

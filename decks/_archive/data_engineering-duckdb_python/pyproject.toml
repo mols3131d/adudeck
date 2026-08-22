@@ -1,0 +1,14 @@
+[project]
+name = "duckdb-python-basic"
+version = "0.1.0"
+description = "로컬 DuckDB 기초 튜토리얼"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "duckdb>=1.5.3",
+  "polars>=1.41.2",
+  "pyarrow>=24.0.0",
+]
+
+[dependency-groups]
+dev = ["marimo", "pytest"]

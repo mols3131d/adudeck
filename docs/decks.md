@@ -32,6 +32,21 @@ Filesystem에서는 directory 위치로 state를 표현한다.
 
 Filesystem이 아닌 storage를 사용하면 해당 storage의 policy에 따라 같은 state semantics를 표현한다.
 
+## Naming
+
+Filesystem deck directory name은 다음 형식을 기본으로 한다.
+
+```text
+<domain>[-<subdomain>]-<topic>[-<extension>...]
+```
+
+- `-`는 의미 필드의 경계를 구분한다.
+- `_`는 하나의 필드 안에서 띄어쓰기를 표현한다.
+- `subdomain`과 `extension`은 필요한 경우에만 사용한다.
+- 현재 구분할 필요가 없는 난이도나 범위 suffix를 선제적으로 붙이지 않는다.
+
+예: `language-c`, `data_engineering-duckdb_python`.
+
 ## Content
 
 - Filesystem deck에서는 `README.md`를 entrypoint로 둔다.
