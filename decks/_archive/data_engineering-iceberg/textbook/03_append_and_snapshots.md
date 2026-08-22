@@ -2,7 +2,8 @@
 
 ## Summary
 
-CSV를 미리 Parquet로 변환하지 않습니다. 학습자가 Arrow Table을 만들고 `table.append()`를 호출하면 PyIceberg가 관리 대상 Parquet와 snapshot metadata를 함께 커밋합니다.
+CSV를 미리 Parquet로 변환하지 않습니다. 학습자가 Arrow Table을 만들고 `table.append()`를 호출하면 PyIceberg가 관리 대상
+Parquet와 snapshot metadata를 함께 커밋합니다.
 
 ## Append 메커니즘
 
@@ -16,7 +17,8 @@ manifest와 manifest list 작성
 새 snapshot을 포함한 metadata 커밋
 ```
 
-직접 만든 Parquet 파일을 warehouse에 복사하는 것만으로는 Iceberg 테이블에 포함되지 않습니다. manifest와 snapshot을 통해 참조되어야 합니다.
+직접 만든 Parquet 파일을 warehouse에 복사하는 것만으로는 Iceberg 테이블에 포함되지 않습니다. manifest와 snapshot을 통해
+참조되어야 합니다.
 
 ## 1. 첫 append 코드 작성
 

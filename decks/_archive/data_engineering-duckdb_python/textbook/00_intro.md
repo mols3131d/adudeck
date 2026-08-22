@@ -2,7 +2,8 @@
 
 ## 목표
 
-이 교재는 Python과 DuckDB를 이용해 로컬에서 재현 가능한 분석 및 데이터 처리 흐름을 구현한다. SQL 문법 자체보다 Python application 안에서 DuckDB를 안전하게 연결하고 파일, DataFrame, table, transaction을 다루는 방법에 초점을 둔다.
+이 교재는 Python과 DuckDB를 이용해 로컬에서 재현 가능한 분석 및 데이터 처리 흐름을 구현한다. SQL 문법 자체보다 Python
+application 안에서 DuckDB를 안전하게 연결하고 파일, DataFrame, table, transaction을 다루는 방법에 초점을 둔다.
 
 ## 시작 상태
 

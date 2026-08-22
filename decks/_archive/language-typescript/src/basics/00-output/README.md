@@ -1,6 +1,7 @@
 # 00. Output (출력)
 
-프로그래밍의 첫걸음은 코드가 실행된 결과를 눈으로 확인하는 것입니다. TypeScript(및 JavaScript)에서 가장 널리 사용되는 출력 도구인 `console.log()`의 다양한 활용법을 알아봅니다.
+프로그래밍의 첫걸음은 코드가 실행된 결과를 눈으로 확인하는 것입니다. TypeScript(및 JavaScript)에서 가장 널리 사용되는
+출력 도구인 `console.log()`의 다양한 활용법을 알아봅니다.
 
 ---
 
@@ -34,7 +35,8 @@ console.log("Agent:", name, "Version:", version);
 
 ### 3. 객체 디버깅 (Object Logging)
 
-변수가 많아질수록 어떤 값이 어떤 변수의 것인지 헷갈릴 수 있습니다. 이때 중괄호(`{}`)를 사용하여 **객체 형태**로 감싸주면 변수 이름과 값을 쌍으로 확인할 수 있어 매우 효율적입니다.
+변수가 많아질수록 어떤 값이 어떤 변수의 것인지 헷갈릴 수 있습니다. 이때 중괄호(`{}`)를 사용하여 **객체 형태**로 감싸주면
+변수 이름과 값을 쌍으로 확인할 수 있어 매우 효율적입니다.
 
 ```typescript
 const profile = {
@@ -64,11 +66,13 @@ console.log("1 + 1 =", 1 + 1); // 1 + 1 = 2
 작성한 코드를 터미널에서 실행하여 결과를 확인하는 방법은 다음과 같습니다.
 
 1. **ts-node 사용 (권장)**: 컴파일 과정 없이 즉시 실행
+
    ```bash
    npx ts-node src/basics/00-output/01-console-log.ts
    ```
 
 2. **Vitest 사용**: 테스트 환경에서 출력 확인
+
    ```bash
    npm test src/basics/00-output/01-console-log.ts
    ```
@@ -76,4 +80,5 @@ console.log("1 + 1 =", 1 + 1); // 1 + 1 = 2
 ---
 
 > [!TIP]
-> 실무에서는 단순히 `console.log` 외에도 `console.error` (에러 출력), `console.warn` (경고 출력), `console.table` (표 형식 출력) 등 다양한 메서드를 상황에 맞춰 활용합니다.
+> 실무에서는 단순히 `console.log` 외에도 `console.error` (에러 출력), `console.warn` (경고 출력), `console.table` (표
+> 형식 출력) 등 다양한 메서드를 상황에 맞춰 활용합니다.

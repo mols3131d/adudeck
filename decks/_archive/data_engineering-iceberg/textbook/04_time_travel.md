@@ -2,7 +2,8 @@
 
 ## Summary
 
-학습자가 snapshot ID를 가져와 `table.scan(snapshot_id=...)`에 직접 전달합니다. Time Travel은 현재 상태를 바꾸지 않고 과거 snapshot의 파일 집합을 읽습니다.
+학습자가 snapshot ID를 가져와 `table.scan(snapshot_id=...)`에 직접 전달합니다. Time Travel은 현재 상태를 바꾸지 않고
+과거 snapshot의 파일 집합을 읽습니다.
 
 ## 현재와 과거
 

@@ -132,7 +132,8 @@ assert first_count == second_count == stored_count
 
 ## Trade-offs
 
-`DELETE + INSERT`는 구현이 단순하고 local MVP에 적합하다. 대규모 dataset에서는 partition file 교체, table format snapshot, staging table swap 같은 방법이 더 효율적일 수 있다.
+`DELETE + INSERT`는 구현이 단순하고 local MVP에 적합하다. 대규모 dataset에서는 partition file 교체, table format
+snapshot, staging table swap 같은 방법이 더 효율적일 수 있다.
 
 ## Checklist
 

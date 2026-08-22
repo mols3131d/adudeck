@@ -2,7 +2,8 @@
 
 ## Retrospective
 
-이 교재에서는 Python 내부에서 DuckDB를 실행하는 기본 mechanics부터 파일 query, DataFrame integration, table 관리, transaction, idempotent ingestion, profiling, ETL test까지 연결했다.
+이 교재에서는 Python 내부에서 DuckDB를 실행하는 기본 mechanics부터 파일 query, DataFrame integration, table 관리,
+transaction, idempotent ingestion, profiling, ETL test까지 연결했다.
 
 완성된 흐름은 다음과 같다.
 

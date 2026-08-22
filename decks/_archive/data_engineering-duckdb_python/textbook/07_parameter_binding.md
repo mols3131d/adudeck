@@ -2,7 +2,8 @@
 
 ## Overview
 
-값은 SQL 문자열에 직접 삽입하지 않고 parameter binding으로 전달한다. Table name과 column name 같은 identifier는 allowlist로 검증한다.
+값은 SQL 문자열에 직접 삽입하지 않고 parameter binding으로 전달한다. Table name과 column name 같은 identifier는
+allowlist로 검증한다.
 
 ## 값 Binding
 

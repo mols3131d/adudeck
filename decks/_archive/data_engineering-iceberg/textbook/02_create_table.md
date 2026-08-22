@@ -2,7 +2,8 @@
 
 ## Summary
 
-학습자가 Catalog 연결과 schema를 직접 정의해 빈 Iceberg 테이블을 만듭니다. 이 단계에서는 초기 metadata가 생기지만 snapshot과 Parquet data file은 생기지 않습니다.
+학습자가 Catalog 연결과 schema를 직접 정의해 빈 Iceberg 테이블을 만듭니다. 이 단계에서는 초기 metadata가 생기지만
+snapshot과 Parquet data file은 생기지 않습니다.
 
 ## 참조 구조
 
@@ -39,7 +40,8 @@ def load_lab_catalog() -> Catalog:
     )
 ```
 
-이 함수는 SQLite Catalog와 Iceberg 테이블 파일의 루트를 프로젝트의 `warehouse/`로 고정합니다. `pyiceberg_catalog.db`는 로컬 실습용 Catalog이고 나머지 하위 디렉터리에는 테이블 metadata와 data file이 생성됩니다.
+이 함수는 SQLite Catalog와 Iceberg 테이블 파일의 루트를 프로젝트의 `warehouse/`로 고정합니다. `pyiceberg_catalog.db`는
+로컬 실습용 Catalog이고 나머지 하위 디렉터리에는 테이블 metadata와 data file이 생성됩니다.
 
 ## 2. 테이블 생성 코드 작성
 
@@ -82,7 +84,8 @@ uv run python scripts/inspect_lab.py
 
 ## 흔한 실수
 
-- `TableAlreadyExistsError`: 이전 결과가 남았습니다. `uv run python scripts/reset_lab.py` 실행 후 이 장을 다시 진행합니다.
+- `TableAlreadyExistsError`: 이전 결과가 남았습니다. `uv run python scripts/reset_lab.py` 실행 후 이 장을 다시
+  진행합니다.
 - `ModuleNotFoundError: iceberg_basic`: `uv sync`를 실행했고 파일이 `src/iceberg_basic/` 아래에 있는지 확인합니다.
 - namespace를 만들지 않고 테이블부터 만들면 Catalog에 따라 namespace 관련 오류가 발생합니다.
 

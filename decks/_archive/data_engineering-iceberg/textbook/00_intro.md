@@ -2,7 +2,8 @@
 
 ## Overview
 
-이 교재에서는 PyIceberg로 테이블 생성, append, Time Travel, schema evolution 코드를 직접 작성합니다. 제공 스크립트는 초기화와 관찰만 담당합니다.
+이 교재에서는 PyIceberg로 테이블 생성, append, Time Travel, schema evolution 코드를 직접 작성합니다. 제공 스크립트는
+초기화와 관찰만 담당합니다.
 
 ## 학습 목표
 
@@ -23,7 +24,8 @@
 | 제공 도구 | `scripts/watch_lab.py` | 현재 상태 반복 관찰 |
 | 학습자 코드 | `src/iceberg_basic/*.py` | Catalog 설정, create, append, Time Travel, schema evolution |
 
-`reset`, `status`, `watch`는 학습 보조 작업입니다. Iceberg의 상태를 바꾸는 핵심 작업은 `src/iceberg_basic/`에 직접 작성합니다. 이 디렉터리는 `pyproject.toml`에 등록된 설치 가능한 Python 패키지입니다.
+`reset`, `status`, `watch`는 학습 보조 작업입니다. Iceberg의 상태를 바꾸는 핵심 작업은 `src/iceberg_basic/`에 직접
+작성합니다. 이 디렉터리는 `pyproject.toml`에 등록된 설치 가능한 Python 패키지입니다.
 
 ## 정확한 시작 상태
 
@@ -33,8 +35,10 @@
 
 ## 정확한 완료 상태
 
-- 직접 작성한 `src/iceberg_basic/catalog.py`, `create_table.py`, `append_first.py`, `append_second.py`, `time_travel.py`, `evolve_schema.py`가 있습니다.
-- `warehouse/pyiceberg_catalog.db`와 `warehouse/tutorial/orders/` 아래에 Catalog, Iceberg metadata와 Parquet 파일이 있습니다.
+- 직접 작성한 `src/iceberg_basic/catalog.py`, `create_table.py`, `append_first.py`, `append_second.py`,
+  `time_travel.py`, `evolve_schema.py`가 있습니다.
+- `warehouse/pyiceberg_catalog.db`와 `warehouse/tutorial/orders/` 아래에 Catalog, Iceberg metadata와 Parquet 파일이
+  있습니다.
 - `tutorial.orders`는 3행, 2개 snapshot, `order_id`, `item`, `channel` schema를 가집니다.
 - 첫 snapshot을 지정해 읽으면 2행이 나옵니다.
 
@@ -66,7 +70,8 @@ uv run python scripts/watch_lab.py
 
 ## 범위와 버전
 
-이 교재는 `pyiceberg>=0.11,<0.12` API를 대상으로 합니다. 로컬 SQLite Catalog와 파일시스템으로 핵심 구조만 확인하며, 다중 writer, REST Catalog, 객체 저장소, 인증은 검증하지 않습니다.
+이 교재는 `pyiceberg>=0.11,<0.12` API를 대상으로 합니다. 로컬 SQLite Catalog와 파일시스템으로 핵심 구조만 확인하며, 다중
+writer, REST Catalog, 객체 저장소, 인증은 검증하지 않습니다.
 
 ## Checklist
 

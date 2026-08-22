@@ -2,7 +2,8 @@
 
 ## Summary
 
-Parquet는 한 파일의 행과 열을 효율적으로 저장합니다. Iceberg는 여러 data file 중 현재 테이블에 속하는 파일과 과거 상태를 metadata와 커밋 규칙으로 관리합니다.
+Parquet는 한 파일의 행과 열을 효율적으로 저장합니다. Iceberg는 여러 data file 중 현재 테이블에 속하는 파일과 과거 상태를
+metadata와 커밋 규칙으로 관리합니다.
 
 ## 서로 다른 책임
 
@@ -34,7 +35,8 @@ uv run python scripts/inspect_lab.py
 
 ## 다음 장을 위한 질문
 
-빈 Iceberg 테이블을 만든 직후에는 schema와 테이블 이름은 존재하지만 행은 없습니다. 그렇다면 Parquet data file도 생겨야 할까요? 다음 장에서 직접 생성한 뒤 확인합니다.
+빈 Iceberg 테이블을 만든 직후에는 schema와 테이블 이름은 존재하지만 행은 없습니다. 그렇다면 Parquet data file도 생겨야
+할까요? 다음 장에서 직접 생성한 뒤 확인합니다.
 
 ## Checklist
 

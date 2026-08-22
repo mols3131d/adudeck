@@ -118,7 +118,8 @@ def test_profile_partition() -> None:
 
 ### Schema drift
 
-`union_by_name=true`만으로 해결하지 않는다. 예상 schema와 실제 schema를 비교하고 incident 또는 validation failure로 처리한다.
+`union_by_name=true`만으로 해결하지 않는다. 예상 schema와 실제 schema를 비교하고 incident 또는 validation failure로
+처리한다.
 
 ### Flaky sampling
 

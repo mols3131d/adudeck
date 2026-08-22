@@ -14,7 +14,8 @@ DuckDB는 별도 서버 없이 application process 안에서 실행되는 분석
 - 테스트용 embedded database
 - dbt-duckdb 기반 로컬 transformation
 
-DuckDB는 OLTP database보다 columnar analytical workload에 초점을 둔다. 대량 `SELECT`, aggregation, join에는 적합하지만 높은 동시성의 row 단위 transaction system을 대체하는 용도는 아니다.
+DuckDB는 OLTP database보다 columnar analytical workload에 초점을 둔다. 대량 `SELECT`, aggregation, join에는 적합하지만
+높은 동시성의 row 단위 transaction system을 대체하는 용도는 아니다.
 
 ## 첫 SQL 실행
 

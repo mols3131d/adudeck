@@ -2,7 +2,8 @@
 
 ## Summary
 
-학습자가 `update_schema()` 트랜잭션으로 nullable 컬럼을 추가합니다. schema metadata는 바뀌지만 기존 Parquet와 append snapshot은 다시 만들어지지 않습니다.
+학습자가 `update_schema()` 트랜잭션으로 nullable 컬럼을 추가합니다. schema metadata는 바뀌지만 기존 Parquet와 append
+snapshot은 다시 만들어지지 않습니다.
 
 ## Field ID가 필요한 이유
 
@@ -46,11 +47,14 @@ uv run python scripts/inspect_lab.py
 
 - **Action:** nullable 문자열 컬럼 `channel`을 추가합니다.
 - **Change:** 새 metadata JSON과 field ID 3이 생깁니다.
-- **Verify:** snapshot은 2개, Parquet는 2개로 그대로이고 schema에 `(3, 'channel', 'string')`이 추가되어야 합니다. 기존 3행의 `channel` 값은 `None`입니다.
+- **Verify:** snapshot은 2개, Parquet는 2개로 그대로이고 schema에 `(3, 'channel', 'string')`이 추가되어야 합니다. 기존
+  3행의 `channel` 값은 `None`입니다.
 
 ## 왜 기존 파일을 다시 쓰지 않는가
 
-기존 Parquet에는 `channel` 값이 없습니다. 새 컬럼이 nullable이므로 Iceberg reader는 기존 파일의 누락된 값을 `NULL`로 해석할 수 있습니다. 포맷이 schema 변경을 지원하는 것과 downstream 프로그램이 새 schema를 처리하는 것은 별개의 호환성 문제입니다.
+기존 Parquet에는 `channel` 값이 없습니다. 새 컬럼이 nullable이므로 Iceberg reader는 기존 파일의 누락된 값을 `NULL`로
+해석할 수 있습니다. 포맷이 schema 변경을 지원하는 것과 downstream 프로그램이 새 schema를 처리하는 것은 별개의 호환성
+문제입니다.
 
 ## 흔한 실수
 
