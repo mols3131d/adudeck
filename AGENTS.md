@@ -1,16 +1,3 @@
-Please also reference the following rules as needed. The list below is provided in TOON format, and `@` stands for the project root directory.
-
-rules[3]:
-  - path: @decks/_archive/AGENTS.md
-    description: Rules for inactive decks with no current planned work.
-    applyTo[1]: decks/_archive/**/*
-  - path: @decks/_backlog/AGENTS.md
-    description: Rules for decks with intended follow-up work that is not currently active.
-    applyTo[1]: decks/_backlog/**/*
-  - path: @decks/AGENTS.md
-    description: Rules for learning decks and their state.
-    applyTo[1]: decks/**/*
-
 # Additional Conventions Beyond the Built-in Functions
 
 As this project's AI coding tool, you must follow the additional conventions below, in addition to the built-in functions.
