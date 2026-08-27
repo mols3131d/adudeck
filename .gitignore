@@ -19,7 +19,10 @@ rulesync.local.jsonc
 .rulesync/skills/.curated/
 
 # Local-only agent projections
+.claude/skills/
+.github/skills/
 .agents/rules/
+.agents/skills/
 .agents/workflows/
 .codex/
 AGENTS.override.md
