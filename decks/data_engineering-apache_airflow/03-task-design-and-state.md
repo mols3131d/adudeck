@@ -39,7 +39,8 @@ one_big_task
 
 `load`에서 실패해도 retry할 때 extract부터 다시 수행해야 할 수 있다.
 
-하지만 Task를 아주 작게 쪼개는 것도 항상 좋은 것은 아니다. local Python function call이면 충분한 작업까지 모두 Task로 만들면 scheduling overhead와 graph complexity가 늘어난다.
+하지만 Task를 아주 작게 쪼개는 것도 항상 좋은 것은 아니다. local Python function call이면 충분한 작업까지 모두 Task로
+만들면 scheduling overhead와 graph complexity가 늘어난다.
 
 좋은 Task 경계는 대체로 다음 특징을 가진다.
 
@@ -78,7 +79,8 @@ success failed
 
 실제 Airflow에는 `skipped`, `upstream_failed`, `deferred`, `up_for_reschedule` 등 더 많은 state가 있다.
 
-중요한 것은 state 이름을 전부 암기하는 것이 아니라 **어느 component와 조건 때문에 다음 state로 이동했는지 추적하는 것**이다.
+중요한 것은 state 이름을 전부 암기하는 것이 아니라
+**어느 component와 조건 때문에 다음 state로 이동했는지 추적하는 것**이다.
 
 예를 들어 `queued`에서 오래 머무는 문제와 `running` 후 실패하는 문제는 전혀 다른 layer를 의심해야 한다.
 
@@ -199,7 +201,8 @@ XCom에는 작은 metadata를 전달하고, 큰 dataset은 external storage에 �
 2GB dataframe 자체를 XCom으로 전달
 ```
 
-Airflow documentation도 XCom을 작은 metadata 전달에 사용하는 형태와 큰 file을 storage service를 통해 주고받는 형태를 구분한다.
+Airflow documentation도 XCom을 작은 metadata 전달에 사용하는 형태와 큰 file을 storage service를 통해 주고받는 형태를
+구분한다.
 
 ## 6. control dependency와 data dependency를 함께 설계한다
 
@@ -300,9 +303,11 @@ curated/orders/dt=2026-08-27/orders.parquet
 
 두 번째 종류에 retry를 20번 줘도 같은 error를 20번 반복할 가능성이 높다.
 
-따라서 retry policy는 "실패하면 다시"가 아니라 **이 failure가 시간 경과나 재시도로 회복될 수 있는가**를 기준으로 잡아야 한다.
+따라서 retry policy는 "실패하면 다시"가 아니라 **이 failure가 시간 경과나 재시도로 회복될 수 있는가**를 기준으로 잡아야
+한다.
 
-Airflow 3.3에는 기본 retry count뿐 아니라 pluggable retry policy도 도입되어 있지만, 처음에는 이 판단 기준을 먼저 익히는 것이 중요하다.
+Airflow 3.3에는 기본 retry count뿐 아니라 pluggable retry policy도 도입되어 있지만, 처음에는 이 판단 기준을 먼저 익히는
+것이 중요하다.
 
 ## 9. 상태로 debugging 범위를 좁힌다
 
@@ -465,7 +470,8 @@ Downstream dependency:
 
 다음을 설명할 수 있으면 core foundation을 한 번 통과한 것이다.
 
-> Airflow의 reliability는 retry 횟수를 늘리는 데서 생기는 것이 아니라, Task를 독립적인 runtime state와 side-effect boundary로 설계하고 같은 logical input의 재실행이 안전하도록 만드는 데서 시작한다.
+> Airflow의 reliability는 retry 횟수를 늘리는 데서 생기는 것이 아니라, Task를 독립적인 runtime state와 side-effect
+> boundary로 설계하고 같은 logical input의 재실행이 안전하도록 만드는 데서 시작한다.
 
 ## References
 
