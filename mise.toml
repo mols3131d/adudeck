@@ -18,7 +18,7 @@ description = "Validate Rulesync configuration"
 run = "rulesync doctor --strict"
 
 [tasks."rulesync:generate"]
-description = "Generate tracked agent projections from canonical Rulesync assets"
+description = "Generate agent projections from canonical Rulesync assets"
 run = "rulesync generate"
 
 [tasks."rulesync:check"]
