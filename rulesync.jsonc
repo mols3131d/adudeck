@@ -8,7 +8,7 @@
     "antigravity-ide",
     "antigravity-cli"
   ],
-  "features": ["rules", "skills"],
+  "features": ["skills"],
   "outputRoots": ["."],
   "delete": true
 }
