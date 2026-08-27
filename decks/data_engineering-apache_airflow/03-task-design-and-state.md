@@ -1,481 +1,659 @@
-# 03. Task design: 재실행 가능한 작업과 data 경계 만들기
+# 03. Task design: failure, retry, side effect를 직접 관찰하기
 
-Airflow에서 DAG graph가 예쁘게 보인다고 해서 workflow가 운영하기 좋은 것은 아니다.
+Airflow에서 graph가 보기 좋다고 workflow가 운영하기 좋은 것은 아니다.
 
-실제 안정성은 **Task를 어떤 경계로 나누고, 각 Task가 어떤 state와 side effect를 갖게 만드는가**에서 크게 결정된다.
+실제 reliability는 **Task를 어떤 runtime boundary로 나누고, 각 TaskInstance의 재실행이 external system에 어떤 side effect를
+남기는가**에서 크게 결정된다.
 
-이 chapter의 핵심 질문은 두 가지다.
-
-1. 이 Task를 같은 DagRun에서 다시 실행해도 안전한가?
-2. Task 사이에 실제 data를 어떻게 연결할 것인가?
+이 chapter에서는 `prepare -> transform -> publish` workflow에 의도적인 failure를 넣는다. 실패를 빨리 없애는 것이 목적이
+아니다. `running`, `up_for_retry`, `failed`, `upstream_failed`, `success`를 직접 관찰하고, retry와 XCom과 external output이
+서로 어떤 관계인지 설명하는 것이 목적이다.
 
 ## 1. Task는 함수 분할 단위가 아니라 운영 단위다
 
-일반 Python code에서는 긴 함수를 readability 때문에 여러 함수로 쪼갤 수 있다.
+일반 Python code에서 함수를 나누는 이유는 readability일 수 있다.
 
-Airflow Task를 나누는 기준은 조금 다르다. Task 경계는 runtime에서 별도의 state와 retry 경계가 된다.
-
-다음 pipeline을 보자.
+Airflow Task boundary에는 추가 의미가 생긴다.
 
 ```text
-extract -> transform -> load
+Task boundary
+= state boundary
++ retry boundary
++ log boundary
++ dependency boundary
++ side-effect responsibility boundary
 ```
-
-각 단계를 Task로 나누면 다음이 가능해진다.
-
-- extract만 retry
-- transform failure를 별도로 관찰
-- load가 성공하기 전에는 DagRun을 완료하지 않음
-- 단계별 duration과 log 확인
-
-반대로 모든 일을 하나의 Task에 넣으면 Airflow가 볼 수 있는 state도 하나뿐이다.
-
-```text
-one_big_task
-  ├─ extract
-  ├─ transform
-  └─ load
-```
-
-`load`에서 실패해도 retry할 때 extract부터 다시 수행해야 할 수 있다.
-
-하지만 Task를 아주 작게 쪼개는 것도 항상 좋은 것은 아니다. local Python function call이면 충분한 작업까지 모두 Task로
-만들면 scheduling overhead와 graph complexity가 늘어난다.
-
-좋은 Task 경계는 대체로 다음 특징을 가진다.
-
-- 독립적으로 성공/실패를 판단할 의미가 있다.
-- 독립 retry가 가치가 있다.
-- input/output contract를 설명할 수 있다.
-- 외부 system에 대한 side effect의 책임이 명확하다.
-
-## 2. TaskInstance state는 실행 lifecycle을 나타낸다
-
-TaskInstance는 단순히 `success`와 `failed`만 갖지 않는다.
-
-개념적으로 자주 보게 되는 lifecycle을 단순화하면 다음과 같다.
-
-```text
-None
-  |
-  v
-scheduled
-  |
-  v
-queued
-  |
-  v
-running
-  | \
-  |  \
-  v   v
-success failed
-          |
-          v
-     up_for_retry
-          |
-          +----> scheduled ...
-```
-
-실제 Airflow에는 `skipped`, `upstream_failed`, `deferred`, `up_for_reschedule` 등 더 많은 state가 있다.
-
-중요한 것은 state 이름을 전부 암기하는 것이 아니라
-**어느 component와 조건 때문에 다음 state로 이동했는지 추적하는 것**이다.
-
-예를 들어 `queued`에서 오래 머무는 문제와 `running` 후 실패하는 문제는 전혀 다른 layer를 의심해야 한다.
-
-- `queued`에서 정체: executor/worker capacity, queue, pool 등 실행 resource 쪽을 검토
-- `running -> failed`: user code, external dependency, timeout 등 실제 execution을 검토
-- `upstream_failed`: 해당 Task 자체보다 upstream failure부터 검토
-
-## 3. Retry가 존재하면 idempotence를 먼저 생각한다
-
-Airflow Task는 실패할 수 있고 retry될 수 있다.
-
-따라서 Task code는 가능한 한 같은 logical input으로 여러 번 실행되어도 결과가 망가지지 않는 성질이 필요하다.
-
-이 성질을 **idempotence**라고 부른다.
-
-완전히 수학적인 idempotence를 항상 만들 수 있는 것은 아니지만, data pipeline에서는 다음 질문이 유용하다.
-
-> 같은 DagRun의 같은 TaskInstance가 다시 실행되면 external system에 어떤 side effect가 반복되는가?
-
-### 위험한 예: 무조건 append
-
-```python
-def load_orders(rows):
-    warehouse.insert(rows)
-```
-
-첫 시도에서 insert는 성공했지만 process가 success state를 기록하기 전에 죽었다고 하자.
-
-retry가 다시 같은 rows를 append하면 duplicate가 생길 수 있다.
-
-### 더 안전한 방향: logical partition을 기준으로 replace/upsert
-
-```text
-DagRun interval -> partition dt=2026-08-27
-
-retry 1: write dt=2026-08-27
-retry 2: replace/upsert dt=2026-08-27
-```
-
-구현 방식은 warehouse에 따라 달라지지만 원칙은 같다.
-
-**wall-clock execution time이 아니라 DagRun의 logical input을 side-effect key로 사용한다.**
-
-## 4. Task input과 output을 contract로 본다
-
-Task 사이를 다음처럼 생각하면 설계가 쉬워진다.
-
-```text
-Task A
-  input contract
-  operation
-  output contract
-       |
-       v
-Task B
-```
-
-예를 들어 extract Task의 contract를 다음처럼 잡을 수 있다.
-
-```text
-input
-- data_interval_start
-- data_interval_end
-
-side effect
-- object storage에 parquet file 생성
-
-output metadata
-- bucket
-- object key
-- row count
-```
-
-transform Task는 이 metadata를 받아 실제 object storage에서 data를 읽는다.
-
-이 방식은 "Python object를 Task 사이에서 그대로 전달한다"보다 distributed execution 환경에 잘 맞는다.
-
-Airflow는 여러 Task가 같은 worker나 같은 process에서 실행된다고 보장하지 않기 때문이다.
-
-## 5. XCom은 orchestration metadata에 가깝게 사용한다
-
-TaskFlow에서는 함수 return value를 다음 task argument로 넘기는 문법이 자연스럽다.
-
-```python
-@task
-def extract():
-    return {"object_key": "raw/orders/2026-08-27.parquet"}
-
-
-@task
-def transform(source):
-    ...
-
-
-raw = extract()
-transform(raw)
-```
-
-코드만 보면 일반 Python function call처럼 보이지만 runtime에서 Task 간 값 전달은 XCom을 사용한다.
-
-여기서 중요한 boundary가 있다.
-
-XCom에는 작은 metadata를 전달하고, 큰 dataset은 external storage에 둔다.
-
-좋은 예:
-
-```json
-{
-  "bucket": "analytics-raw",
-  "object_key": "orders/dt=2026-08-27/data.parquet",
-  "row_count": 182341
-}
-```
-
-좋지 않은 기본 방향:
-
-```text
-2GB dataframe 자체를 XCom으로 전달
-```
-
-Airflow documentation도 XCom을 작은 metadata 전달에 사용하는 형태와 큰 file을 storage service를 통해 주고받는 형태를
-구분한다.
-
-## 6. control dependency와 data dependency를 함께 설계한다
-
-다음 TaskFlow code를 보자.
-
-```python
-raw = extract_orders()
-clean = transform_orders(raw)
-load_orders(clean)
-```
-
-여기에는 두 종류의 관계가 함께 있다.
-
-### Control dependency
-
-`extract_orders`가 성공한 뒤 `transform_orders`가 실행되어야 한다.
-
-### Data dependency
-
-`transform_orders`는 extract가 생성한 object location을 알아야 한다.
-
-TaskFlow 문법은 두 관계를 자연스럽게 연결해 주지만 conceptual boundary는 유지해야 한다.
-
-큰 data 자체는 external storage에 있고, XCom에는 그 data를 찾는 identifier가 있다는 식으로 생각한다.
-
-```text
-              control dependency
-Task A ------------------------------> Task B
-  |                                      |
-  | write                                | read
-  v                                      v
-       external object storage
-  ^                                      ^
-  |                                      |
-  +--- object key via XCom --------------+
-```
-
-## 7. 실패를 고려한 작은 ETL을 설계해 보자
-
-요구사항이 다음과 같다고 하자.
-
-> 하루치 주문을 API에서 가져와 object storage에 저장하고, 정제한 뒤 warehouse partition으로 load한다.
-
-### Task 1: extract_orders
-
-책임:
-
-- 해당 data interval의 API data를 가져온다.
-- raw object를 deterministic path에 저장한다.
-- object key와 row count를 반환한다.
-
-예시 path:
-
-```text
-raw/orders/dt=2026-08-27/orders.parquet
-```
-
-retry 시 같은 path를 overwrite할 수 있도록 설계하면 duplicate raw object가 무한히 생기는 것을 막기 쉽다.
-
-### Task 2: transform_orders
-
-책임:
-
-- raw object key를 input으로 받는다.
-- schema validation과 transform을 수행한다.
-- curated object를 deterministic path에 저장한다.
-
-```text
-curated/orders/dt=2026-08-27/orders.parquet
-```
-
-### Task 3: load_orders
-
-책임:
-
-- curated object를 읽는다.
-- warehouse의 `dt=2026-08-27` partition을 replace 또는 idempotent upsert한다.
-- 성공 시 load result metadata를 남긴다.
-
-이렇게 나누면 각 Task의 retry와 side effect를 따로 reasoning할 수 있다.
-
-## 8. Retry하면 안 되는 failure도 있다
-
-모든 실패에 retry를 많이 주는 것은 좋은 운영이 아니다.
-
-### Retry 가치가 있는 failure
-
-- 일시적인 network timeout
-- external API의 temporary 5xx
-- transient connection failure
-
-### Retry로 해결되지 않을 가능성이 큰 failure
-
-- schema mismatch
-- 잘못된 SQL syntax
-- required configuration 누락
-- deterministic code bug
-
-두 번째 종류에 retry를 20번 줘도 같은 error를 20번 반복할 가능성이 높다.
-
-따라서 retry policy는 "실패하면 다시"가 아니라 **이 failure가 시간 경과나 재시도로 회복될 수 있는가**를 기준으로 잡아야
-한다.
-
-Airflow 3.3에는 기본 retry count뿐 아니라 pluggable retry policy도 도입되어 있지만, 처음에는 이 판단 기준을 먼저 익히는
-것이 중요하다.
-
-## 9. 상태로 debugging 범위를 좁힌다
-
-workflow가 진행되지 않을 때 TaskInstance state를 먼저 본다.
-
-### Case A: downstream이 `upstream_failed`
-
-먼저 downstream code를 볼 이유가 적다.
-
-```text
-extract: success
-transform: failed
-load: upstream_failed
-```
-
-`load`가 실행되지 않은 원인은 `load` code failure가 아니라 upstream condition이다.
-
-### Case B: task가 `up_for_retry`
-
-현재 실패가 terminal failure가 아니다.
-
-확인할 것은 다음과 같다.
-
-- 어떤 exception이 발생했는가?
-- retry 대상이 맞는 failure인가?
-- retry delay 후 같은 side effect를 반복해도 안전한가?
-
-### Case C: task가 오래 `queued`
-
-user function이 아직 시작하지 않았을 수 있다.
-
-확인 범위는 worker capacity, executor queue, pool/concurrency 등 execution infrastructure 쪽이다.
-
-### Case D: task가 `running` 후 `failed`
-
-이제 실제 task log와 external system response가 핵심 증거다.
-
-이처럼 state는 단순한 UI badge가 아니라 **debugging search space를 줄이는 signal**이다.
-
-## 10. Task를 나눌 때 사용할 checklist
-
-새 workflow를 만들 때 각 Task 후보에 다음을 묻는다.
-
-1. 이 작업의 logical input은 무엇인가?
-2. external side effect는 무엇인가?
-3. output은 data 자체인가, data location을 가리키는 metadata인가?
-4. 같은 input으로 retry하면 안전한가?
-5. 실패했을 때 이 단계만 다시 실행할 가치가 있는가?
-6. 이 단계의 성공/실패를 독립적으로 관찰할 가치가 있는가?
-7. upstream/downstream dependency가 business requirement를 실제로 표현하는가?
-
-답이 불명확하면 Python code부터 작성하기보다 Task boundary를 다시 생각하는 편이 낫다.
-
-## 11. Worked example: duplicate가 생기는 load 고치기
-
-현재 load Task가 다음 방식이라고 하자.
-
-```text
-1. transform 결과를 읽는다.
-2. warehouse table에 INSERT한다.
-3. success 처리 전에 worker가 죽을 수 있다.
-4. retry하면 같은 rows를 다시 INSERT한다.
-```
-
-문제는 Airflow retry 자체가 아니다. Task side effect가 retry-safe하지 않다는 데 있다.
-
-수정 전략을 단계별로 생각한다.
-
-### Step 1. logical key를 정한다
-
-DagRun의 data interval에서 partition key를 만든다.
-
-```text
-dt=2026-08-27
-```
-
-### Step 2. load semantics를 명시한다
-
-예:
-
-```text
-"이 Task가 성공하면 dt=2026-08-27 partition은 source snapshot과 동일해야 한다."
-```
-
-이 문장이 invariant가 된다.
-
-### Step 3. implementation을 invariant에 맞춘다
-
-warehouse capability에 따라 다음 중 하나를 선택할 수 있다.
-
-- partition overwrite
-- staging table + atomic swap
-- deterministic key 기반 MERGE/upsert
-
-### Step 4. retry를 다시 평가한다
-
-이제 같은 TaskInstance를 여러 번 실행해도 최종 partition이 같은 logical state로 수렴하는지 확인한다.
-
-이것이 단순히 `retries=3`을 추가하는 것보다 중요한 reliability 설계다.
-
-## Practice
-
-### 1. Task boundary 비교
 
 다음 두 설계를 비교한다.
 
 ```text
-A. one_task: extract + transform + load
+A. one_big_task
+   extract + transform + load
 
 B. extract -> transform -> load
 ```
 
-다음 관점에서 각각 장단점을 설명한다.
+A에서 load가 마지막에 실패하면 전체 TaskInstance를 다시 실행해야 할 수 있다.
 
-- retry cost
-- observability
-- data transfer
-- scheduling overhead
-- failure isolation
+B에서는 load만 독립적으로 retry할 수 있다. 대신 Task 수가 늘고 scheduling/runtime overhead와 data boundary를 관리해야 한다.
 
-### 2. Idempotence debugging
+따라서 "함수를 최대한 잘게 쪼갠다"가 원칙이 아니다.
 
-load Task가 retry될 때 duplicate row가 생긴다.
+좋은 Task 후보는 보통 다음 질문에 의미 있는 답을 갖는다.
 
-Airflow 설정만 바꾸는 해결책과 Task side-effect semantics를 바꾸는 해결책을 구분하고, 왜 후자가 더 근본적인지 설명한다.
+- 이 단계만 성공/실패로 관찰할 가치가 있는가?
+- 이 단계만 retry할 가치가 있는가?
+- logical input과 output contract를 설명할 수 있는가?
+- external side effect의 책임이 명확한가?
 
-### 3. XCom 판단
+## 2. TaskInstance state는 lifecycle evidence다
 
-다음 값 중 XCom으로 전달하기 적합한 것과 external storage에 두는 것이 적합한 것을 나눈다.
+TaskInstance는 단순히 success/failed boolean이 아니다.
 
-- S3 object key 문자열
+학습용으로 단순화한 흐름은 다음과 같다.
+
+```text
+scheduled
+   |
+   v
+queued
+   |
+   v
+running
+   | \
+   |  \
+   |   +--------------------+
+   v                        v
+success                   failed attempt
+                            |
+                     retries remain?
+                        /       \
+                      yes       no
+                       |         |
+                       v         v
+                up_for_retry   failed
+                       |
+                       v
+                next scheduled try
+```
+
+dependency 때문에 실행되지 못한 downstream에는 `upstream_failed` 같은 state가 나타날 수 있다.
+
+중요한 것은 state 이름을 암기하는 것이 아니라 다음 질문을 할 수 있는가다.
+
+> 이 state는 어느 layer의 어떤 조건 때문에 생겼고, 다음 transition을 일으키려면 무엇이 달라져야 하는가?
+
+## 3. Retry가 존재하는 순간 side effect가 핵심이 된다
+
+Task가 external API에 요청하거나 table을 수정한다고 하자.
+
+첫 실행에서 side effect는 성공했지만 Airflow가 success를 확정하기 전에 worker가 죽을 수 있다.
+
+```text
+try 1
+  external write SUCCESS
+  process crash
+  Airflow success 기록 못 함
+
+try 2
+  same external write AGAIN
+```
+
+이때 "Airflow가 두 번 실행해서 duplicate가 생겼다"고만 말하면 설계 문제를 놓친다.
+
+Airflow는 failure recovery를 위해 retry를 제공한다. business side effect가 retry-safe해야 한다.
+
+### Idempotent 방향
+
+예를 들어 data interval에서 deterministic partition key를 만든다.
+
+```text
+logical input: dt=2026-08-27
+
+try 1 -> replace/upsert dt=2026-08-27
+try 2 -> replace/upsert dt=2026-08-27
+
+final invariant
+"dt=2026-08-27 partition은 source snapshot과 일치한다"
+```
+
+완벽한 수학적 idempotence가 항상 가능한 것은 아니지만, **같은 logical input의 재실행이 어떤 결과로 수렴해야 하는지**를 먼저
+정의해야 한다.
+
+## 4. 실습 Dag의 구조를 읽는다
+
+`lab/dags/observable_runtime.py`는 다음 workflow를 만든다.
+
+```text
+prepare -> transform -> publish
+```
+
+세 Task는 실제 dataset을 XCom에 싣지 않는다.
+
+```text
+prepare
+  writes -> lab/output/<run>-manifest.json
+  returns -> file path
+
+transform
+  receives -> file path via XCom
+  reads -> manifest file
+  writes -> transformed file
+  returns -> transformed file path
+
+publish
+  receives -> transformed file path via XCom
+  writes -> published file
+```
+
+즉 control/data boundary를 다음처럼 나눈다.
+
+```text
+Airflow metadata / XCom
+        file identifier
+              |
+              v
+Task A -----------------> Task B
+  |                         |
+  | actual data             | actual data
+  v                         v
+        lab/output files
+```
+
+이 pattern은 production에서 object storage나 warehouse를 쓰는 구조의 축소판이다.
+
+## 5. failure mode를 이용해 state machine을 조작한다
+
+Dag에는 `failure_mode` Param이 있다.
+
+```text
+none
+  transform이 바로 성공
+
+once
+  transform try 1은 의도적으로 실패
+  retry 후 try 2는 성공
+
+always
+  transform이 모든 try에서 실패
+  retries를 소진한 뒤 terminal failed
+```
+
+`transform`은 `retries=1`이므로 최대 두 try를 관찰할 수 있다.
+
+이 failure는 bug가 아니라 **state transition을 사람이 볼 수 있게 만드는 실험 control**이다.
+
+## 6. Observable Lab A: `up_for_retry`를 놓치지 않고 잡는다
+
+Airflow standalone을 실행하고 Dag를 unpause한다.
+
+```bash
+bash lab/airflow.sh standalone
+```
+
+별도 terminal:
+
+```bash
+bash lab/airflow.sh dags unpause adudeck_observable_runtime
+```
+
+### 실행 전에 prediction
+
+`failure_mode=once`라면 다음을 예측한다.
+
+```text
+prepare
+  success
+
+transform
+  try 1 running
+  -> intentional error
+  -> up_for_retry
+  -> retry delay
+  -> try 2 running
+  -> success
+
+publish
+  transform이 성공하기 전에는 실행 불가
+  -> eventually success
+
+DagRun
+  eventually success
+```
+
+특히 다음 두 질문의 답을 적고 시작한다.
+
+1. transform의 첫 failure 순간 DagRun은 곧바로 terminal `failed`가 될까?
+2. publish는 transform의 retry 대기 중에 실행될까?
+
+### trigger
+
+UI에서 `failure_mode=once`를 선택해 trigger한다.
+
+CLI에서는 다음처럼 실행할 수 있다.
+
+```bash
+bash lab/airflow.sh dags trigger \
+  -c '{"failure_mode":"once"}' \
+  adudeck_observable_runtime
+```
+
+최근 run에서 `<RUN_ID>`를 찾는다.
+
+```bash
+bash lab/airflow.sh dags list-runs adudeck_observable_runtime -o table
+```
+
+## 7. `up_for_retry` 동안 네 관측면을 동시에 본다
+
+transform 첫 시도는 8초 동안 실행된 뒤 실패하고 retry delay 15초를 둔다. 일부러 사람이 중간 state를 잡을 수 있게 한 것이다.
+
+### UI / Grid
+
+transform이 실패한 직후 terminal failed로 끝나는지, retry state로 이동하는지 본다.
+
+publish가 어떤 상태인지도 같이 본다.
+
+### CLI
+
+몇 초 간격으로 반복한다.
+
+```bash
+bash lab/airflow.sh tasks states-for-dag-run \
+  adudeck_observable_runtime \
+  '<RUN_ID>' \
+  -o table
+```
+
+가능하면 다음 세 snapshot을 확보한다.
+
+```text
+A. transform=running, try 1
+B. transform=up_for_retry
+C. transform=running 또는 success, try 2
+```
+
+Timing 때문에 하나를 놓쳤다면 다시 새 run을 trigger한다. lab에서는 실패를 재현하는 비용이 작다.
+
+### metadata probe
+
+```bash
+python lab/inspect_metadata.py \
+  --dag-id adudeck_observable_runtime \
+  --run-id '<RUN_ID>'
+```
+
+`task_instance`의 `state`, `try_number`, start/end timestamp를 본다.
+
+Airflow 3에서는 try number가 task execution 도중 임의로 증가하는 counter라고 생각하지 않는다. 새 try가 scheduling될 때 구분되는
+runtime identity의 일부로 해석하는 편이 안전하다.
+
+### task log
+
+transform log의 marker를 찾는다.
+
+```text
+[ADUDECK_OBSERVE] transform:start
+[ADUDECK_OBSERVE] transform decision: failure_mode=once, try_number=1
+intentional lab failure
+```
+
+다음 try에서는 `try_number=2`와 success path를 찾는다.
+
+## 8. failure는 같은데 TaskInstance state가 다른 이유
+
+첫 try에서 Python exception이 발생했다.
+
+그런데 retry가 남았다면 TaskInstance의 의미는 다음과 같다.
+
+```text
+"한 번 실패했다"
+!=
+"이 TaskInstance의 logical work가 terminal failure다"
+```
+
+scheduler는 retry policy와 retry delay를 반영해 다음 try를 다시 실행 가능하게 만든다.
+
+따라서 debugging에서 traceback만 보고 terminal outcome을 단정하면 안 된다.
+
+```text
+exception evidence
++
+TaskInstance current state
++
+retry policy / try_number
+```
+
+를 같이 봐야 한다.
+
+## 9. Observable Lab B: terminal failure와 `upstream_failed`
+
+이번에는 `failure_mode=always`로 새 DagRun을 만든다.
+
+실행 전 prediction:
+
+```text
+prepare -> success
+transform try 1 -> fail -> up_for_retry
+transform try 2 -> fail -> terminal failed
+publish -> upstream_failed
+DagRun -> failed
+```
+
+trigger:
+
+```bash
+bash lab/airflow.sh dags trigger \
+  -c '{"failure_mode":"always"}' \
+  adudeck_observable_runtime
+```
+
+새 `<RUN_ID>`를 찾아 UI, CLI, metadata를 다시 본다.
+
+### 핵심 질문
+
+`publish` code에는 bug가 없다. 그런데 왜 publish는 success가 아닌가?
+
+답은 publish의 user code를 보기 전에 dependency state에서 찾는다.
+
+```text
+transform = failed
+        |
+        v
+publish dependency unsatisfied
+        |
+        v
+publish = upstream_failed
+```
+
+이것이 state가 debugging search space를 줄여 주는 방식이다.
+
+## 10. control-plane state와 external side effect를 비교한다
+
+terminal failure run의 output을 본다.
+
+```bash
+find lab/output -maxdepth 1 -type f -print
+```
+
+`prepare`는 이미 성공했기 때문에 manifest file은 존재할 수 있다.
+
+반면 `transform`은 성공 path까지 가지 못했으므로 transformed output이 없고 `publish`도 실행되지 않아 published output이 없을
+수 있다.
+
+이 상태를 다음처럼 정리한다.
+
+```text
+prepare TaskInstance = success
+  -> manifest side effect 존재
+
+transform TaskInstance = failed
+  -> transformed success output 없음
+
+publish TaskInstance = upstream_failed
+  -> publish user code 자체가 시작되지 않음
+```
+
+workflow failure가 항상 "아무 side effect도 없었다"는 뜻은 아니다.
+
+이 때문에 재실행 설계에서는 **부분적으로 성공한 external state를 어떻게 다룰 것인지**가 중요하다.
+
+## 11. XCom은 data plane 자체가 아니라 orchestration metadata로 본다
+
+TaskFlow code는 일반 Python function call처럼 보인다.
+
+```python
+publish(transform(prepare()))
+```
+
+하지만 runtime에서 세 Task가 한 call stack으로 실행되는 것은 아니다.
+
+각 Task는 독립적인 TaskInstance이고 return value는 downstream dependency와 XCom을 통해 연결된다.
+
+metadata probe를 다시 실행하면 `xcom` table의 row identity와 key도 볼 수 있다.
+
+```bash
+python lab/inspect_metadata.py \
+  --dag-id adudeck_observable_runtime \
+  --run-id '<RUN_ID>'
+```
+
+probe는 XCom `value`를 출력하지 않는다. 이 실습에서 확인하려는 것은 **어떤 Task가 어떤 run에서 XCom record를 만들었는가**다.
+
+실제 값은 task log와 code를 함께 해석한다.
+
+```text
+XCom
+  "이 transformed output은 어디 있는가?"
+  -> path / identifier
+
+external storage
+  "실제 transformed data는 무엇인가?"
+  -> file contents
+```
+
+production에서는 file 대신 S3 URI, table name, object version, row count 같은 작은 metadata를 전달하는 방식으로 확장할 수 있다.
+
+## 12. 왜 큰 DataFrame을 XCom에 넣지 않는가
+
+다음 두 방식을 비교한다.
+
+```text
+A.
+Task A return -> 2GB DataFrame -> XCom -> Task B
+
+B.
+Task A writes -> object storage
+Task A return -> object key
+Task B reads -> object storage
+```
+
+B는 data storage responsibility와 orchestration metadata responsibility를 분리한다.
+
+Task가 다른 process/machine에서 실행될 수 있는 시스템에서는 이 boundary가 더 중요해진다.
+
+또한 Airflow metadata DB를 business dataset 저장소로 오해하지 않게 된다.
+
+## 13. Observable Modification Lab: retry-unsafe side effect를 직접 만든다
+
+지금 `transform`은 intentional failure를 **성공 output을 쓰기 전에** 발생시킨다.
+
+따라서 첫 실패가 business output duplicate를 만들지는 않는다.
+
+이번에는 일부러 나쁜 코드를 만들어 본다. `transform` 안에서 failure check 전에 다음과 비슷한 append side effect를 추가한다.
+
+```python
+journal_path = OUTPUT_DIR / "transform-business-events.log"
+with journal_path.open("a") as file:
+    file.write(f"{snapshot['run_id']} transformed\n")
+```
+
+`failure_mode=once`로 새 run을 trigger한다.
+
+### Prediction
+
+- transform try 1은 append 후 실패한다.
+- try 2도 같은 logical work에 대해 append한다.
+- 최종 DagRun은 success일 수 있지만 business event는 두 줄 남을 수 있다.
+
+실제로 확인한다.
+
+```bash
+cat lab/output/transform-business-events.log
+```
+
+Airflow state만 보면 최종 transform은 success다. 그러나 external side effect는 duplicate다.
+
+이 실험은 중요한 사실을 보여준다.
+
+> **TaskInstance success는 business side effect가 exactly-once였다는 증명이 아니다.**
+
+실습이 끝나면 이 temporary modification을 되돌린다.
+
+## 14. retry-safe한 invariant로 고친다
+
+append 대신 logical run/partition에 대응하는 deterministic location을 사용한다고 하자.
+
+```text
+output/<logical-key>/transformed.json
+```
+
+그리고 같은 input으로 retry하면 같은 logical output을 overwrite하거나 upsert한다.
+
+검증할 invariant를 먼저 문장으로 쓴다.
+
+```text
+"이 TaskInstance가 몇 번 실행되더라도 최종 transformed output은
+해당 logical input의 최신 올바른 snapshot 하나를 표현한다."
+```
+
+그 다음 implementation이 invariant를 만족하는지 본다.
+
+좋은 reliability 설계는 `retries=10` 같은 숫자부터 시작하지 않는다.
+
+```text
+failure model
+   ↓
+side-effect invariant
+   ↓
+retry-safe implementation
+   ↓
+retry policy
+```
+
+순서가 더 중요하다.
+
+## 15. 모든 failure를 retry하면 안 된다
+
+retry가 회복 가능성을 높이는 failure가 있다.
+
+```text
+network timeout
+external service temporary 5xx
+short-lived connection failure
+```
+
+시간이 지나도 같은 input에서 똑같이 실패할 가능성이 높은 경우도 있다.
+
+```text
+SQL syntax error
+schema mismatch
+missing required configuration
+deterministic code bug
+```
+
+따라서 retry policy를 읽을 때 질문한다.
+
+> 이 failure의 원인이 시간이 지나거나 새 execution attempt를 얻으면 달라질 수 있는가?
+
+그렇지 않다면 retry는 recovery가 아니라 error repetition이 될 수 있다.
+
+## 16. State-based debugging matrix
+
+| 관측 state | 먼저 의심할 범위 | 아직 우선순위가 낮은 것 |
+| --- | --- | --- |
+| Dag가 목록에 없음 | parse/import/Dag Processor | task business logic |
+| Task가 `queued`에 오래 있음 | execution capacity, pool, executor path | task 내부 마지막 SQL |
+| Task가 `up_for_retry` | exception + retry policy + side-effect safety | Dag 전체 재작성 |
+| Task가 `failed` | terminal task failure evidence | downstream code부터 보기 |
+| downstream `upstream_failed` | upstream terminal state | downstream function bug부터 보기 |
+| Task `success`, output 이상 | external side effect/invariant | scheduler가 실행 안 했다고 가정 |
+
+state는 UI decoration이 아니라 **다음 investigation의 검색 공간을 줄이는 index**다.
+
+## 17. Task boundary checklist
+
+새 Task를 설계할 때 다음 질문에 답한다.
+
+1. logical input은 무엇인가?
+2. external side effect는 무엇인가?
+3. output contract는 data 자체인가, identifier/metadata인가?
+4. 같은 logical input으로 retry하면 안전한가?
+5. 이 단계만 독립 retry할 가치가 있는가?
+6. 이 단계만 독립적으로 성공/실패 관찰할 가치가 있는가?
+7. upstream failure가 downstream에 어떤 state로 전파되어야 하는가?
+8. success state 외에 어떤 external evidence로 결과를 검증할 것인가?
+
+답이 불명확하면 Python code부터 쓰기 전에 boundary를 다시 그린다.
+
+## Practice
+
+### 1. Retry timeline reconstruction
+
+`failure_mode=once` run 하나를 골라 다음 timeline을 실제 timestamp와 try number로 채운다.
+
+```text
+prepare success
+      |
+      v
+transform try 1 start
+      |
+      v
+transform try 1 error
+      |
+      v
+up_for_retry
+      |
+      v
+transform try 2 start
+      |
+      v
+transform success
+      |
+      v
+publish success
+```
+
+Evidence source도 각 줄 옆에 적는다: UI / CLI / metadata / log / output.
+
+### 2. Terminal failure diagnosis
+
+`failure_mode=always` run에서 publish가 `upstream_failed`인 이유를 publish code를 인용하지 않고 설명한다.
+
+### 3. XCom vs external storage
+
+다음을 XCom metadata와 external storage 중 어디에 둘지 결정한다.
+
+- object key 문자열
 - row count 정수
-- 4GB parquet file bytes
+- 4GB parquet bytes
 - warehouse table name
 - 500MB pandas DataFrame
 - validation result `{passed: true, invalid_rows: 3}`
 
-### 4. State-based diagnosis
+### 4. Idempotence repair
 
-다음 세 상황에서 가장 먼저 볼 layer를 적는다.
-
-1. Task가 `queued`에서 40분 동안 움직이지 않는다.
-2. Task가 `running` 직후 Python exception으로 실패한다.
-3. downstream Task가 `upstream_failed`다.
-
-### 5. Transfer
-
-자신이 운영한다고 가정한 data pipeline 하나를 골라 다음 형식으로 세 Task를 설계한다.
+다음 load를 retry-safe하게 만들기 위한 invariant와 구현 전략을 각각 적는다.
 
 ```text
-Task name:
-Logical input:
-External side effect:
-Output metadata:
-Retry-safe invariant:
-Downstream dependency:
+INSERT INTO orders SELECT ...
 ```
+
+가능한 전략 예시는 partition overwrite, deterministic key 기반 MERGE/upsert, staging + atomic replace 등이지만 어느 것을
+선택할지는 storage semantics에 따라 달라진다.
+
+### 5. Cross-layer contradiction
+
+다음 관측을 받았다.
+
+```text
+TaskInstance state = success
+warehouse rows = expected보다 2배
+```
+
+왜 scheduler failure만 의심하면 안 되는지 설명하고, 어떤 side-effect evidence를 추가로 모을지 적는다.
 
 ## Checkpoint
 
-다음을 설명할 수 있으면 core foundation을 한 번 통과한 것이다.
+다음을 설명할 수 있으면 core foundation을 통과한 것이다.
 
-> Airflow의 reliability는 retry 횟수를 늘리는 데서 생기는 것이 아니라, Task를 독립적인 runtime state와 side-effect
-> boundary로 설계하고 같은 logical input의 재실행이 안전하도록 만드는 데서 시작한다.
+> Airflow reliability는 retry 횟수를 늘리는 데서 생기지 않는다. Task를 의미 있는 runtime/state boundary로 나누고, 같은 logical
+> input의 재실행이 external side effect를 망가뜨리지 않도록 invariant를 설계해야 한다. UI의 state, TaskInstance try, XCom metadata,
+> task log, 실제 output을 함께 봐야 그 invariant가 지켜졌는지 판단할 수 있다.
 
 ## References
 
-- [Architecture Overview — Workloads and Control Flow](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html)
 - [Tasks](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/tasks.html)
 - [XComs](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/xcoms.html)
-- [Airflow 3.3 Release Notes](https://airflow.apache.org/docs/apache-airflow/stable/release_notes.html)
+- [Architecture Overview — Workloads and Control Flow](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html)
+- [CLI Reference — task states](https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html)
