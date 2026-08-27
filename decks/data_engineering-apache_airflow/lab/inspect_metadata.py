@@ -66,7 +66,7 @@ def inspect_table(
         params.append(run_id)
 
     where = f" WHERE {' AND '.join(predicates)}" if predicates else ""
-    order_candidates = ["logical_date", "start_date", "queued_at", "run_id"]
+    order_candidates = ["logical_date", "start_date", "queued_at", "timestamp", "run_id"]
     order_column = next((column for column in order_candidates if column in available), None)
     order = f' ORDER BY "{order_column}" DESC' if order_column else ""
     quoted_columns = ", ".join(f'"{column}"' for column in columns)
@@ -133,6 +133,21 @@ def main() -> None:
                 "duration",
                 "hostname",
                 "executor",
+            ],
+            args.dag_id,
+            args.run_id,
+            args.limit,
+        )
+        inspect_table(
+            connection,
+            "xcom",
+            [
+                "dag_id",
+                "run_id",
+                "task_id",
+                "map_index",
+                "key",
+                "timestamp",
             ],
             args.dag_id,
             args.run_id,
