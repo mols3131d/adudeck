@@ -58,8 +58,8 @@ execution time != data time
 [08-27 00:00, 08-28 00:00)
 ```
 
-`start_date`는 "이 timestamp에 process를 시작하라"는 명령이 아니다. timetable이 첫 scheduling interval을 계산할 때 사용하는
-경계다.
+`start_date`는 "이 timestamp에 process를 시작하라"는 명령이 아니다. timetable이 첫 scheduling interval을 계산할 때
+사용하는 경계다.
 
 따라서 첫 scheduled run이 `start_date`와 같은 순간에 즉시 실행되지 않는 것을 "하루 늦게 실행되는 bug"라고 보면 안 된다.
 
@@ -90,8 +90,8 @@ DagRun interval
 warehouse.orders/dt=2026-08-27
 ```
 
-반대로 business partition을 `datetime.now()`로 만들면 delayed execution이나 retry에서 같은 logical work가 다른 날짜를 건드릴
-수 있다.
+반대로 business partition을 `datetime.now()`로 만들면 delayed execution이나 retry에서 같은 logical work가 다른 날짜를
+건드릴 수 있다.
 
 ## 4. 실습 Dag: 2분마다 interval을 노출한다
 
@@ -362,7 +362,8 @@ bash lab/airflow.sh backfill create \
   --dry-run
 ```
 
-현재 deck 작성 시각은 2026-08-28 KST이므로 이 범위는 이미 종료된 historical range다. 미래에 실습해도 계속 과거 범위로 남는다.
+현재 deck 작성 시각은 2026-08-28 KST이므로 이 범위는 이미 종료된 historical range다. 미래에 실습해도 계속 과거 범위로
+남는다.
 
 ### 실행 전에 적을 것
 
@@ -386,8 +387,8 @@ bash lab/airflow.sh backfill create \
   --max-active-runs 1
 ```
 
-`max-active-runs=1`은 correctness requirement가 아니다. 여러 historical run이 순차적으로 보이게 해서 **사람이 state를 따라가기
-쉽게 만든 실험 조건**이다.
+`max-active-runs=1`은 correctness requirement가 아니다. 여러 historical run이 순차적으로 보이게 해서
+**사람이 state를 따라가기 쉽게 만든 실험 조건**이다.
 
 run 목록을 다시 본다.
 
@@ -505,9 +506,9 @@ output JSON
 
 다음을 자신의 말로 설명할 수 있으면 다음 chapter로 간다.
 
-> Airflow schedule은 단순 wall-clock alarm이 아니다. DagRun은 logical/data interval을 갖고 timetable과 scheduler가 run 생성 시점을
-> 결정한다. task의 실제 실행은 늦어질 수 있지만 logical work는 유지되어야 한다. catchup은 normal scheduling policy이고,
-> backfill은 명시적인 historical reprocessing operation이다.
+> Airflow schedule은 단순 wall-clock alarm이 아니다. DagRun은 logical/data interval을 갖고 timetable과 scheduler가 run
+> 생성 시점을 결정한다. task의 실제 실행은 늦어질 수 있지만 logical work는 유지되어야 한다. catchup은 normal scheduling
+> policy이고, backfill은 명시적인 historical reprocessing operation이다.
 
 ## References
 
