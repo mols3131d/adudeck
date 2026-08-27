@@ -3,8 +3,9 @@
 Airflow를 처음 배울 때 가장 위험한 오해는 DAG Python 파일, 화면에 보이는 graph, 실제 실행 중인 process와 실행 기록을
 하나의 대상으로 생각하는 것이다.
 
-이 chapter의 핵심은 **definition과 runtime state를 분리한 뒤, 실제 Airflow를 실행하면서 그 구분을 눈으로 확인하는 것**이다.
-설명을 읽고 끝내지 않는다. 먼저 예측하고, 같은 실행을 UI·CLI·log·metadata·output에서 찾아 연결한다.
+이 chapter의 핵심은
+**definition과 runtime state를 분리한 뒤, 실제 Airflow를 실행하면서 그 구분을 눈으로 확인하는 것**이다. 설명을 읽고
+끝내지 않는다. 먼저 예측하고, 같은 실행을 UI·CLI·log·metadata·output에서 찾아 연결한다.
 
 ## 1. Airflow가 필요한 이유
 
@@ -130,7 +131,8 @@ Dag file / Dag bundle
         +---- reads control-plane state ----+
 ```
 
-실제 deployment는 더 복잡해질 수 있지만 처음에는 **각 component가 어떤 종류의 state를 소유하거나 소비하는지**에 집중한다.
+실제 deployment는 더 복잡해질 수 있지만 처음에는 **각 component가 어떤 종류의 state를 소유하거나 소비하는지**에
+집중한다.
 
 ### Dag Processor: definition을 runtime이 읽을 형태로 만든다
 
@@ -190,8 +192,8 @@ Airflow 3에서 executor는 별도 daemon으로 외우지 않는다. **scheduler
 
 scheduler의 state decision과 task user code의 실행은 다른 문제다.
 
-Task가 실행되면 실제 Python code가 API를 호출하고 file을 쓰거나 warehouse query를 수행할 수 있다. 이 side effect는 Airflow
-metadata state와 구분해야 한다.
+Task가 실행되면 실제 Python code가 API를 호출하고 file을 쓰거나 warehouse query를 수행할 수 있다. 이 side effect는
+Airflow metadata state와 구분해야 한다.
 
 ```text
 control-plane state             data-plane / external side effect
@@ -211,8 +213,8 @@ Deck directory에서 Airflow standalone을 시작한다.
 bash lab/airflow.sh standalone
 ```
 
-Airflow 공식 CLI의 `standalone`은 local development/testing용 all-in-one 실행 방식이다. 이 lab에서는 deployment 운영을 배우는
-것이 아니라, 한 machine에서 component와 state 흐름을 관찰하기 위해 사용한다.
+Airflow 공식 CLI의 `standalone`은 local development/testing용 all-in-one 실행 방식이다. 이 lab에서는 deployment 운영을
+배우는 것이 아니라, 한 machine에서 component와 state 흐름을 관찰하기 위해 사용한다.
 
 standalone terminal은 닫지 않는다. 이후 이 terminal은 **component/task log 관측면**이 된다.
 
@@ -284,8 +286,8 @@ bash lab/airflow.sh dags trigger \
   adudeck_observable_runtime
 ```
 
-lab task는 일부러 몇 초 동안 실행되도록 되어 있다. 바로 끝내기 위한 delay가 아니라 **state를 사람이 관찰할 시간을 확보하기
-위한 instrumentation**이다.
+lab task는 일부러 몇 초 동안 실행되도록 되어 있다. 바로 끝내기 위한 delay가 아니라
+**state를 사람이 관찰할 시간을 확보하기 위한 instrumentation**이다.
 
 ## 6. 관측면 1: UI / Grid
 
@@ -350,8 +352,8 @@ transform  success
 publish    success
 ```
 
-실제 표시되는 intermediate state는 timing에 따라 다를 수 있다. 중요한 것은 **같은 TaskInstance가 시간에 따라 state transition을
-겪는다는 것**이다.
+실제 표시되는 intermediate state는 timing에 따라 다를 수 있다. 중요한 것은
+**같은 TaskInstance가 시간에 따라 state transition을 겪는다는 것**이다.
 
 ## 8. 관측면 3: task/component log
 
@@ -375,8 +377,8 @@ data_interval_end
 
 이 log에서 중요한 사실은 TaskFlow Python 함수가 단순한 일반 함수 호출처럼 실행되는 것이 아니라는 점이다.
 
-Dag file을 parsing할 때 `prepare()`의 business logic이 바로 실행된 것이 아니다. scheduler가 특정 TaskInstance를 실행 가능하다고
-판단한 뒤 task runtime에서 함수 body가 실행되었다.
+Dag file을 parsing할 때 `prepare()`의 business logic이 바로 실행된 것이 아니다. scheduler가 특정 TaskInstance를 실행
+가능하다고 판단한 뒤 task runtime에서 함수 body가 실행되었다.
 
 ### Parsing time과 task execution time 구분
 
@@ -407,8 +409,8 @@ python lab/inspect_metadata.py \
   --run-id '<RUN_ID>'
 ```
 
-probe는 local standalone이 사용하는 SQLite metadata database의 `dag_run`, `task_instance` table에서 현재 version에 존재하는
-주요 column만 골라 출력한다.
+probe는 local standalone이 사용하는 SQLite metadata database의 `dag_run`, `task_instance` table에서 현재 version에
+존재하는 주요 column만 골라 출력한다.
 
 찾아볼 값은 다음과 같다.
 
@@ -475,7 +477,8 @@ lab/output
     "publish가 실제 file side effect를 남겼다"
 ```
 
-TaskInstance state는 external system의 data 자체가 아니다. Airflow가 orchestration을 위해 관리하는 control-plane evidence다.
+TaskInstance state는 external system의 data 자체가 아니다. Airflow가 orchestration을 위해 관리하는 control-plane
+evidence다.
 
 실제 production에서는 이 output이 S3 object, warehouse partition, API side effect 등이 될 수 있다.
 
@@ -599,8 +602,9 @@ external side effect:
 
 다음을 자신의 말로 설명할 수 있으면 다음 chapter로 간다.
 
-> DAG Python 파일이 존재하는 것, Dag가 parsing되는 것, DagRun이 생성되는 것, TaskInstance가 실행되는 것, external output이
-> 생기는 것은 서로 다른 사건이다. Airflow를 debugging할 때는 이 사건들을 하나로 뭉개지 않고 각 layer의 evidence를 확인한다.
+> DAG Python 파일이 존재하는 것, Dag가 parsing되는 것, DagRun이 생성되는 것, TaskInstance가 실행되는 것, external
+> output이 생기는 것은 서로 다른 사건이다. Airflow를 debugging할 때는 이 사건들을 하나로 뭉개지 않고 각 layer의
+> evidence를 확인한다.
 
 ## References
 
