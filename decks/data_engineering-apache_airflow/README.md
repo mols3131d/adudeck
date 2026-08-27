@@ -45,13 +45,14 @@ Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라,
 1. **UI / Grid** — 사람이 workflow 전체와 TaskInstance state를 시각적으로 본다.
 2. **CLI snapshot** — `dags list-runs`, `tasks states-for-dag-run` 등으로 특정 시점의 state를 텍스트로 고정한다.
 3. **component/task log** — scheduler가 실행 가능성을 판단하고 task code가 실제로 수행되는 흔적을 본다.
-4. **metadata + side effect** — read-only metadata DB probe와 `lab/output/`을 통해 control-plane state와 실제 output을 구분한다.
+4. **metadata + side effect** — read-only metadata DB probe와 `lab/output/`을 통해 control-plane state와 실제 output을
+   구분한다.
 
 네 화면의 값이 항상 같은 형태로 보일 필요는 없다. 중요한 것은 **서로 다른 관측면이 같은 DagRun/TaskInstance를 어떻게
 표현하는지 연결하는 것**이다.
 
-metadata DB는 Airflow의 internal implementation surface다. 이 deck의 `inspect_metadata.py`는 학습용 **read-only probe**로만
-사용하며 application integration API로 취급하지 않는다.
+metadata DB는 Airflow의 internal implementation surface다. 이 deck의 `inspect_metadata.py`는 학습용
+**read-only probe**로만 사용하며 application integration API로 취급하지 않는다.
 
 ## Prerequisites
 
@@ -131,9 +132,9 @@ core mental model과 관측 방법이 잡힌 뒤 실제 필요가 생길 때 확
 
 ## Version Baseline
 
-작성 기준은 Apache Airflow 3.3.1이다. Airflow 3에서는 standalone Dag Processor가 필수 component이고, executor는 별도 daemon이
-아니라 scheduler 안에서 사용되는 execution abstraction이다. minor release에서 CLI, UI, internal metadata schema가 바뀔 수
-있으므로 public authoring surface는 `airflow.sdk`를 사용하고 internal DB 관측은 read-only로 제한한다.
+작성 기준은 Apache Airflow 3.3.1이다. Airflow 3에서는 standalone Dag Processor가 필수 component이고, executor는 별도
+daemon이 아니라 scheduler 안에서 사용되는 execution abstraction이다. minor release에서 CLI, UI, internal metadata
+schema가 바뀔 수 있으므로 public authoring surface는 `airflow.sdk`를 사용하고 internal DB 관측은 read-only로 제한한다.
 
 ## References
 
