@@ -11,7 +11,7 @@ derived projection이며 직접 편집하지 않는다.
 └── skills/    # portable agent skills
 ```
 
-`rulesync.jsonc`는 다음 shared target을 정의한다.
+`rulesync.jsonc`는 Skills를 생성할 다음 shared target을 정의한다.
 
 - `claudecode`
 - `codexcli`
@@ -23,6 +23,9 @@ derived projection이며 직접 편집하지 않는다.
 Generated Skills는 target-native runtime을 위한 local projection으로 취급하며 Git에 추적하지 않는다. 현재 project-scope
 skill projection 경로는 `.claude/skills/`, `.github/skills/`, `.agents/skills/`이고 `.gitignore`가 이들을 제외한다.
 Canonical Skill은 `.rulesync/skills/`에만 유지한다.
+
+Repository Rules는 기존 repository instruction surface를 유지하기 위해 `mise run rulesync:generate`와
+`mise run rulesync:check`가 `agentsmd,copilot` 대상으로 별도 생성·검증한다. 이는 shared Skills target set과 분리한다.
 
 `rulesync.local.jsonc`에서 `targets`를 정의하면 shared target set 전체를 교체한다. Local target을 추가할 때 repository의
 shared target도 함께 적는다.
@@ -36,7 +39,7 @@ mise run rulesync:check
 ```
 
 - `doctor` — configuration을 strict mode로 진단한다.
-- `generate` — canonical source에서 target projection을 갱신한다.
+- `generate` — canonical source에서 Skills와 repository Rule projection을 갱신한다.
 - `check` — 현재 workspace의 generated projection이 current generation과 일치하는지 확인한다.
 
 Rulesync는 active development 동안 mise의 GitHub backend에서 current latest release를 사용한다.
