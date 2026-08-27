@@ -1,8 +1,10 @@
 # 02. Scheduling: data interval을 기준으로 시간 이해하기
 
-Airflow scheduling에서 가장 자주 생기는 오해는 `schedule="@daily"`를 "매일 00:00에 그날의 일을 시작한다"라고만 해석하는 것이다.
+Airflow scheduling에서 가장 자주 생기는 오해는 `schedule="@daily"`를 "매일 00:00에 그날의 일을 시작한다"라고만 해석하는
+것이다.
 
-Airflow의 scheduled workflow는 보통 **처리 대상이 되는 시간 구간(data interval)**을 먼저 생각해야 한다. scheduler는 특정 interval이 끝난 뒤 그 interval을 처리하는 DagRun을 만들 수 있다.
+Airflow의 scheduled workflow는 보통 **처리 대상이 되는 시간 구간(data interval)**을 먼저 생각해야 한다. scheduler는 특정
+interval이 끝난 뒤 그 interval을 처리하는 DagRun을 만들 수 있다.
 
 이 mental model을 잡지 않으면 `start_date`, logical date, catchup, backfill이 각각 따로 외워야 하는 옵션처럼 보인다.
 
@@ -15,7 +17,8 @@ Airflow의 scheduled workflow는 보통 **처리 대상이 되는 시간 구간(
              data interval
 ```
 
-이 interval의 데이터는 8월 27일 하루 동안 계속 들어올 수 있다. 따라서 8월 27일 전체를 처리하는 scheduled run은 일반적으로 interval이 끝난 **8월 28일 00:00 이후**에 실행 가능해진다.
+이 interval의 데이터는 8월 27일 하루 동안 계속 들어올 수 있다. 따라서 8월 27일 전체를 처리하는 scheduled run은
+일반적으로 interval이 끝난 **8월 28일 00:00 이후**에 실행 가능해진다.
 
 중요한 점은 다음 두 시간을 구분하는 것이다.
 
@@ -24,7 +27,8 @@ Airflow의 scheduled workflow는 보통 **처리 대상이 되는 시간 구간(
 
 둘은 같지 않다.
 
-실행이 queue나 retry 때문에 8월 28일 00:10에 시작되더라도 이 DagRun이 담당하는 data interval은 여전히 8월 27일 하루일 수 있다.
+실행이 queue나 retry 때문에 8월 28일 00:10에 시작되더라도 이 DagRun이 담당하는 data interval은 여전히 8월 27일 하루일 수
+있다.
 
 ## 2. schedule은 반복되는 interval을 만든다
 
@@ -62,7 +66,8 @@ aggregate_orders()
 
 각 interval은 하나의 scheduled DagRun과 연결될 수 있다.
 
-여기서 `start_date`는 "8월 25일 00:00에 task process를 시작하라"는 명령이 아니다. scheduling timetable이 계산할 수 있는 첫 data interval의 기준점으로 이해하는 편이 정확하다.
+여기서 `start_date`는 "8월 25일 00:00에 task process를 시작하라"는 명령이 아니다. scheduling timetable이 계산할 수 있는
+첫 data interval의 기준점으로 이해하는 편이 정확하다.
 
 ## 3. 왜 첫 run이 start_date보다 늦게 보이는가
 
@@ -82,11 +87,13 @@ start_date
 
 따라서 첫 scheduled run은 8월 25일 00:00에 즉시 실행되는 것이 아니라, 해당 daily interval이 끝난 뒤 만들어진다.
 
-이 동작을 모르고 보면 Airflow가 "하루 늦게 실행된다"고 느끼기 쉽다. 실제로는 **완료된 시간 구간을 처리한다**는 모델에 가깝다.
+이 동작을 모르고 보면 Airflow가 "하루 늦게 실행된다"고 느끼기 쉽다. 실제로는 **완료된 시간 구간을 처리한다**는 모델에
+가깝다.
 
 ## 4. DagRun의 시간은 partition key처럼 생각할 수 있다
 
-batch pipeline에서는 DagRun을 단순히 "실행 번호"로 보기보다 **어떤 data partition을 담당하는 실행인지 식별하는 key**로 생각하면 편하다.
+batch pipeline에서는 DagRun을 단순히 "실행 번호"로 보기보다 **어떤 data partition을 담당하는 실행인지 식별하는 key**로
+생각하면 편하다.
 
 예를 들어 날짜별 partition을 만드는 pipeline이 있다고 하자.
 
@@ -100,9 +107,11 @@ DagRun interval                    output
 
 이런 설계에서는 task가 `datetime.now()`를 기준으로 output path를 결정하면 위험하다.
 
-8월 27일 partition을 처리하는 task가 장애 때문에 8월 29일에 재실행되었다고 하자. `now()`를 사용하면 잘못된 8월 29일 partition을 건드릴 수 있다.
+8월 27일 partition을 처리하는 task가 장애 때문에 8월 29일에 재실행되었다고 하자. `now()`를 사용하면 잘못된 8월 29일
+partition을 건드릴 수 있다.
 
-대신 task가 **DagRun의 data interval**을 기준으로 읽고 쓰도록 만들면 retry나 delayed execution에서도 같은 logical partition을 처리할 수 있다.
+대신 task가 **DagRun의 data interval**을 기준으로 읽고 쓰도록 만들면 retry나 delayed execution에서도 같은 logical
+partition을 처리할 수 있다.
 
 이 원칙은 idempotence와도 직접 연결된다.
 
@@ -121,9 +130,11 @@ start_date                                      now
      historical intervals that may need runs
 ```
 
-반면 `catchup=False`는 보통 새로 활성화한 Dag가 과거 모든 interval을 자동으로 처리하지 않고 최신 scheduling point부터 운영되도록 할 때 사용한다.
+반면 `catchup=False`는 보통 새로 활성화한 Dag가 과거 모든 interval을 자동으로 처리하지 않고 최신 scheduling point부터
+운영되도록 할 때 사용한다.
 
-`catchup=False`를 "과거 데이터를 절대 처리할 수 없다"고 이해하면 안 된다. 자동 scheduled catchup과 의도적인 historical reprocessing은 다른 문제다.
+`catchup=False`를 "과거 데이터를 절대 처리할 수 없다"고 이해하면 안 된다. 자동 scheduled catchup과 의도적인 historical
+reprocessing은 다른 문제다.
 
 ## 6. backfill은 의도적으로 과거 구간을 다시 처리하는 작업이다
 
@@ -133,7 +144,8 @@ start_date                                      now
 - transform logic을 수정했고 특정 historical partitions를 재계산해야 함
 - 새 downstream table을 과거 데이터까지 채워야 함
 
-이때 필요한 것은 "평소 schedule이 과거 run을 자동 생성하게 둘 것인가"가 아니라 **명시한 과거 범위를 다시 실행하는 작업**이다.
+이때 필요한 것은 "평소 schedule이 과거 run을 자동 생성하게 둘 것인가"가 아니라
+**명시한 과거 범위를 다시 실행하는 작업**이다.
 
 이것이 backfill을 이해하는 출발점이다.
 
@@ -311,7 +323,8 @@ scheduled data interval 관점에서는 보통 하나의 interval이 끝난 뒤 
 
 8월 1~7일 transform logic에 bug가 있었다.
 
-단순히 최신 DagRun을 다시 실행하는 것으로 충분하지 않은 이유를 설명하고, 어떤 historical range를 어떤 partition key와 연결해야 하는지 적는다.
+단순히 최신 DagRun을 다시 실행하는 것으로 충분하지 않은 이유를 설명하고, 어떤 historical range를 어떤 partition key와
+연결해야 하는지 적는다.
 
 ### 5. 설명하기
 
@@ -325,7 +338,8 @@ scheduled data interval 관점에서는 보통 하나의 interval이 끝난 뒤 
 
 다음을 자신의 말로 설명할 수 있으면 다음 chapter로 넘어간다.
 
-> scheduled DagRun의 시간은 task가 실제로 시작된 wall-clock 시각보다, 그 run이 담당하는 data interval을 먼저 기준으로 해석해야 한다.
+> scheduled DagRun의 시간은 task가 실제로 시작된 wall-clock 시각보다, 그 run이 담당하는 data interval을 먼저 기준으로
+> 해석해야 한다.
 
 ## References
 
