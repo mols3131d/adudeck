@@ -4,7 +4,8 @@ Airflow를 처음 배울 때 가장 흔한 혼란은 Python 코드, DAG graph, �
 
 핵심은 **정의(definition)와 실행(runtime state)을 분리하는 것**이다.
 
-Airflow의 DAG 파일은 "이 작업을 지금 실행하라"는 script가 아니다. DAG 파일은 반복해서 실행할 workflow의 구조를 선언한다. 실제 실행이 발생하면 Airflow는 그 정의를 바탕으로 별도의 runtime object와 state를 만든다.
+Airflow의 DAG 파일은 "이 작업을 지금 실행하라"는 script가 아니다. DAG 파일은 반복해서 실행할 workflow의 구조를 선언한다.
+실제 실행이 발생하면 Airflow는 그 정의를 바탕으로 별도의 runtime object와 state를 만든다.
 
 ## 1. Airflow가 해결하는 문제
 
@@ -27,7 +28,8 @@ Airflow가 필요한 이유는 보통 실행 자체보다 **반복 실행의 운
 - upstream task가 실패했는데 downstream task를 실행해도 되는가?
 - worker가 죽었을 때 task는 어떤 상태로 남는가?
 
-Airflow는 이런 질문을 다루는 orchestrator다. 데이터 변환 자체를 대신 수행하기보다 **어떤 작업이 언제 실행 가능한지 판단하고, 실행 결과의 state를 기록하며, 다음 작업을 진행할지 결정한다.**
+Airflow는 이런 질문을 다루는 orchestrator다. 데이터 변환 자체를 대신 수행하기보다
+**어떤 작업이 언제 실행 가능한지 판단하고, 실행 결과의 state를 기록하며, 다음 작업을 진행할지 결정한다.**
 
 ## 2. 네 가지 object를 먼저 구분한다
 
@@ -77,7 +79,8 @@ TaskInstance ≈ DagRun + Task
 
 `transform_orders`라는 Task가 하나 있어도 날짜별 DagRun마다 서로 다른 TaskInstance가 생긴다.
 
-이 구분은 debugging에서 매우 중요하다. "transform task가 실패했다"보다 정확한 표현은 "2026-08-27 DagRun의 transform_orders TaskInstance가 실패했다"다.
+이 구분은 debugging에서 매우 중요하다. "transform task가 실패했다"보다 정확한 표현은 "2026-08-27 DagRun의
+transform_orders TaskInstance가 실패했다"다.
 
 ## 3. 정의에서 실행까지 어떤 component가 움직이는가
 
@@ -111,15 +114,19 @@ Dag file / Dag bundle
             user task code
 ```
 
-Airflow 3에서 executor는 별도의 daemon service라기보다 **scheduler가 사용하는 execution abstraction/configuration**이다. 기본 architecture 문서에서도 executor는 scheduler의 configuration property이며 scheduler process 안에서 동작한다고 설명한다.
+Airflow 3에서 executor는 별도의 daemon service라기보다 **scheduler가 사용하는 execution abstraction/configuration**이다.
+기본 architecture 문서에서도 executor는 scheduler의 configuration property이며 scheduler process 안에서 동작한다고
+설명한다.
 
-실제 architecture에는 API Server, Task SDK, optional triggerer 등 더 많은 component가 있지만, 처음에는 **누가 어떤 state를 읽고 바꾸는지**가 중요하다.
+실제 architecture에는 API Server, Task SDK, optional triggerer 등 더 많은 component가 있지만, 처음에는
+**누가 어떤 state를 읽고 바꾸는지**가 중요하다.
 
 ### Dag Processor
 
 Dag Processor는 Dag bundle의 Dag 파일을 읽고 parsing한다.
 
-Python 파일에 Dag를 정의했다고 해서 scheduler가 매번 그 Python 파일을 직접 실행하며 판단하는 식으로 생각하면 안 된다. Airflow 3에서는 Dag Processor가 definition을 parsing하고 serialized representation을 metadata database에 저장한다.
+Python 파일에 Dag를 정의했다고 해서 scheduler가 매번 그 Python 파일을 직접 실행하며 판단하는 식으로 생각하면 안 된다.
+Airflow 3에서는 Dag Processor가 definition을 parsing하고 serialized representation을 metadata database에 저장한다.
 
 따라서 DAG file이 syntax error 때문에 parsing되지 않으면 runtime 단계로 넘어가기 전에 이미 문제가 발생한 것이다.
 
@@ -131,7 +138,8 @@ metadata database는 Airflow의 runtime state를 이해할 때 중심에 둬야 
 
 중요한 mental model은 다음이다.
 
-> Airflow는 단순히 Python process들이 서로 직접 명령을 전달하는 시스템이 아니라, 여러 component가 공유된 workflow state를 읽고 갱신하면서 진행되는 system이다.
+> Airflow는 단순히 Python process들이 서로 직접 명령을 전달하는 시스템이 아니라, 여러 component가 공유된 workflow
+> state를 읽고 갱신하면서 진행되는 system이다.
 
 ### Scheduler
 
@@ -154,15 +162,19 @@ scheduler의 핵심 질문은 다음과 같다.
 
 executor는 "어디에서 어떤 방식으로 task를 실행할 것인가"에 관여한다.
 
-개념적으로 scheduler가 **무엇을 실행할지** 결정한다면 executor는 scheduler 안에서 **그 실행을 어떤 execution backend에 제출할지** 담당한다고 볼 수 있다.
+개념적으로 scheduler가 **무엇을 실행할지** 결정한다면 executor는 scheduler 안에서
+**그 실행을 어떤 execution backend에 제출할지** 담당한다고 볼 수 있다.
 
-실제 user code는 worker 쪽에서 실행된다. deployment 방식에 따라 worker는 같은 machine의 process일 수도 있고, 별도의 Celery worker나 Kubernetes Pod일 수도 있다.
+실제 user code는 worker 쪽에서 실행된다. deployment 방식에 따라 worker는 같은 machine의 process일 수도 있고, 별도의
+Celery worker나 Kubernetes Pod일 수도 있다.
 
 ### API Server
 
-Airflow 3의 API Server는 UI와 REST API를 제공한다. Task SDK를 사용하는 task가 Airflow와 runtime state를 주고받는 경로에도 관여한다.
+Airflow 3의 API Server는 UI와 REST API를 제공한다. Task SDK를 사용하는 task가 Airflow와 runtime state를 주고받는
+경로에도 관여한다.
 
-처음에는 "web UI component"로만 외우기보다, **사람과 task runtime이 Airflow control plane을 관찰하거나 상호작용하는 API surface**라고 이해하는 편이 낫다.
+처음에는 "web UI component"로만 외우기보다,
+**사람과 task runtime이 Airflow control plane을 관찰하거나 상호작용하는 API surface**라고 이해하는 편이 낫다.
 
 ## 4. 하나의 DagRun을 끝까지 추적해 보자
 
@@ -223,7 +235,8 @@ schedule 조건을 만족하면 scheduler는 해당 Dag에 대한 DagRun을 만�
 
 DagRun 안에서 각 Task에 대응하는 TaskInstance가 runtime state를 가진다.
 
-처음에는 `extract_orders`의 dependency가 없으므로 실행 가능하지만 `transform_orders`와 `load_orders`는 upstream 완료를 기다려야 한다.
+처음에는 `extract_orders`의 dependency가 없으므로 실행 가능하지만 `transform_orders`와 `load_orders`는 upstream 완료를
+기다려야 한다.
 
 ### 단계 4: scheduler가 실행 가능성을 판단한다
 
@@ -243,7 +256,8 @@ worker가 user code를 실행하고 성공하면 해당 TaskInstance state가 �
 
 필요한 TaskInstance들이 terminal state에 도달하면 DagRun 자체도 성공 또는 실패 같은 결과 state를 갖게 된다.
 
-이 흐름에서 중요한 점은 **dependency graph가 직접 task를 호출하는 것이 아니라, scheduler가 runtime state를 반복해서 평가하며 다음 실행을 가능하게 만든다**는 것이다.
+이 흐름에서 중요한 점은 **dependency graph가 직접 task를 호출하는 것이 아니라, scheduler가 runtime state를 반복해서
+평가하며 다음 실행을 가능하게 만든다**는 것이다.
 
 ## 5. control flow와 data flow를 섞지 않는다
 
@@ -267,7 +281,8 @@ Task A가 2GB dataframe 생성
 Task B가 dataframe 사용
 ```
 
-Airflow의 XCom은 task 간 작은 metadata를 전달하는 데 적합하다. 큰 data payload는 object storage, database, warehouse 같은 external system에 저장하고 Task 간에는 location이나 identifier를 넘기는 편이 일반적으로 안전하다.
+Airflow의 XCom은 task 간 작은 metadata를 전달하는 데 적합하다. 큰 data payload는 object storage, database, warehouse
+같은 external system에 저장하고 Task 간에는 location이나 identifier를 넘기는 편이 일반적으로 안전하다.
 
 예를 들어 다음과 같이 나눈다.
 
@@ -295,7 +310,8 @@ Task B
 
 ### "scheduler가 task code를 직접 실행한다"
 
-scheduler의 핵심 책임은 실행 가능성을 판단하고 executor를 통해 execution backend에 제출하는 것이다. 실제 user task code 실행은 worker execution context에서 일어난다.
+scheduler의 핵심 책임은 실행 가능성을 판단하고 executor를 통해 execution backend에 제출하는 것이다. 실제 user task code
+실행은 worker execution context에서 일어난다.
 
 ### "dependency arrow는 data가 이동한다는 뜻이다"
 
@@ -377,7 +393,8 @@ Task A가 5GB parquet dataset을 만들고 Task B가 이를 읽어야 한다.
 
 다음 문장을 자신의 말로 설명할 수 있으면 이 chapter의 목표를 달성한 것이다.
 
-> Airflow는 Dag definition을 직접 순차 실행하는 script runner가 아니라, DagRun과 TaskInstance의 state를 관리하면서 dependency를 만족한 작업을 scheduler가 실행 대상으로 결정하는 orchestrator다.
+> Airflow는 Dag definition을 직접 순차 실행하는 script runner가 아니라, DagRun과 TaskInstance의 state를 관리하면서
+> dependency를 만족한 작업을 scheduler가 실행 대상으로 결정하는 orchestrator다.
 
 ## References
 
