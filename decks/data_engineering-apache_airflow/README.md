@@ -1,8 +1,10 @@
 # Apache Airflow
 
-Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라, **시간과 의존성에 따라 반복되는 작업의 실행 상태를 관리하는 workflow orchestrator**로 이해하기 위한 deck이다.
+Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라,
+**시간과 의존성에 따라 반복되는 작업의 실행 상태를 관리하는 workflow orchestrator**로 이해하기 위한 deck이다.
 
-이 deck은 Airflow 3.3.x의 core concepts를 기준으로 한다. 특정 cloud managed service나 production deployment recipe보다, Airflow 내부에서 어떤 object와 state가 만들어지고 어떤 component가 그것을 변경하는지 이해하는 데 초점을 둔다.
+이 deck은 Airflow 3.3.x의 core concepts를 기준으로 한다. 특정 cloud managed service나 production deployment recipe보다,
+Airflow 내부에서 어떤 object와 state가 만들어지고 어떤 component가 그것을 변경하는지 이해하는 데 초점을 둔다.
 
 ## Goal
 
@@ -22,7 +24,8 @@ Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라, **�
 - SQL과 batch data processing에 대한 기본 감각
 - process, environment variable, file path 같은 실행 환경의 기초 개념
 
-Docker, Kubernetes, distributed systems 지식은 core learning path의 prerequisite로 두지 않는다. 해당 지식은 production deployment를 다룰 때 필요해진다.
+Docker, Kubernetes, distributed systems 지식은 core learning path의 prerequisite로 두지 않는다. 해당 지식은 production
+deployment를 다룰 때 필요해진다.
 
 ## Scope
 
@@ -56,7 +59,8 @@ core mental model이 잡힌 뒤 필요한 항목만 별도 chapter로 확장한�
 
 ## Version Baseline
 
-작성 시점의 Apache Airflow stable documentation은 3.3.1이다. minor release에서 세부 API나 UI는 바뀔 수 있으므로, 이 deck은 가능한 한 version-independent한 core state model을 중심으로 설명한다.
+작성 시점의 Apache Airflow stable documentation은 3.3.1이다. minor release에서 세부 API나 UI는 바뀔 수 있으므로, 이
+deck은 가능한 한 version-independent한 core state model을 중심으로 설명한다.
 
 ## References
 
