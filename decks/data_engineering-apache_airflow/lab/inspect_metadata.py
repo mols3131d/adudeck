@@ -69,8 +69,9 @@ def inspect_table(
     order_candidates = ["logical_date", "start_date", "queued_at", "run_id"]
     order_column = next((column for column in order_candidates if column in available), None)
     order = f' ORDER BY "{order_column}" DESC' if order_column else ""
+    quoted_columns = ", ".join(f'"{column}"' for column in columns)
+    query = f'SELECT {quoted_columns} FROM "{table}"{where}{order} LIMIT ?'
 
-    query = f'SELECT {", ".join(f"\"{column}\"" for column in columns)} FROM "{table}"{where}{order} LIMIT ?'
     params.append(limit)
     rows = connection.execute(query, params).fetchall()
 
