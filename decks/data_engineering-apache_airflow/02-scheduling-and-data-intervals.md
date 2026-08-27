@@ -61,8 +61,8 @@ data interval
 [08-27 00:00, 08-28 00:00)
 ```
 
-`start_date`는 "그 순간 process를 시작하라"는 timer command가 아니다. timetable이 첫 scheduling interval을 계산할 때 사용하는
-경계다.
+`start_date`는 "그 순간 process를 시작하라"는 timer command가 아니다. timetable이 첫 scheduling interval을 계산할 때
+사용하는 경계다.
 
 따라서 daily Dag의 첫 scheduled run이 `start_date`와 같은 시각에 즉시 실행되지 않는 상황은 이상하지 않다.
 
@@ -164,7 +164,8 @@ bash lab/airflow.sh dags next-execution \
   --table
 ```
 
-CLI는 `logical_date`, `data_interval.start`, `data_interval.end`, `run_after` 같은 scheduling 정보를 계산해 보여줄 수 있다.
+CLI는 `logical_date`, `data_interval.start`, `data_interval.end`, `run_after` 같은 scheduling 정보를 계산해 보여줄 수
+있다.
 
 자신의 예측과 비교한다.
 
@@ -236,8 +237,8 @@ ls -lt lab/output/schedule-*.json | head
 cat lab/output/schedule-<RUN_ID에 대응하는 파일>.json
 ```
 
-파일 이름은 shell-safe하게 변환되므로 `run_id`와 정확히 같은 문자열은 아닐 수 있다. JSON body의 `run_id`로 동일한 run인지
-확인한다.
+파일 이름은 shell-safe하게 변환되므로 `run_id`와 정확히 같은 문자열은 아닐 수 있다. JSON body의 `run_id`로 동일한
+run인지 확인한다.
 
 ## 7. 관측 결과를 하나의 시간축으로 합친다
 
@@ -390,8 +391,8 @@ bash lab/airflow.sh backfill create \
   --max-active-runs 1
 ```
 
-`max-active-runs=1`은 correctness requirement가 아니라 **여러 historical run이 순차적으로 보이게 해서 관찰하기 쉽게 만드는 실험
-조건**이다.
+`max-active-runs=1`은 correctness requirement가 아니라
+**여러 historical run이 순차적으로 보이게 해서 관찰하기 쉽게 만드는 실험 조건**이다.
 
 다시 run list를 본다.
 
@@ -505,9 +506,9 @@ output JSON
 
 다음을 자신의 말로 설명할 수 있으면 통과한다.
 
-> Airflow schedule은 단순 wall-clock alarm이 아니다. DagRun은 logical/data interval을 갖고 scheduler는 timetable에 따라 run을
-> 만든다. 실제 task 실행 시각은 늦어질 수 있지만 logical work는 유지되어야 하며, catchup과 backfill은 과거 interval을 다루는
-> 서로 다른 mechanism이다.
+> Airflow schedule은 단순 wall-clock alarm이 아니다. DagRun은 logical/data interval을 갖고 scheduler는 timetable에 따라
+> run을 만든다. 실제 task 실행 시각은 늦어질 수 있지만 logical work는 유지되어야 하며, catchup과 backfill은 과거
+> interval을 다루는 서로 다른 mechanism이다.
 
 ## References
 
