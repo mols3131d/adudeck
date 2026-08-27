@@ -1,348 +1,517 @@
-# 02. Scheduling: data interval을 기준으로 시간 이해하기
+# 02. Scheduling: data interval을 시간축과 runtime에서 검증하기
 
-Airflow scheduling에서 가장 자주 생기는 오해는 `schedule="@daily"`를 "매일 00:00에 그날의 일을 시작한다"라고만 해석하는
-것이다.
+Airflow scheduling에서 가장 흔한 오해는 `schedule="@daily"`를 단순히 "매일 자정에 실행"이라고만 이해하는 것이다.
 
-Airflow의 scheduled workflow는 보통 **처리 대상이 되는 시간 구간(data interval)**을 먼저 생각해야 한다. scheduler는 특정
-interval이 끝난 뒤 그 interval을 처리하는 DagRun을 만들 수 있다.
+Airflow의 scheduled workflow를 이해하려면 세 시간을 분리해야 한다.
 
-이 mental model을 잡지 않으면 `start_date`, logical date, catchup, backfill이 각각 따로 외워야 하는 옵션처럼 보인다.
+```text
+1. data time
+   이 DagRun이 담당하는 데이터 구간
 
-## 1. 먼저 business time과 execution time을 분리한다
+2. scheduling time
+   scheduler가 이 run을 만들 수 있게 되는 시점
 
-매일 전날 주문 데이터를 집계한다고 하자.
+3. wall-clock execution time
+   task process가 실제로 시작되고 끝나는 현실 시간
+```
+
+이 chapter에서는 이 관계를 먼저 시간축으로 계산하고, 실제 2분 schedule Dag를 실행해 **예측한 interval과 Airflow가 기록한
+runtime state가 일치하는지 관찰**한다.
+
+## 1. 왜 "오늘 run"이라는 표현이 위험한가
+
+전날 주문을 집계하는 daily pipeline을 생각한다.
 
 ```text
 2026-08-27 00:00 ---------------- 2026-08-28 00:00
-             data interval
+                 data interval
 ```
 
-이 interval의 데이터는 8월 27일 하루 동안 계속 들어올 수 있다. 따라서 8월 27일 전체를 처리하는 scheduled run은
-일반적으로 interval이 끝난 **8월 28일 00:00 이후**에 실행 가능해진다.
+8월 27일 하루의 데이터는 8월 27일이 끝나기 전까지 계속 들어올 수 있다. 따라서 이 구간을 완전히 처리하는 scheduled run은
+interval이 끝난 뒤 실행 가능해지는 것이 자연스럽다.
 
-중요한 점은 다음 두 시간을 구분하는 것이다.
+```text
+data interval
+[08-27 00:00, 08-28 00:00)
+                         |
+                         | interval complete
+                         v
+                   scheduled run eligible
+```
 
-- **data time**: 이 run이 담당하는 데이터의 시간 범위
-- **wall-clock execution time**: scheduler가 실제로 run을 만들고 task가 실행되는 현실 시간
+실제 task가 08-28 00:07에 시작되었다고 해도 이 run이 담당하는 data interval이 08-28 데이터로 바뀌는 것은 아니다.
 
-둘은 같지 않다.
+### 핵심 distinction
 
-실행이 queue나 retry 때문에 8월 28일 00:10에 시작되더라도 이 DagRun이 담당하는 data interval은 여전히 8월 27일 하루일 수
-있다.
+```text
+"언제 실행했는가?"
+!=
+"어느 시간 구간의 데이터를 담당하는가?"
+```
+
+이 distinction이 retry, backfill, partition 설계까지 이어진다.
 
 ## 2. schedule은 반복되는 interval을 만든다
 
-간단한 daily Dag를 보자.
-
-```python
-import pendulum
-from airflow.sdk import dag, task
-
-
-@dag(
-    schedule="@daily",
-    start_date=pendulum.datetime(2026, 8, 25, tz="UTC"),
-    catchup=True,
-)
-def aggregate_orders():
-    @task
-    def aggregate():
-        ...
-
-    aggregate()
-
-
-aggregate_orders()
-```
-
-개념적으로는 다음과 같은 interval들이 생긴다.
+`@daily`처럼 interval-based timetable을 단순화하면 다음과 같은 연속 구간을 생각할 수 있다.
 
 ```text
 [08-25 00:00, 08-26 00:00)
 [08-26 00:00, 08-27 00:00)
 [08-27 00:00, 08-28 00:00)
-...
 ```
 
-각 interval은 하나의 scheduled DagRun과 연결될 수 있다.
+`start_date`는 "그 순간 process를 시작하라"는 timer command가 아니다. timetable이 첫 scheduling interval을 계산할 때 사용하는
+경계다.
 
-여기서 `start_date`는 "8월 25일 00:00에 task process를 시작하라"는 명령이 아니다. scheduling timetable이 계산할 수 있는
-첫 data interval의 기준점으로 이해하는 편이 정확하다.
+따라서 daily Dag의 첫 scheduled run이 `start_date`와 같은 시각에 즉시 실행되지 않는 상황은 이상하지 않다.
 
-## 3. 왜 첫 run이 start_date보다 늦게 보이는가
+## 3. logical date와 data interval
 
-`start_date=2026-08-25 00:00`, `schedule="@daily"`라면 첫 interval은 대략 다음과 같다.
+DagRun에는 실행을 식별하는 시간 정보가 있다.
+
+학습할 때는 다음을 한 덩어리로 외우지 않는다.
 
 ```text
-start_date
-    |
-    v
-08-25 00:00 ---------------- 08-26 00:00
-          first interval
+logical_date
+
+data_interval_start
+data_interval_end
+
+run_after / 실제 scheduling 가능 시각
+
+TaskInstance start/end wall-clock time
+```
+
+특히 batch data engineering에서는 data interval을 partition key를 결정하는 입력으로 사용할 수 있다.
+
+```text
+DagRun interval
+[2026-08-27, 2026-08-28)
+
+        ↓ logical data
+
+warehouse.orders/dt=2026-08-27
+```
+
+반대로 task 안에서 `datetime.now()`를 business partition의 기준으로 사용하면 retry나 delayed execution에서 다른 날짜를
+건드릴 수 있다.
+
+## 4. 실습 대상: 2분 schedule을 사용하는 Dag
+
+`lab/dags/observable_schedule.py`에는 다음 Dag가 있다.
+
+```text
+Dag ID: adudeck_observable_schedule
+schedule: */2 * * * *
+catchup: False
+Task: expose_interval
+```
+
+2분 schedule은 production recommendation이 아니라 **사람이 기다리지 않고 scheduling cycle을 관찰하기 위한 실험 장치**다.
+
+Task는 실행될 때 다음 값을 log와 JSON output에 남긴다.
+
+```text
+run_id
+logical_date
+data_interval_start
+data_interval_end
+try_number
+```
+
+그리고 20초 동안 `running` 상태를 유지해 UI, CLI, metadata DB에서 같은 TaskInstance를 찾을 시간을 확보한다.
+
+## 5. Observable Lab A: 실행 전에 다음 interval을 예측한다
+
+Airflow standalone이 켜져 있지 않다면 시작한다.
+
+```bash
+bash lab/airflow.sh standalone
+```
+
+별도 terminal에서 Dag가 보이는지 확인한다.
+
+```bash
+bash lab/airflow.sh dags list
+```
+
+아직 unpause하지 않는다.
+
+먼저 Airflow가 계산하는 다음 execution을 확인하기 **전에**, 현재 UTC 시간을 보고 다음 2분 경계를 직접 적는다.
+
+예를 들어 현재가 다음과 같다고 하자.
+
+```text
+12:05:37 UTC
+```
+
+2분 경계가 짝수 분이라고 가정하면 다음 interval과 run-after 시점을 먼저 예상한다.
+
+```text
+예상 data interval: [12:04, 12:06)
+예상 run 가능 시점: 12:06 이후
+```
+
+정답을 외우는 것이 아니라 timetable을 시간축으로 그리는 연습이다.
+
+### Airflow의 계산과 비교한다
+
+```bash
+bash lab/airflow.sh dags next-execution \
+  adudeck_observable_schedule \
+  -n 3 \
+  --table
+```
+
+CLI는 `logical_date`, `data_interval.start`, `data_interval.end`, `run_after` 같은 scheduling 정보를 계산해 보여줄 수 있다.
+
+자신의 예측과 비교한다.
+
+틀렸다면 바로 command를 다시 외우지 않는다. 어느 경계를 잘못 잡았는지 시간축을 수정한다.
+
+## 6. Observable Lab B: scheduler가 실제 DagRun을 만들게 한다
+
+Dag를 unpause한다.
+
+```bash
+bash lab/airflow.sh dags unpause adudeck_observable_schedule
+```
+
+다음 2분 경계를 기다리는 동안 UI의 Dag page를 연다.
+
+### 관측 1: UI
+
+새 scheduled DagRun이 나타나는지 본다.
+
+Task `expose_interval`이 `running`인 20초 동안 다음을 기록한다.
+
+```text
+DagRun state:
+TaskInstance state:
+실제 wall-clock start time:
+```
+
+### 관측 2: CLI
+
+```bash
+bash lab/airflow.sh dags list-runs adudeck_observable_schedule -o table
+```
+
+방금 생성된 `<RUN_ID>`를 골라 task state를 본다.
+
+```bash
+bash lab/airflow.sh tasks states-for-dag-run \
+  adudeck_observable_schedule \
+  '<RUN_ID>' \
+  -o table
+```
+
+20초 안에 여러 번 실행해 `running -> success`를 직접 잡아본다.
+
+### 관측 3: task log
+
+UI task log 또는 standalone terminal에서 다음 marker를 찾는다.
+
+```text
+[ADUDECK_OBSERVE] scheduled interval:
+```
+
+그 안의 `data_interval_start`, `data_interval_end`를 적는다.
+
+### 관측 4: metadata DB
+
+```bash
+python lab/inspect_metadata.py \
+  --dag-id adudeck_observable_schedule \
+  --run-id '<RUN_ID>'
+```
+
+`dag_run` row와 `task_instance` row의 timestamp를 구분해서 본다.
+
+### 관측 5: external output
+
+```bash
+ls -lt lab/output/schedule-*.json | head
+cat lab/output/schedule-<RUN_ID에 대응하는 파일>.json
+```
+
+파일 이름은 shell-safe하게 변환되므로 `run_id`와 정확히 같은 문자열은 아닐 수 있다. JSON body의 `run_id`로 동일한 run인지
+확인한다.
+
+## 7. 관측 결과를 하나의 시간축으로 합친다
+
+실제 값을 이용해 다음 그림을 완성한다.
+
+```text
+data_interval_start                  data_interval_end
+        |                                   |
+        v                                   v
+--------+-----------------------------------+-------- time
+                                            |
+                                            | scheduler may create run
+                                            v
+                                      DagRun created
+                                            |
+                                            v
+                                      Task running
+                                            |
+                                            v
+                                      Task success
+```
+
+그리고 네 종류의 시간을 적는다.
+
+| 의미 | 실제 관측값 |
+| --- | --- |
+| logical date | |
+| data interval start | |
+| data interval end | |
+| TaskInstance actual start | |
+| TaskInstance actual end | |
+
+`TaskInstance actual start`가 data interval start와 다르다는 것은 bug가 아니다.
+
+## 8. execution delay가 생겨도 logical work는 바뀌지 않는다
+
+scheduler cycle, execution capacity, task startup, retry 등으로 실제 실행은 늦어질 수 있다.
+
+```text
+data interval end
+        |
+        +---- scheduler delay ----+
                                   |
-                                  v
-                         interval complete
-                         -> scheduled run eligible
+                                  +---- execution delay ----+
+                                                          |
+                                                          v
+                                                    task starts
 ```
 
-따라서 첫 scheduled run은 8월 25일 00:00에 즉시 실행되는 것이 아니라, 해당 daily interval이 끝난 뒤 만들어진다.
+하지만 task가 처리해야 하는 logical data가 wall-clock delay 때문에 자동으로 바뀌어서는 안 된다.
 
-이 동작을 모르고 보면 Airflow가 "하루 늦게 실행된다"고 느끼기 쉽다. 실제로는 **완료된 시간 구간을 처리한다**는 모델에
-가깝다.
-
-## 4. DagRun의 시간은 partition key처럼 생각할 수 있다
-
-batch pipeline에서는 DagRun을 단순히 "실행 번호"로 보기보다 **어떤 data partition을 담당하는 실행인지 식별하는 key**로
-생각하면 편하다.
-
-예를 들어 날짜별 partition을 만드는 pipeline이 있다고 하자.
+따라서 data pipeline task는 가능한 한 다음처럼 생각한다.
 
 ```text
-DagRun interval                    output
-----------------------------------------------------------------
-[2026-08-25, 2026-08-26)  ->  warehouse.orders/dt=2026-08-25
-[2026-08-26, 2026-08-27)  ->  warehouse.orders/dt=2026-08-26
-[2026-08-27, 2026-08-28)  ->  warehouse.orders/dt=2026-08-27
+input partition
+= runtime의 logical/data interval에서 결정
+
+not
+= task process가 우연히 시작된 현재 시각에서 결정
 ```
 
-이런 설계에서는 task가 `datetime.now()`를 기준으로 output path를 결정하면 위험하다.
+## 9. retry와 data interval의 관계
 
-8월 27일 partition을 처리하는 task가 장애 때문에 8월 29일에 재실행되었다고 하자. `now()`를 사용하면 잘못된 8월 29일
-partition을 건드릴 수 있다.
-
-대신 task가 **DagRun의 data interval**을 기준으로 읽고 쓰도록 만들면 retry나 delayed execution에서도 같은 logical
-partition을 처리할 수 있다.
-
-이 원칙은 idempotence와도 직접 연결된다.
-
-## 5. catchup은 과거 interval을 자동으로 따라잡을지 결정한다
-
-새 Dag를 오늘 처음 활성화했는데 `start_date`가 한 달 전이라면, scheduler 입장에서는 이미 끝난 interval이 많이 존재한다.
-
-`catchup=True`라면 Airflow는 아직 실행 기록이 없는 과거 interval에 대해 scheduled DagRun을 만들 수 있다.
+같은 TaskInstance가 retry된다고 하자.
 
 ```text
-start_date                                      now
-    |                                            |
-    v                                            v
-----|----|----|----|----|----|----|----|----|----
-     ^    ^    ^    ^    ^    ^    ^    ^
-     historical intervals that may need runs
+DagRun: [08-27, 08-28)
+
+try 1
+  actual execution: 08-28 00:03
+  failed
+
+try 2
+  actual execution: 08-28 00:18
+  success
 ```
 
-반면 `catchup=False`는 보통 새로 활성화한 Dag가 과거 모든 interval을 자동으로 처리하지 않고 최신 scheduling point부터
-운영되도록 할 때 사용한다.
+두 try는 wall-clock time이 다르지만 같은 logical work를 재시도한다.
 
-`catchup=False`를 "과거 데이터를 절대 처리할 수 없다"고 이해하면 안 된다. 자동 scheduled catchup과 의도적인 historical
-reprocessing은 다른 문제다.
-
-## 6. backfill은 의도적으로 과거 구간을 다시 처리하는 작업이다
-
-운영 중 다음 상황이 생길 수 있다.
-
-- source bug 때문에 8월 1일부터 8월 7일까지 잘못 처리됨
-- transform logic을 수정했고 특정 historical partitions를 재계산해야 함
-- 새 downstream table을 과거 데이터까지 채워야 함
-
-이때 필요한 것은 "평소 schedule이 과거 run을 자동 생성하게 둘 것인가"가 아니라
-**명시한 과거 범위를 다시 실행하는 작업**이다.
-
-이것이 backfill을 이해하는 출발점이다.
-
-개념적으로 다음과 같다.
-
-```text
-normal scheduled runs
-                    now
-                     |
-... 08-20 08-21 08-22 08-23 08-24
-
-historical repair target
-     [08-01 ---- 08-07]
-       ^
-       explicit reprocessing range
-```
-
-catchup과 backfill은 둘 다 historical interval과 관련되지만 목적이 다르다.
-
-- catchup: scheduler가 놓친/미생성 과거 interval을 정상 schedule의 연장선에서 생성
-- backfill: 사용자가 선택한 historical range를 의도적으로 재처리
-
-## 7. retry는 같은 logical work의 재시도다
-
-TaskInstance가 network timeout 때문에 실패했다고 하자.
-
-```text
-DagRun: interval [08-27, 08-28)
-Task: load_orders
-
-try 1 -> failed
-try 2 -> success
-```
-
-retry가 발생했다고 해서 task가 담당하는 data interval이 바뀌어서는 안 된다.
-
-따라서 retry-safe한 task는 같은 logical input에 대해 여러 번 실행되어도 결과가 깨지지 않도록 설계하는 것이 중요하다.
-
-예를 들어 다음 패턴이 위험하다.
+따라서 다음 코드는 위험하다.
 
 ```python
-# 개념 예시
-output_table = f"orders_{datetime.now():%Y%m%d}"
+partition = datetime.now().date()
 ```
 
-재시도 시점이 다음 날로 넘어가면 같은 TaskInstance가 전혀 다른 table을 건드릴 수 있다.
+retry가 날짜 경계를 넘으면 같은 TaskInstance가 다른 partition을 건드릴 수 있다.
 
-대신 runtime context가 제공하는 interval/partition 기준 값을 사용해야 한다.
+다음 chapter에서 이 문제가 idempotence와 어떻게 연결되는지 실제 failure lab으로 확인한다.
 
-## 8. "언제 실행되나"를 계산하는 절차
+## 10. catchup은 무엇을 자동 생성할지 결정한다
 
-schedule 관련 문제를 만났을 때 다음 순서로 계산한다.
-
-### 1. timetable이 만드는 interval을 그린다
-
-예를 들어 `@daily`면 먼저 자정 경계를 표시한다.
+오래전에 시작했어야 하는 Dag를 오늘 처음 활성화했다고 하자.
 
 ```text
-00:00        00:00        00:00
-  |------------|------------|
-      day A         day B
+start_date                                  now
+    |                                        |
+    v                                        v
+----+----+----+----+----+----+----+----+----+
+    historical scheduling intervals
 ```
 
-### 2. 이번 DagRun이 어느 interval을 담당하는지 정한다
+`catchup=True`면 scheduler가 정상 schedule의 연장선에서 과거 interval의 DagRun을 생성할 수 있다.
+
+`catchup=False`면 일반적으로 최신 scheduling point부터 운영하고 과거 interval을 자동으로 모두 따라잡지 않는다.
+
+여기서 중요한 오해를 제거한다.
 
 ```text
-[data_interval_start, data_interval_end)
+catchup=False
+!=
+과거 데이터를 다시 처리할 수 없음
 ```
 
-### 3. interval이 언제 끝나는지 본다
+자동 scheduling policy와 명시적인 historical reprocessing은 다른 기능이다.
 
-scheduled run은 보통 자신이 담당하는 interval이 끝나야 생성될 수 있다.
+## 11. backfill은 historical range를 의도적으로 다시 계산한다
 
-### 4. 실제 execution delay를 별도로 본다
+Airflow 3.3 CLI에는 explicit backfill command가 있다.
 
-scheduler cycle, queue, pool, worker capacity, retry 때문에 실제 시작 시각은 더 늦을 수 있다.
+먼저 실제 run을 만들지 않는 dry run으로 scheduling 결과를 관찰한다.
 
-즉 다음 식으로 생각한다.
-
-```text
-logical data interval
-        +
-scheduling eligibility
-        +
-execution delay
-        =
-observed wall-clock run time
+```bash
+bash lab/airflow.sh backfill create \
+  --dag-id adudeck_observable_schedule \
+  --from-date '2026-08-28T00:00:00+00:00' \
+  --to-date '2026-08-28T00:04:00+00:00' \
+  --max-active-runs 1 \
+  --dry-run
 ```
 
-## 9. Worked example: "왜 28일에 27일 데이터를 처리하지?"
+### 실행 전에 예측한다
 
-요구사항이 다음과 같다고 하자.
+명령을 실행하기 전에 다음을 적는다.
 
-> 매일 전날 확정된 주문을 집계해서 날짜 partition에 저장한다.
+- 어떤 logical dates가 대상이 될 것으로 예상하는가?
+- 각 run의 data interval은 무엇인가?
+- `catchup=False`인데 dry-run 결과가 나올 수 있다고 예상하는가?
 
-Dag schedule은 `@daily`다.
+그 다음 실제 dry-run 결과와 비교한다.
 
-8월 27일 데이터를 처리하는 run을 추적해 보자.
+### 실제 backfill을 실행한다
 
-### Step 1. 대상 interval
+local lab에서만 다음처럼 `--dry-run`을 제거한다.
 
-```text
-[2026-08-27 00:00, 2026-08-28 00:00)
+```bash
+bash lab/airflow.sh backfill create \
+  --dag-id adudeck_observable_schedule \
+  --from-date '2026-08-28T00:00:00+00:00' \
+  --to-date '2026-08-28T00:04:00+00:00' \
+  --max-active-runs 1
 ```
 
-### Step 2. output partition
+`max-active-runs=1`은 correctness requirement가 아니라 **여러 historical run이 순차적으로 보이게 해서 관찰하기 쉽게 만드는 실험
+조건**이다.
 
-```text
-dt=2026-08-27
+다시 run list를 본다.
+
+```bash
+bash lab/airflow.sh dags list-runs adudeck_observable_schedule -o table
 ```
 
-### Step 3. run이 실행 가능해지는 시점
+normal scheduled run과 backfill run의 `run_id`, logical date, state를 비교한다.
 
-8월 28일 00:00 이후다. 그 전에는 8월 27일 interval이 끝나지 않았다.
+metadata probe와 `lab/output/schedule-*.json`도 함께 본다.
 
-### Step 4. worker가 실제 시작한 시각
+## 12. catchup과 backfill을 관측 가능한 차이로 설명한다
 
-예를 들어 8월 28일 00:07일 수 있다.
+둘 다 과거 interval과 관련되므로 이름만 외우면 자주 섞인다.
 
-### Step 5. task가 사용해야 하는 날짜
+| 질문 | catchup | backfill |
+| --- | --- | --- |
+| 누가 시작하는가 | 정상 scheduler policy | 사용자의 명시적 historical operation |
+| 무엇을 결정하는가 | 미생성 과거 interval을 자동 생성할지 | 지정한 과거 range를 재처리할지 |
+| `catchup=False`와 공존 가능한가 | 자동 catchup은 안 함 | 가능 |
+| 관측 evidence | scheduled DagRun 생성 패턴 | backfill run / backfill operation |
 
-`2026-08-28`이라는 wall-clock 날짜가 아니라 DagRun이 담당하는 interval에서 계산한 `2026-08-27`이어야 한다.
+실습에서 `catchup=False`인 Dag를 explicit backfill할 수 있다는 사실을 직접 확인하면 둘의 boundary가 훨씬 선명해진다.
 
-이렇게 해야 같은 run을 8월 29일에 retry하거나 다시 실행해도 여전히 `dt=2026-08-27`을 처리한다.
+## 13. Scheduling debugging 절차
 
-## 10. 흔한 오해
+"왜 이 task가 지금 실행됐지?" 또는 "왜 아직 안 돌지?"를 만나면 다음 순서로 본다.
 
-### "start_date는 process 시작 시간이다"
+### Step 1. timetable output을 계산한다
 
-아니다. scheduled interval 계산의 기준점으로 이해해야 한다.
+```bash
+bash lab/airflow.sh dags next-execution adudeck_observable_schedule --table
+```
 
-### "@daily는 오늘 00:00에 오늘 데이터를 처리한다"
+### Step 2. 필요한 DagRun이 실제로 있는지 본다
 
-scheduled data interval 관점에서는 보통 하나의 interval이 끝난 뒤 그 interval의 run이 생성된다.
+```bash
+bash lab/airflow.sh dags list-runs adudeck_observable_schedule -o table
+```
 
-### "catchup=False면 historical data를 처리할 수 없다"
+### Step 3. DagRun의 interval과 state를 본다
 
-아니다. 자동 catchup을 하지 않는 것과 명시적 backfill/reprocessing은 별개다.
+UI와 metadata probe를 사용한다.
 
-### "retry하면 현재 시간 기준으로 다시 계산하면 된다"
+### Step 4. TaskInstance state를 분리해서 본다
 
-그렇게 하면 같은 logical run이 retry 시점에 따라 다른 partition을 처리할 수 있다.
+DagRun이 존재한다고 task가 즉시 실행되는 것은 아니다. dependency와 execution condition을 따로 확인한다.
+
+### Step 5. wall-clock delay와 logical data를 다시 분리한다
+
+늦게 실행되었다는 사실만 보고 "잘못된 날짜 run"이라고 판단하지 않는다.
 
 ## Practice
 
-### 1. Interval 계산
+### 1. Interval prediction
 
-다음 Dag가 있다.
+현재 시각과 무관하게 다음 timetable을 그린다.
 
-```python
-@dag(
-    schedule="@daily",
-    start_date=pendulum.datetime(2026, 8, 10, tz="UTC"),
-    catchup=True,
-)
+```text
+schedule: */2 * * * *
 ```
 
-첫 세 개의 daily data interval을 직접 적고, 각각 언제 scheduled run이 생성 가능해지는지 표시한다.
+`10:00`, `10:02`, `10:04`, `10:06` 경계를 표시하고 각 scheduled run의 data interval을 적는다.
 
-### 2. Wall clock과 data time
+### 2. Cross-view timestamp audit
 
-8월 20일 interval을 처리하는 TaskInstance가 8월 23일에 retry되었다.
+실제 한 run을 골라 다음을 채운다.
 
-- input partition은 어떤 날짜여야 하는가?
-- `datetime.now()`를 partition key로 쓰면 어떤 bug가 생길 수 있는가?
+```text
+run_id:
+logical_date:
+data_interval_start:
+data_interval_end:
+DagRun start_date:
+TaskInstance start_date:
+TaskInstance end_date:
+```
 
-### 3. Catchup 판단
+각 timestamp가 같은 의미가 아닌 이유를 설명한다.
 
-다음 두 상황에서 `catchup=True/False` 중 어떤 쪽을 우선 검토할지 이유와 함께 설명한다.
+### 3. Retry thought experiment
 
-1. 오늘 새로 배포한 monitoring Dag이며 과거 실행은 의미가 없다.
-2. 날짜별 warehouse partition을 생성하는 Dag이며 `start_date` 이후 모든 날짜가 빠짐없이 필요하다.
+08-27 partition을 처리하는 TaskInstance가 08-29에 retry되었다.
 
-### 4. Backfill 설계
+- `datetime.now()`를 partition key로 사용하면 어떤 문제가 생기는가?
+- data interval을 사용하면 어떤 invariant를 유지할 수 있는가?
 
-8월 1~7일 transform logic에 bug가 있었다.
+### 4. Catchup vs backfill
 
-단순히 최신 DagRun을 다시 실행하는 것으로 충분하지 않은 이유를 설명하고, 어떤 historical range를 어떤 partition key와
-연결해야 하는지 적는다.
+다음 요구를 각각 어느 기능으로 모델링할지 결정하고 이유를 설명한다.
 
-### 5. 설명하기
+1. 새 Dag를 활성화했더니 지난 7일의 정상 schedule도 모두 처리해야 한다.
+2. 지난달 3일치 transform bug를 수정했으므로 그 range만 다시 계산해야 한다.
+3. 신규 table을 과거 1년치로 채워야 한다.
 
-다음 질문에 그림 없이 답해 본다.
+### 5. Evidence before explanation
 
-> Airflow daily job이 왜 "하루 늦게 돈다"고 보일 수 있는가?
+실제 lab에서 예상과 다른 run이 생겼다면 바로 원인을 추측하지 않는다.
 
-답변에는 최소한 `data interval`, `interval end`, `execution time` 세 개념이 들어가야 한다.
+다음 evidence를 먼저 모은 뒤 설명을 작성한다.
+
+```text
+next-execution output
+list-runs output
+metadata dag_run row
+task log interval marker
+output JSON
+```
 
 ## Checkpoint
 
-다음을 자신의 말로 설명할 수 있으면 다음 chapter로 넘어간다.
+다음을 자신의 말로 설명할 수 있으면 통과한다.
 
-> scheduled DagRun의 시간은 task가 실제로 시작된 wall-clock 시각보다, 그 run이 담당하는 data interval을 먼저 기준으로
-> 해석해야 한다.
+> Airflow schedule은 단순 wall-clock alarm이 아니다. DagRun은 logical/data interval을 갖고 scheduler는 timetable에 따라 run을
+> 만든다. 실제 task 실행 시각은 늦어질 수 있지만 logical work는 유지되어야 하며, catchup과 backfill은 과거 interval을 다루는
+> 서로 다른 mechanism이다.
 
 ## References
 
 - [Scheduler](https://airflow.apache.org/docs/apache-airflow/stable/concepts/scheduler.html)
-- [Dag Runs](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dag-run.html)
-- [Backfill](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/backfill.html)
+- [Dag Run](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dag-run.html)
+- [CLI Reference — next-execution / backfill](https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html)
+- [FAQ — start_date and data interval](https://airflow.apache.org/docs/apache-airflow/stable/faq.html)
