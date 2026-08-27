@@ -2,12 +2,13 @@
 
 Airflow에서 graph가 보기 좋다고 workflow가 운영하기 좋은 것은 아니다.
 
-실제 reliability는 **Task를 어떤 runtime boundary로 나누고, 각 TaskInstance의 재실행이 external system에 어떤 side effect를
-남기는가**에서 크게 결정된다.
+실제 reliability는
+**Task를 어떤 runtime boundary로 나누고, 각 TaskInstance의 재실행이 external system에 어떤 side effect를 남기는가**에서
+크게 결정된다.
 
 이 chapter에서는 `prepare -> transform -> publish` workflow에 의도적인 failure를 넣는다. 실패를 빨리 없애는 것이 목적이
-아니다. `running`, `up_for_retry`, `failed`, `upstream_failed`, `success`를 직접 관찰하고, retry와 XCom과 external output이
-서로 어떤 관계인지 설명하는 것이 목적이다.
+아니다. `running`, `up_for_retry`, `failed`, `upstream_failed`, `success`를 직접 관찰하고, retry와 XCom과 external
+output이 서로 어떤 관계인지 설명하는 것이 목적이다.
 
 ## 1. Task는 함수 분할 단위가 아니라 운영 단위다
 
@@ -35,7 +36,8 @@ B. extract -> transform -> load
 
 A에서 load가 마지막에 실패하면 전체 TaskInstance를 다시 실행해야 할 수 있다.
 
-B에서는 load만 독립적으로 retry할 수 있다. 대신 Task 수가 늘고 scheduling/runtime overhead와 data boundary를 관리해야 한다.
+B에서는 load만 독립적으로 retry할 수 있다. 대신 Task 수가 늘고 scheduling/runtime overhead와 data boundary를 관리해야
+한다.
 
 따라서 "함수를 최대한 잘게 쪼갠다"가 원칙이 아니다.
 
@@ -117,8 +119,8 @@ final invariant
 "dt=2026-08-27 partition은 source snapshot과 일치한다"
 ```
 
-완벽한 수학적 idempotence가 항상 가능한 것은 아니지만, **같은 logical input의 재실행이 어떤 결과로 수렴해야 하는지**를 먼저
-정의해야 한다.
+완벽한 수학적 idempotence가 항상 가능한 것은 아니지만, **같은 logical input의 재실행이 어떤 결과로 수렴해야 하는지**를
+먼저 정의해야 한다.
 
 ## 4. 실습 Dag의 구조를 읽는다
 
@@ -246,7 +248,8 @@ bash lab/airflow.sh dags list-runs adudeck_observable_runtime -o table
 
 ## 7. `up_for_retry` 동안 네 관측면을 동시에 본다
 
-transform 첫 시도는 8초 동안 실행된 뒤 실패하고 retry delay 15초를 둔다. 일부러 사람이 중간 state를 잡을 수 있게 한 것이다.
+transform 첫 시도는 8초 동안 실행된 뒤 실패하고 retry delay 15초를 둔다. 일부러 사람이 중간 state를 잡을 수 있게 한
+것이다.
 
 ### UI / Grid
 
@@ -285,8 +288,8 @@ python lab/inspect_metadata.py \
 
 `task_instance`의 `state`, `try_number`, start/end timestamp를 본다.
 
-Airflow 3에서는 try number가 task execution 도중 임의로 증가하는 counter라고 생각하지 않는다. 새 try가 scheduling될 때 구분되는
-runtime identity의 일부로 해석하는 편이 안전하다.
+Airflow 3에서는 try number가 task execution 도중 임의로 증가하는 counter라고 생각하지 않는다. 새 try가 scheduling될 때
+구분되는 runtime identity의 일부로 해석하는 편이 안전하다.
 
 ### task log
 
@@ -378,8 +381,8 @@ find lab/output -maxdepth 1 -type f -print
 
 `prepare`는 이미 성공했기 때문에 manifest file은 존재할 수 있다.
 
-반면 `transform`은 성공 path까지 가지 못했으므로 transformed output이 없고 `publish`도 실행되지 않아 published output이 없을
-수 있다.
+반면 `transform`은 성공 path까지 가지 못했으므로 transformed output이 없고 `publish`도 실행되지 않아 published output이
+없을 수 있다.
 
 이 상태를 다음처럼 정리한다.
 
@@ -418,7 +421,8 @@ python lab/inspect_metadata.py \
   --run-id '<RUN_ID>'
 ```
 
-probe는 XCom `value`를 출력하지 않는다. 이 실습에서 확인하려는 것은 **어떤 Task가 어떤 run에서 XCom record를 만들었는가**다.
+probe는 XCom `value`를 출력하지 않는다. 이 실습에서 확인하려는 것은
+**어떤 Task가 어떤 run에서 XCom record를 만들었는가**다.
 
 실제 값은 task log와 code를 함께 해석한다.
 
@@ -432,7 +436,8 @@ external storage
   -> file contents
 ```
 
-production에서는 file 대신 S3 URI, table name, object version, row count 같은 작은 metadata를 전달하는 방식으로 확장할 수 있다.
+production에서는 file 대신 S3 URI, table name, object version, row count 같은 작은 metadata를 전달하는 방식으로 확장할
+수 있다.
 
 ## 12. 왜 큰 DataFrame을 XCom에 넣지 않는가
 
@@ -460,7 +465,8 @@ Task가 다른 process/machine에서 실행될 수 있는 시스템에서는 이
 
 따라서 첫 실패가 business output duplicate를 만들지는 않는다.
 
-이번에는 일부러 나쁜 코드를 만들어 본다. `transform` 안에서 failure check 전에 다음과 비슷한 append side effect를 추가한다.
+이번에는 일부러 나쁜 코드를 만들어 본다. `transform` 안에서 failure check 전에 다음과 비슷한 append side effect를
+추가한다.
 
 ```python
 journal_path = OUTPUT_DIR / "transform-business-events.log"
@@ -647,9 +653,9 @@ warehouse rows = expected보다 2배
 
 다음을 설명할 수 있으면 core foundation을 통과한 것이다.
 
-> Airflow reliability는 retry 횟수를 늘리는 데서 생기지 않는다. Task를 의미 있는 runtime/state boundary로 나누고, 같은 logical
-> input의 재실행이 external side effect를 망가뜨리지 않도록 invariant를 설계해야 한다. UI의 state, TaskInstance try, XCom metadata,
-> task log, 실제 output을 함께 봐야 그 invariant가 지켜졌는지 판단할 수 있다.
+> Airflow reliability는 retry 횟수를 늘리는 데서 생기지 않는다. Task를 의미 있는 runtime/state boundary로 나누고, 같은
+> logical input의 재실행이 external side effect를 망가뜨리지 않도록 invariant를 설계해야 한다. UI의 state, TaskInstance
+> try, XCom metadata, task log, 실제 output을 함께 봐야 그 invariant가 지켜졌는지 판단할 수 있다.
 
 ## References
 
