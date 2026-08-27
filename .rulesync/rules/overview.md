@@ -25,15 +25,16 @@ description: Repository-wide contract for the adudeck agentic learning workspace
 ## Authority
 
 - `.rulesync/` is the canonical source for portable agent Rules and Skills managed by Rulesync.
-- `rulesync.jsonc` selects repository-shared targets and features whose generated outputs are tracked in Git.
+- `rulesync.jsonc` selects the repository-shared targets used for generated projections.
 - `rulesync.local.jsonc` must remain untracked. If it defines `targets`, it replaces the shared target set, so include
   the shared targets alongside any local additions.
 - `mise.toml` installs the repository toolchain and exposes repeatable Rulesync tasks.
 - Treat generated vendor-native agent files as derived artifacts; change the canonical `.rulesync/` source instead.
 - Prefer the `mise run rulesync:*` tasks for repository-wide Rulesync operations when mise is available.
-- Commit outputs selected by the shared `rulesync.jsonc`; keep local-only projections untracked.
-- Generate from canonical source after agent asset changes; CI detects tracked projection drift from the resulting Git
-  tree.
+- Generated Skills are local-only projections and must remain untracked; commit only generated projections that the
+  repository explicitly keeps tracked.
+- Generate from canonical source after agent asset changes; CI detects drift only for tracked projections in the
+  resulting Git tree.
 
 ## Safety
 
