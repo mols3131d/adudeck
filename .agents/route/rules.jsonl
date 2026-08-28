@@ -1,0 +1,4 @@
+{"_meta":{"kind":"rules","instructions":"When this Rule route is loaded for a task with known target paths, match those paths against globs and load every matching Rule source before continuing. Multiple matching Rules compose; route order does not define precedence. If no target path is known, do not load a scoped Rule from this file. Root repository guidance is already loaded through AGENTS.md. The referenced canonical Rule source remains authoritative."}}
+{"source":".rulesync/rules/archive.md","globs":["decks/_archive/**/*"]}
+{"source":".rulesync/rules/backlog.md","globs":["decks/_backlog/**/*"]}
+{"source":".rulesync/rules/decks.md","globs":["decks/**/*"]}
