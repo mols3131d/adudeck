@@ -9,6 +9,29 @@
     "antigravity-cli"
   ],
   "features": ["skills"],
+  "sources": [
+    {
+      "source": "https://github.com/mols3131d/mols-agent-assets.git",
+      "transport": "git",
+      "ref": "main",
+      "path": "src/rulesync/.rulesync/skills",
+      "skills": [
+        "guidance-context",
+        "clarify-code",
+        "mols-agent-asset",
+        "mols-agent-asset-validator",
+        "mols-agent-asset-find",
+        "mols-chatbot-bootstrap",
+        "mols-ci-design",
+        "mols-markdown-for-human",
+        "mols-markdown-maintenance",
+        "mols-mermaid-diagram",
+        "mols-mermaid-chart",
+        "mols-rpi",
+        "technical-document-fidelity"
+      ]
+    }
+  ],
   "outputRoots": ["."],
   "delete": true
 }

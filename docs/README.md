@@ -5,7 +5,6 @@
 ## Index
 
 - [`decks.md`](decks.md) — deck storage, state, content 원칙
-- [`notion.md`](notion.md) — Notion deck storage와 property 기반 state 정책
 - [`automation.md`](automation.md) — local automation, CI, cloud/API 비용 경계
 
 ## Placement
