@@ -48,8 +48,8 @@ core path는 다음만 가정한다.
 - terminal에서 command를 실행하고 file path와 environment variable을 다루는 기초
 - batch processing에서 "한 번의 logical work가 특정 input/partition을 담당한다"는 기본 감각
 
-SQL 기초는 data-engineering example을 이해하는 데 도움이 되지만 core Airflow mechanism의 필수 prerequisite로 두지 않는다.
-Docker, Kubernetes, distributed systems 지식도 prerequisite가 아니다.
+SQL 기초는 data-engineering example을 이해하는 데 도움이 되지만 core Airflow mechanism의 필수 prerequisite로 두지
+않는다. Docker, Kubernetes, distributed systems 지식도 prerequisite가 아니다.
 
 ### Learning Outcomes
 
@@ -58,22 +58,22 @@ Basic curriculum을 마치면 다음을 할 수 있어야 한다.
 1. `Dag`, `DagRun`, `Task`, `TaskInstance`를 구분하고 같은 logical execution을 UI, CLI, log, metadata에서 연결한다.
 2. `airflow.sdk`와 TaskFlow를 사용해 작은 Dag를 정의하고 dependency를 표현하며, Dag parsing/loading과 task execution을
    구분해 설명한다.
-3. `schedule`, `start_date`, logical date, data interval, manual/scheduled run, catchup의 관계를 시간축에서 예측하고 실제
-   DagRun으로 검증한다.
+3. `schedule`, `start_date`, logical date, data interval, manual/scheduled run, catchup의 관계를 시간축에서 예측하고
+   실제 DagRun으로 검증한다.
 4. dependency와 TaskInstance state transition을 바탕으로 task가 왜 실행되었거나 막혔는지 설명하고, 관측·retry·side
    effect 책임을 고려해 task boundary를 판단한다.
 5. runtime input, task-to-task metadata, 실제 dataset, external-system credential/configuration이 서로 다른 책임임을
    설명하고 `Params`, XCom, external storage, Connection을 적절한 boundary에 배치한다. Airflow Variable은 global/shared
    value surface로 인식하되 task-to-task data channel과 혼동하지 않는다.
-6. retry, rerun/reprocessing, catchup, backfill을 같은 개념으로 뭉개지 않고, 같은 logical work의 반복 실행이 external side
-   effect를 어떻게 다루어야 하는지 idempotence 관점에서 설명하고 수정한다.
+6. retry, rerun/reprocessing, catchup, backfill을 같은 개념으로 뭉개지 않고, 같은 logical work의 반복 실행이 external
+   side effect를 어떻게 다루어야 하는지 idempotence 관점에서 설명하고 수정한다.
 7. "Airflow가 안 돈다"는 증상을 parsing/loading, DagRun scheduling, dependency/state, task runtime, external side effect
    문제로 좁히고 최소한의 evidence로 원인을 설명한다.
 
 ### Concept Dependencies
 
-unit은 chapter/file 경계가 아니라 learning responsibility다. 하나의 chapter가 여러 unit을 개발할 수 있고, unit 하나가 여러
-learning slice에 걸쳐 구현될 수도 있다.
+unit은 chapter/file 경계가 아니라 learning responsibility다. 하나의 chapter가 여러 unit을 개발할 수 있고, unit 하나가
+여러 learning slice에 걸쳐 구현될 수도 있다.
 
 ```text
 U1 Runtime mental model
@@ -122,8 +122,9 @@ TaskInstance state, data/side-effect boundary가 모두 잡힌 뒤에 다룬다.
 | O6 recovery/reprocessing/idempotence | U6 | retry/backfill 같은 반복 실행에서 invariant와 side effect를 검증하고 unsafe design을 수정한다. |
 | O7 evidence-first diagnosis | U7 | 여러 layer의 evidence를 최소 순서로 모아 하나의 failure를 설명하고 수정 후 재검증한다. |
 
-U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 아니라, learner가 **작은 workflow의 설계 → 예측 → 실행 →
-관찰 → failure/reprocessing → 수정 → 재검증**을 독립적으로 수행하는 것으로 평가한다.
+U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 아니라, learner가
+**작은 workflow의 설계 → 예측 → 실행 → 관찰 → failure/reprocessing → 수정 → 재검증**을 독립적으로 수행하는 것으로
+평가한다.
 
 ### Current Material Mapping
 
@@ -140,8 +141,8 @@ U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 �
 
 ### Out of Scope for Basic
 
-다음은 core Basic outcome에 필요해질 때 curriculum delta로 다시 검토한다. 현재는 선행 학습으로 요구하거나 chapter를 만들지
-않는다.
+다음은 core Basic outcome에 필요해질 때 curriculum delta로 다시 검토한다. 현재는 선행 학습으로 요구하거나 chapter를
+만들지 않는다.
 
 - CeleryExecutor/KubernetesExecutor와 distributed production topology
 - Kubernetes 기반 HA deployment와 scheduler performance tuning
