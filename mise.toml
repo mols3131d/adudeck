@@ -40,11 +40,11 @@ sh .rulesync/scripts/project-root-agents.sh --check
 """
 
 [tasks."chatbot:check"]
-description = "Check chatbot Skill routing metadata"
+description = "Check chatbot routing metadata"
 run = '''
 rulesync install --frozen
-uv run python .rulesync/skills/.curated/mols-chatbot-bootstrap/scripts/generate_routes.py --repo . --skills-root .rulesync/skills --output-dir .agents/route --kinds skills --check
-uv run python -c "import json,pathlib; d=json.load(open('rulesync.lock'))['sources']['mols3131d/mols-agent-assets']; e={r['name']:r['source'] for r in map(json.loads,pathlib.Path('.agents/route/skills.jsonl').read_text().splitlines()[1:]) if r['source'].startswith('https://raw.githubusercontent.com/mols3131d/mols-agent-assets/')}; assert set(e)==set(d['skills']) and all('/'+d['resolvedRef']+'/' in s for s in e.values())"
+uv run python .rulesync/skills/.curated/mols-chatbot-bootstrap/scripts/generate_routes.py --repo . --skills-root .rulesync/skills --output-dir .agents/route --kinds both --check
+uv run python -c "import json,pathlib; d=json.load(open('rulesync.lock'))['sources']['mols3131d/mols-agent-assets']; e={r['name']:r['source'] for r in map(json.loads,pathlib.Path('.agents/route/skills.jsonl').read_text().splitlines()[1:]) if r['source'].startswith('https://raw.githubusercontent.com/mols3131d/mols-agent-assets/')}; assert set(e)==set(d['skills']) and all('/'+d['resolvedRef']+'/' in s and s.endswith('/skills/'+n+'/SKILL.md') for n,s in e.items())"
 '''
 
 [tasks."format:markdown"]
