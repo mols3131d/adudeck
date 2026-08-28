@@ -9,6 +9,22 @@
     "antigravity-cli"
   ],
   "features": ["skills"],
+  "sources": [
+    {
+      "source": "mols3131d/mols-agent-assets@main:src/rulesync/.rulesync/skills",
+      "skills": [
+        "guidance-context",
+        "clarify-code",
+        "mols-agent-asset",
+        "mols-agent-asset-validator",
+        "mols-agent-asset-find",
+        "mols-chatbot-bootstrap",
+        "mols-ci-design",
+        "mols-markdown-for-human",
+        "mols-markdown-maintenance"
+      ]
+    }
+  ],
   "outputRoots": ["."],
   "delete": true
 }
