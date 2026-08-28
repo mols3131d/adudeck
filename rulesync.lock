@@ -1,0 +1,51 @@
+{
+  "lockfileVersion": 1,
+  "sources": {
+    "mols3131d/mols-agent-assets": {
+      "requestedRef": "main",
+      "resolvedRef": "6db356e512e5f4c2cab561653ae9b37c47702e7f",
+      "resolvedAt": "2026-08-28T11:22:14.581Z",
+      "skills": {
+        "mols-agent-asset": {
+          "integrity": "sha256-124fdbded5fa2d787da6c207c1bbe3db428cc2395b586e8ad25d91936465e0eb"
+        },
+        "mols-chatbot-bootstrap": {
+          "integrity": "sha256-bbd2c76d95263bc4beb579ff727219a39f3ad922f3339c00254c1f902a3c7687"
+        },
+        "mols-markdown-for-human": {
+          "integrity": "sha256-d12d681eaad30d33946ef7493e244320e6113accf2a6d1a4ba8962600294a5e0"
+        },
+        "mols-agent-asset-find": {
+          "integrity": "sha256-6ace67d927da8eedcdd359593ddcbd7a80d97a2fa9cab42288f634116382aef6"
+        },
+        "clarify-code": {
+          "integrity": "sha256-91089c5e6720eeba282098eb4a2f35dadba1e1487ff3592e1eebf87b3e32143b"
+        },
+        "technical-document-fidelity": {
+          "integrity": "sha256-ae0cd88ac490bb23e52d909f030750e1177f6f59fa6c3749d6f2bef2edb01a78"
+        },
+        "mols-markdown-maintenance": {
+          "integrity": "sha256-9512e6f65bfaced6569353e749f8abe899f89283a3bf21a69d39057b6c752f6c"
+        },
+        "mols-rpi": {
+          "integrity": "sha256-cea1aeea21c7dbe1ff56eb3cf46e510ef50f691e6a4a97b5f5582922b0d4046d"
+        },
+        "mols-ci-design": {
+          "integrity": "sha256-d1e45b38bab766af738f50b2828ce615eacf2ec4d63b5c8cd9b83b31344161b5"
+        },
+        "guidance-context": {
+          "integrity": "sha256-c159b50eafb82b34b4c7473cf89c87d34ec4428b72c58541e258608f80ef2f08"
+        },
+        "mols-mermaid-diagram": {
+          "integrity": "sha256-f3b689fb9cf960fc9e31a3b6ed4b84b8f6314af4c03293410d38a7c38acf50b3"
+        },
+        "mols-agent-asset-validator": {
+          "integrity": "sha256-3656ca7d568fbc51286cc262210c7499346909c796e2825c5910f421ec16f940"
+        },
+        "mols-mermaid-chart": {
+          "integrity": "sha256-983ff55d920be723a2f86db8bc71615f0c8b7ecb9d6b64c7d96b2ab314cbf563"
+        }
+      }
+    }
+  }
+}

@@ -20,9 +20,10 @@ derived projection이며 직접 편집하지 않는다.
 - `antigravity-ide`
 - `antigravity-cli`
 
-External reusable Skills는 `rulesync.jsonc`의 declarative `sources`로 관리한다. Upstream repository가 해당 Skill의 authority이며,
-`rulesync install`은 선택된 dependency를 `.rulesync/skills/.curated/`에 설치하고 resolved revision을 `rulesync.lock`에 고정한다.
-Curated dependency는 local generated input이므로 Git에 직접 추적하지 않고 lockfile을 통해 재현한다.
+External reusable Skills는 `rulesync.jsonc`의 declarative `sources`로 관리한다. Upstream repository가 해당 Skill의
+authority이며, `rulesync install`은 선택된 dependency를 `.rulesync/skills/.curated/`에 설치하고 resolved revision을
+`rulesync.lock`에 고정한다. Curated dependency는 local generated input이므로 Git에 직접 추적하지 않고 lockfile을 통해
+재현한다.
 
 Generated Skills는 target-native runtime을 위한 local projection으로 취급하며 Git에 추적하지 않는다. 현재 project-scope
 skill projection 경로는 `.claude/skills/`, `.github/skills/`, `.agents/skills/`이고 `.gitignore`가 이들을 제외한다.
