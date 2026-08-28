@@ -18,7 +18,7 @@ description = "Validate Rulesync configuration"
 run = "rulesync doctor --strict"
 
 [tasks."rulesync:install"]
-description = "Install external Rulesync dependencies"
+description = "Resolve external Rulesync dependencies"
 run = "rulesync install"
 
 [tasks."rulesync:normalize-agents"]
@@ -34,7 +34,7 @@ fi
 [tasks."rulesync:generate"]
 description = "Generate agent projections from canonical Rulesync assets"
 run = """
-mise run rulesync:install
+rulesync install --frozen
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
 mise run rulesync:normalize-agents
