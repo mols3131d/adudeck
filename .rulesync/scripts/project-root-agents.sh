@@ -3,7 +3,7 @@ set -eu
 
 source_file=.rulesync/rules/overview.md
 target_file=AGENTS.md
-tmp_file=$(mktemp)
+tmp_file=$(mktemp "${target_file}.tmp.XXXXXX")
 trap 'rm -f "$tmp_file"' EXIT
 
 awk '
@@ -15,9 +15,15 @@ frontmatter && $0 == "---" { frontmatter = 0; next }
 
 test -s "$tmp_file"
 
-if [ "${1:-}" = "--check" ]; then
-  cmp -s "$target_file" "$tmp_file"
-else
-  mv "$tmp_file" "$target_file"
-  trap - EXIT
-fi
+case "${1:-write}" in
+  write)
+    mv "$tmp_file" "$target_file"
+    ;;
+  --check)
+    cmp -s "$target_file" "$tmp_file"
+    ;;
+  *)
+    echo "usage: $0 [--check]" >&2
+    exit 2
+    ;;
+esac
