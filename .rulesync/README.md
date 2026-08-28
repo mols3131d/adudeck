@@ -32,8 +32,9 @@ Canonical Skill은 `.rulesync/skills/`에만 유지한다.
 
 Repository Rules는 `agentsmd,copilot` 대상으로 별도 생성·검증한다. Rulesync가 생성한 nested `AGENTS.md`는 canonical
 scoped Rule의 `agentsmd.subprojectPath` projection으로 그대로 유지한다. Root `AGENTS.md`에 Rulesync가 추가하는 nested
-Rule discovery preamble은 `.rulesync/scripts/normalize_agents.py`가 projection 단계에서 제거한다. Root와 nested
-`AGENTS.md`를 어떤 경로와 순서로 읽는지는 `CHATBOT.md`만 소유한다.
+Rule discovery preamble은 `.rulesync/scripts/normalize_agents.py`가 projection 단계에서 제거한다. 이 adapter는 Rule
+내용을 소유하거나 변경하지 않고 generated discovery wrapper만 정규화한다. Root와 nested `AGENTS.md`를 어떤 경로와
+순서로 읽는지는 `CHATBOT.md`만 소유한다.
 
 `rulesync.local.jsonc`에서 `targets`를 정의하면 shared target set 전체를 교체한다. Local target을 추가할 때 repository의
 shared target도 함께 적는다.
