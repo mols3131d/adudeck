@@ -65,7 +65,7 @@ def u5_boundaries_starter():
             "run_input_param": context["params"]["region"],
             "xcom_value_kind": "dataset path",
             "dataset_path": dataset_path,
-            "global_runtime_variable": environment,
+            "airflow_variable_value": environment,
             "connection": {
                 "conn_id": connection.conn_id,
                 "conn_type": connection.conn_type,
@@ -92,11 +92,12 @@ def u5_boundaries_starter():
     persist_evidence(inspect_boundaries(stage_orders()))
 
     # Learner work:
-    # - explain why `region` is a per-run Param instead of a global Variable in this scenario;
+    # - explain why `region` is a per-run Param instead of a Variable in this scenario;
     # - explain why fixture/output data stays in files while XCom carries an identifier;
     # - inspect the demo Connection without printing its password;
     # - change one requirement and decide whether the value belongs in Params, XCom,
-    #   external storage, Connection, Variable, or ordinary version-controlled Dag code.
+    #   external storage, Connection, Variable, or ordinary version-controlled Dag code;
+    # - distinguish the logical role of Variable/Connection from the backend that resolves them.
 
 
 u5_boundaries_starter()
