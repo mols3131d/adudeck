@@ -4,6 +4,7 @@
 
 ## Index
 
+- [`VISON.md`](VISON.md) — workspace vision과 learning principles
 - [`decks.md`](decks.md) — deck storage, state, content 원칙
 - [`automation.md`](automation.md) — local automation, CI, cloud/API 비용 경계
 
