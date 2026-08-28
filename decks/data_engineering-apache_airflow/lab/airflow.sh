@@ -10,10 +10,11 @@ export AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS="True"
 export ADUDECK_AIRFLOW_OUTPUT_DIR="${ADUDECK_AIRFLOW_OUTPUT_DIR:-${LAB_DIR}/output}"
 
 # Teaching-only defaults for the U5 boundary exercise. They are not real credentials and are
-# intentionally scoped to this disposable local wrapper environment.
+# intentionally scoped to this disposable local wrapper environment. Airflow resolves these via
+# the environment-variable secrets backend; they are not metadata-DB rows.
 export AIRFLOW_VAR_ADUDECK_ENVIRONMENT="${AIRFLOW_VAR_ADUDECK_ENVIRONMENT:-local-lab}"
 if [[ -z "${AIRFLOW_CONN_ADUDECK_DEMO_API:-}" ]]; then
-  export AIRFLOW_CONN_ADUDECK_DEMO_API='{"conn_type":"http","host":"localhost","port":8080,"login":"learner","password":"not-a-secret","extra":{"purpose":"adudeck-u5-boundary-lab"}}'
+  export AIRFLOW_CONN_ADUDECK_DEMO_API='{"conn_type":"http","host":"api.example.invalid","port":443,"login":"learner","password":"not-a-secret","extra":{"purpose":"adudeck-u5-boundary-lab"}}'
 fi
 
 mkdir -p "${ADUDECK_AIRFLOW_OUTPUT_DIR}"
