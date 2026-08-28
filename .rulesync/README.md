@@ -8,7 +8,7 @@ derived projection이며 직접 편집하지 않는다.
 ```text
 .rulesync/
 ├── rules/     # portable repository rules
-├── scripts/   # small projection adapters
+├── scripts/   # root AGENTS projection helper
 └── skills/    # portable agent skills
 ```
 
