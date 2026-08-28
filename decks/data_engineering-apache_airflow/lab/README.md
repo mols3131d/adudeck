@@ -2,7 +2,8 @@
 
 이 디렉토리는 textbook의 개념을 실제 Airflow 3.3.1 runtime에서 관찰하고 수정하기 위한 local learning environment다.
 
-실습의 성공 기준은 command가 성공하는 것이 아니라, learner가 **무엇이 바뀔지 예측하고 같은 DagRun/TaskInstance를 여러 evidence surface에서 연결해 설명할 수 있는가**다.
+실습의 성공 기준은 command가 성공하는 것이 아니라, learner가
+**무엇이 바뀔지 예측하고 같은 DagRun/TaskInstance를 여러 evidence surface에서 연결해 설명할 수 있는가**다.
 
 ## Structure
 
@@ -24,9 +25,11 @@ lab/
 └── output/                  # runtime-generated, gitignored
 ```
 
-기존 `observable_*` DAG는 textbook에서 mechanism을 관찰하기 위한 reference experiment다. `dags/exercises/`의 starter DAG는 learner가 직접 prediction, modification, failure, comparison을 수행하기 위한 시작점이다.
+기존 `observable_*` DAG는 textbook에서 mechanism을 관찰하기 위한 reference experiment다. `dags/exercises/`의 starter
+DAG는 learner가 직접 prediction, modification, failure, comparison을 수행하기 위한 시작점이다.
 
-현재 scaffold는 curriculum의 **U2 Dag authoring/loading**과 **U5 data/configuration boundaries**까지만 준비한다. U7 cumulative integration은 앞 두 slice를 review한 뒤 추가한다.
+현재 scaffold는 curriculum의 **U2 Dag authoring/loading**과 **U5 data/configuration boundaries**까지만 준비한다. U7
+cumulative integration은 앞 두 slice를 review한 뒤 추가한다.
 
 ## Start the runtime
 
@@ -36,16 +39,19 @@ Deck directory에서 실행한다.
 bash lab/airflow.sh standalone
 ```
 
-별도 terminal에서 DAG loading 상태를 확인한다. U2의 controlled parse failure를 확인할 때는 serialized metadata가 아니라 현재 source를 직접 parse하는 local mode를 사용한다.
+별도 terminal에서 DAG loading 상태를 확인한다. U2의 controlled parse failure를 확인할 때는 serialized metadata가 아니라
+현재 source를 직접 parse하는 local mode를 사용한다.
 
 ```bash
 bash lab/airflow.sh dags list --local
 bash lab/airflow.sh dags list-import-errors --local
 ```
 
-`airflow.sh`는 이 deck의 disposable local state만 사용하고 Apache Airflow 3.3.1을 고정한다. U5 실습을 위해 teaching-only Variable과 Connection default도 제공한다. 이 값은 실제 credential이 아니며 production configuration 예시가 아니다.
+`airflow.sh`는 이 deck의 disposable local state만 사용하고 Apache Airflow 3.3.1을 고정한다. U5 실습을 위해 teaching-only
+Variable과 Connection default도 제공한다. 이 값은 실제 credential이 아니며 production configuration 예시가 아니다.
 
-환경 변수로 제공하는 demo Connection은 task runtime에서 resolve되며 Airflow UI나 `connections list`에 저장된 row처럼 나타나지 않을 수 있다. 이 차이 자체를 credential/configuration storage와 task runtime lookup의 boundary로 해석한다.
+환경 변수로 제공하는 demo Connection은 task runtime에서 resolve되며 Airflow UI나 `connections list`에 저장된 row처럼
+나타나지 않을 수 있다. 이 차이 자체를 credential/configuration storage와 task runtime lookup의 boundary로 해석한다.
 
 ## Practice loop
 
@@ -124,7 +130,8 @@ Connection
 → external-system endpoint / credential configuration
 ```
 
-Connection password는 log, XCom, output에 기록하지 않는다. Learner는 requirement를 하나 바꾼 뒤 해당 값이 어느 channel에 속해야 하는지 다시 판단한다.
+Connection password는 log, XCom, output에 기록하지 않는다. Learner는 requirement를 하나 바꾼 뒤 해당 값이 어느 channel에
+속해야 하는지 다시 판단한다.
 
 manual trigger 예:
 
@@ -150,7 +157,8 @@ bash lab/scripts/snapshot.sh \
   '<RUN_ID>'
 ```
 
-helper는 CLI state, read-only metadata probe, external output file 목록을 한 곳에서 보여준다. 결과를 대신 해석하지는 않는다.
+helper는 CLI state, read-only metadata probe, external output file 목록을 한 곳에서 보여준다. 결과를 대신 해석하지는
+않는다.
 
 ## Reset
 
@@ -160,7 +168,8 @@ external output만 초기화:
 bash lab/scripts/reset.sh
 ```
 
-metadata DB까지 포함한 disposable local runtime을 완전히 초기화하려면 먼저 `standalone` process를 종료한 뒤 명시적으로 실행한다.
+metadata DB까지 포함한 disposable local runtime을 완전히 초기화하려면 먼저 `standalone` process를 종료한 뒤 명시적으로
+실행한다.
 
 ```bash
 bash lab/scripts/reset.sh --all
@@ -170,4 +179,6 @@ bash lab/scripts/reset.sh --all
 
 ## Validation boundary
 
-Repository CI와 Python syntax check는 starter가 parse 가능한 Python source라는 수준을 확인할 수 있다. 실제 Airflow runtime에서 DAG loading, task execution, UI/CLI/metadata 관측, Connection/Variable resolution까지 성공했는지는 별도의 runtime evidence가 필요하다.
+Repository CI와 Python syntax check는 starter가 parse 가능한 Python source라는 수준을 확인할 수 있다. 실제 Airflow
+runtime에서 DAG loading, task execution, UI/CLI/metadata 관측, Connection/Variable resolution까지 성공했는지는 별도의
+runtime evidence가 필요하다.
