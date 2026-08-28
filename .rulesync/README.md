@@ -29,8 +29,10 @@ Generated Skills는 target-native runtime을 위한 local projection으로 취�
 skill projection 경로는 `.claude/skills/`, `.github/skills/`, `.agents/skills/`이고 `.gitignore`가 이들을 제외한다.
 Canonical Skill은 `.rulesync/skills/`에만 유지한다.
 
-Repository Rules는 기존 repository instruction surface를 유지하기 위해 `mise run rulesync:generate`와
-`mise run rulesync:check`가 `agentsmd,copilot` 대상으로 별도 생성·검증한다. 이는 shared Skills target set과 분리한다.
+Repository Rules는 `rulesync.rules.jsonc`를 사용해 `agentsmd`와 `copilot` 대상으로 별도 생성·검증한다. `agentsmd`는
+`ruleDiscoveryMode: "none"`으로 생성해 root `AGENTS.md`에 nested `AGENTS.md` discovery harness를 주입하지 않는다.
+Root와 nested `AGENTS.md`를 어떤 순서로 읽는지는 `CHATBOT.md`가 소유한다. Nested `AGENTS.md` 자체는 canonical scoped
+Rule의 `agentsmd.subprojectPath` projection으로 유지한다.
 
 `rulesync.local.jsonc`에서 `targets`를 정의하면 shared target set 전체를 교체한다. Local target을 추가할 때 repository의
 shared target도 함께 적는다.
@@ -44,7 +46,7 @@ mise run rulesync:generate
 mise run rulesync:check
 ```
 
-- `doctor` — configuration을 strict mode로 진단한다.
+- `doctor` — shared Skills config와 Rule projection config를 strict mode로 진단한다.
 - `install` — external dependency를 lockfile에 따라 `.curated/`에 설치한다.
 - `generate` — dependency를 설치한 뒤 canonical source에서 Skills와 repository Rule projection을 갱신한다.
 - `check` — frozen dependency lock과 current generation이 현재 workspace projection과 일치하는지 확인한다.
