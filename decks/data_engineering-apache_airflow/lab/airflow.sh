@@ -3,6 +3,10 @@ set -euo pipefail
 
 LAB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+AIRFLOW_VERSION="3.3.1"
+AIRFLOW_PYTHON_VERSION="${ADUDECK_AIRFLOW_PYTHON:-3.12}"
+AIRFLOW_CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${AIRFLOW_PYTHON_VERSION}.txt"
+
 export AIRFLOW_HOME="${AIRFLOW_HOME:-${LAB_DIR}/.airflow}"
 export AIRFLOW__CORE__DAGS_FOLDER="${AIRFLOW__CORE__DAGS_FOLDER:-${LAB_DIR}/dags}"
 export AIRFLOW__CORE__LOAD_EXAMPLES="False"
@@ -19,4 +23,8 @@ fi
 
 mkdir -p "${ADUDECK_AIRFLOW_OUTPUT_DIR}"
 
-exec uvx "apache-airflow==3.3.1" "$@"
+exec uvx \
+  --python "${AIRFLOW_PYTHON_VERSION}" \
+  --constraint "${AIRFLOW_CONSTRAINT_URL}" \
+  "apache-airflow==${AIRFLOW_VERSION}" \
+  "$@"
