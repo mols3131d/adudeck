@@ -50,8 +50,13 @@ bash lab/airflow.sh dags list-import-errors --local
 `airflow.sh`는 이 deck의 disposable local state만 사용하고 Apache Airflow 3.3.1을 고정한다. U5 실습을 위해 teaching-only
 Variable과 Connection default도 제공한다. 이 값은 실제 credential이 아니며 production configuration 예시가 아니다.
 
-환경 변수로 제공하는 demo Connection은 task runtime에서 resolve되며 Airflow UI나 `connections list`에는 표시되지 않는다.
-이 차이 자체를 credential/configuration storage와 task runtime lookup의 boundary로 해석한다.
+환경 변수로 제공하는 demo Variable과 Connection은 task runtime에서 secrets backend를 통해 resolve된다. Metadata DB row가
+아니므로 Airflow UI나 `variables list` / `connections list`에 표시되지 않는다. **Variable/Connection의 논리적 역할과
+그 값을 어디에서 resolve하는지는 별개의 문제**로 관찰한다.
+
+Airflow 3에서 bare cron string은 기본적으로 `CronTriggerTimetable` semantics를 사용한다. Scheduling chapter의 reference
+DAG는 연속 data interval을 학습하기 위해 `CronDataIntervalTimetable`을 명시적으로 사용한다. 따라서 해당 실습에서 보이는
+`[data_interval_start, data_interval_end)`를 모든 cron Dag의 기본 동작으로 일반화하지 않는다.
 
 ## Practice loop
 
@@ -124,11 +129,19 @@ fixtures + output files
 → 실제 business data
 
 Variable
-→ installation/runtime 수준의 shared value
+→ Airflow runtime configuration key/value
+  (truly runtime-dependent shared setting에 사용)
 
 Connection
 → external-system endpoint / credential configuration
 ```
+
+version control로 관리할 수 있는 고정 설정까지 Variable로 옮기지 않는다. Airflow 공식 문서도 대부분의 설정은 Dag code에
+두고, Variable은 실제 runtime-dependent value에 사용하는 방향을 권한다.
+
+이 lab의 Variable과 Connection은 environment backend에서 resolve되지만, 동일한 논리적 key/connection id가 metadata DB나
+외부 secrets backend에서 resolve되는 deployment도 가능하다. Backend가 달라져도 task가 요구하는 책임 자체가 바뀌는 것은
+아니다.
 
 Connection password는 log, XCom, output에 기록하지 않는다. Learner는 requirement를 하나 바꾼 뒤 해당 값이 어느 channel에
 속해야 하는지 다시 판단한다.
