@@ -1,4 +1,1 @@
-{"_meta":{"kind":"rules","instructions":"When this Rule route is loaded for a task with known target paths, match those paths against globs and load every matching Rule source before continuing. Multiple matching Rules compose; route order does not define precedence. If no target path is known, do not load a scoped Rule from this file. The referenced canonical Rule source remains authoritative."}}
-{"source":".rulesync/rules/archive.md","globs":["decks/_archive/**/*"]}
-{"source":".rulesync/rules/backlog.md","globs":["decks/_backlog/**/*"]}
-{"source":".rulesync/rules/decks.md","globs":["decks/**/*"]}
+{"_meta":{"kind":"rules","instructions":"Do not load repository path Rules from this file. CHATBOT.md already applies them through the root-to-target AGENTS.md walk; this file records that routing boundary only."}}
