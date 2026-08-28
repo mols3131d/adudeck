@@ -12,14 +12,15 @@ Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라,
 
 1. `bash lab/scripts/preflight.sh`로 host/package/source 준비 상태를 확인한다.
 2. [Mental model](textbook/01-mental-model.md)에서 Dag/Task definition과 DagRun/TaskInstance runtime state를 구분한다.
-3. [Lab Guide](lab/README.md)의 verification ladder를 따라 local `tasks test`/`dags test`와 scheduler-backed
+3. `bash lab/airflow.sh db migrate`로 local metadata schema를 준비하고 **schema 존재와 scheduler 실행을 구분**한다.
+4. [Lab Guide](lab/README.md)의 verification ladder를 따라 `tasks test`/`dags test` local execution과 scheduler-backed
    `standalone` 실행의 차이를 관찰한다.
-4. 같은 Dag를 UI, CLI, log, metadata, output에서 연결해 설명한 뒤 다음 chapter로 진행한다.
+5. 같은 Dag를 UI, CLI, log, metadata, output에서 연결해 설명한 뒤 다음 chapter로 진행한다.
 
 첫 학습 session의 목표는 Airflow command를 많이 실행하는 것이 아니다.
 
-> **source가 parse되는 것, local test가 성공하는 것, scheduler-backed DagRun이 존재하는 것, TaskInstance가 실제 실행되는
-> 것은 서로 다른 evidence다.**
+> **source가 parse되는 것, metadata schema가 존재하는 것, local test가 성공하는 것, scheduler-backed DagRun이 존재하는
+> 것, TaskInstance가 실제 실행되는 것은 서로 다른 evidence다.**
 
 이 구분이 잡혀야 이후 scheduling, retry, backfill, idempotence를 같은 runtime model 위에서 이해할 수 있다.
 
@@ -97,13 +98,23 @@ Airflow 3.3.1 공식 prerequisite 기준으로 Python 3.10~3.14가 테스트 대
 - `lab/` 아래에 disposable runtime state와 output을 만들 수 있는 filesystem 권한
 - 첫 package resolution에 필요한 network access 또는 이미 준비된 `uv` cache
 
+`lab/airflow.sh`는 기본적으로 Apache Airflow 3.3.1, Python 3.12, Airflow 3.3.1 release constraints를 함께 사용한다.
+Python baseline은 필요하면 `ADUDECK_AIRFLOW_PYTHON`으로 바꿀 수 있지만 Airflow 3.3.1의 supported Python 범위 안에서
+사용한다.
+
 먼저 다음을 실행한다.
 
 ```bash
 bash lab/scripts/preflight.sh
 ```
 
-그 뒤 scheduler-backed runtime이 필요한 단계에서만 `standalone`을 시작한다.
+그 뒤 metadata schema를 명시적으로 준비한다.
+
+```bash
+bash lab/airflow.sh db migrate
+```
+
+scheduler-backed runtime이 필요한 단계에서만 `standalone`을 시작한다.
 
 ```bash
 bash lab/airflow.sh standalone
