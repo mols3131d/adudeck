@@ -62,8 +62,8 @@ Basic curriculum을 마치면 다음을 할 수 있어야 한다.
 5. runtime input, task-to-task metadata, 실제 dataset, external-system credential/configuration이 서로 다른 책임임을
    설명하고 `Params`, XCom, external storage, Connection을 적절한 boundary에 배치한다. Airflow Variable은 runtime
    configuration key/value로 인식하되 task-to-task data channel과 혼동하지 않고, credential을 Params나 XCom에 전달하지
-   않는다. Variable/Connection의 논리적 역할과 environment/metadata DB/external secrets backend 같은 resolution backend도
-   구분한다.
+   않는다. Variable/Connection의 논리적 역할과 environment/metadata DB/external secrets backend 같은 resolution
+   backend도 구분한다.
 6. retry, TaskInstance clear/re-run, catchup, backfill을 같은 개념으로 뭉개지 않고, 같은 logical work의 반복 실행이
    external side effect를 어떻게 다루어야 하는지 idempotence 관점에서 설명하고 수정한다.
 7. "Airflow가 안 돈다"는 증상을 parsing/loading, DagRun scheduling, dependency/state, task runtime, external side effect
@@ -163,7 +163,8 @@ File coverage만으로 curriculum completion을 판단하지 않는다.
 
 현재 `lab/`에는 U2와 U5를 시작할 수 있는 scaffold가 있다.
 
-- `lab/dags/exercises/u2_authoring_starter.py` — parser-safe authoring/loading baseline과 controlled parse failure 시작점
+- `lab/dags/exercises/u2_authoring_starter.py` — parser-safe authoring/loading baseline과 controlled parse failure
+  시작점
 - `lab/dags/exercises/u5_boundaries_starter.py` — Param/XCom/file/Variable/Connection responsibility 비교 시작점
 - `lab/fixtures/orders.jsonl` — deterministic business-data fixture
 - `lab/scripts/snapshot.sh` — CLI + read-only metadata + external output observation helper
@@ -206,6 +207,6 @@ Discovery
 ## Version and Authority Baseline
 
 현재 material version baseline은 Apache Airflow **3.3.1**이다. Dag/task authoring은 `airflow.sdk`를 중심으로 사용하고,
-scheduling semantics가 학습 목표일 때는 Airflow가 public interface로 문서화한 `airflow.timetables`를 명시적으로 사용할 수
-있다. Internal metadata DB 관측은 학습용 read-only probe로 제한한다. Version-sensitive API, CLI, UI, scheduling default,
-internal schema를 다룰 때는 현재 primary documentation과 실제 lab evidence를 구분해 검증한다.
+scheduling semantics가 학습 목표일 때는 Airflow가 public interface로 문서화한 `airflow.timetables`를 명시적으로 사용할
+수 있다. Internal metadata DB 관측은 학습용 read-only probe로 제한한다. Version-sensitive API, CLI, UI, scheduling
+default, internal schema를 다룰 때는 현재 primary documentation과 실제 lab evidence를 구분해 검증한다.
