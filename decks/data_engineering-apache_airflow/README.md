@@ -12,9 +12,6 @@ Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라,
 작은 scheduled batch workflow를 직접 정의하고 실행한 뒤 runtime state와 evidence를 사용해 동작을 설명하고 기본적인
 failure/reprocessing 문제를 진단할 수 있는 수준을 뜻한다.
 
-이 intra-deck baseline은 workspace-level curriculum metadata와 별개다. 현재 curriculum 설계 자체가 Notion의 `Level`,
-`Prerequisites`, `State` 같은 property를 변경한다는 뜻은 아니다.
-
 ### Goal
 
 학습이 끝나면 learner는 작은 batch workflow에 대해 다음 cycle을 스스로 수행할 수 있어야 한다.
@@ -48,8 +45,8 @@ core path는 다음만 가정한다.
 - terminal에서 command를 실행하고 file path와 environment variable을 다루는 기초
 - batch processing에서 "한 번의 logical work가 특정 input/partition을 담당한다"는 기본 감각
 
-SQL 기초는 data-engineering example을 이해하는 데 도움이 되지만 core Airflow mechanism의 필수 prerequisite로 두지
-않는다. Docker, Kubernetes, distributed systems 지식도 prerequisite가 아니다.
+SQL 기초는 data-engineering example을 이해하는 데 도움이 되지만 core Airflow mechanism의 필수 prerequisite로 두지 않는다.
+Docker, Kubernetes, distributed systems 지식도 prerequisite가 아니다.
 
 ### Learning Outcomes
 
@@ -58,22 +55,22 @@ Basic curriculum을 마치면 다음을 할 수 있어야 한다.
 1. `Dag`, `DagRun`, `Task`, `TaskInstance`를 구분하고 같은 logical execution을 UI, CLI, log, metadata에서 연결한다.
 2. `airflow.sdk`와 TaskFlow를 사용해 작은 Dag를 정의하고 dependency를 표현하며, Dag parsing/loading과 task execution을
    구분해 설명한다.
-3. `schedule`, `start_date`, logical date, data interval, manual/scheduled run, catchup의 관계를 시간축에서 예측하고
-   실제 DagRun으로 검증한다.
+3. `schedule`, `start_date`, logical date, data interval, manual/scheduled run, catchup의 관계를 시간축에서 예측하고 실제
+   DagRun으로 검증한다.
 4. dependency와 TaskInstance state transition을 바탕으로 task가 왜 실행되었거나 막혔는지 설명하고, 관측·retry·side
    effect 책임을 고려해 task boundary를 판단한다.
 5. runtime input, task-to-task metadata, 실제 dataset, external-system credential/configuration이 서로 다른 책임임을
-   설명하고 `Params`, XCom, external storage, Connection을 적절한 boundary에 배치한다. Airflow Variable은 global/shared
-   value surface로 인식하되 task-to-task data channel과 혼동하지 않는다.
-6. retry, rerun/reprocessing, catchup, backfill을 같은 개념으로 뭉개지 않고, 같은 logical work의 반복 실행이 external
+   설명하고 `Params`, XCom, external storage, Connection을 적절한 boundary에 배치한다. Airflow Variable은 shared value
+   surface로 인식하되 task-to-task data channel과 혼동하지 않고, credential을 Params나 XCom에 전달하지 않는다.
+6. retry, TaskInstance clear/re-run, catchup, backfill을 같은 개념으로 뭉개지 않고, 같은 logical work의 반복 실행이 external
    side effect를 어떻게 다루어야 하는지 idempotence 관점에서 설명하고 수정한다.
 7. "Airflow가 안 돈다"는 증상을 parsing/loading, DagRun scheduling, dependency/state, task runtime, external side effect
    문제로 좁히고 최소한의 evidence로 원인을 설명한다.
 
 ### Concept Dependencies
 
-unit은 chapter/file 경계가 아니라 learning responsibility다. 하나의 chapter가 여러 unit을 개발할 수 있고, unit 하나가
-여러 learning slice에 걸쳐 구현될 수도 있다.
+unit은 chapter/file 경계가 아니라 learning responsibility다. 하나의 chapter가 여러 unit을 개발할 수 있고, unit 하나가 여러
+learning slice에 걸쳐 구현될 수도 있다.
 
 ```text
 U1 Runtime mental model
@@ -106,8 +103,8 @@ TaskInstance state, data/side-effect boundary가 모두 잡힌 뒤에 다룬다.
 | **U2. Dag authoring and loading** | `airflow.sdk`, TaskFlow, Dag/Task declaration, dependency, module parsing과 task execution의 분리, Dag loading/import error | 작은 Dag를 직접 작성하고, file 존재 → parse/load → DagRun 생성 → TaskInstance 실행이 서로 다른 단계임을 evidence로 보인다. |
 | **U3. DagRun time model** | schedule, `start_date`, logical date, data interval, manual vs scheduled run, catchup | 실행 전에 interval/run timing을 예측하고 실제 UI/CLI/metadata timestamp와 비교한다. |
 | **U4. Task lifecycle and boundaries** | dependency, 기본 downstream 조건, TaskInstance state, retry-visible state, task boundary의 state/log/retry/side-effect 의미 | intentional failure에서 `running`, `up_for_retry`, `failed`, `upstream_failed`, `success`를 추적하고 task boundary를 설명한다. |
-| **U5. Data and configuration boundaries** | TaskFlow/XCom, external storage, DagRun Params, Connection, Variable의 역할 구분 | 큰 business data와 작은 orchestration metadata를 분리하고, run input·credential/config·task output identifier가 왜 서로 다른 channel을 써야 하는지 판단한다. |
-| **U6. Recovery, reprocessing, idempotence** | retry와 terminal failure, rerun/reprocessing, catchup/backfill, logical input과 wall-clock time, partial side effect, idempotent modification | 같은 logical interval을 반복 실행해도 의도한 final invariant에 수렴하도록 side effect를 수정하고, historical reprocessing 방식을 근거와 함께 선택한다. |
+| **U5. Data and configuration boundaries** | TaskFlow/XCom, external storage, DagRun Params, Connection, Variable의 역할 구분 | 큰 business data와 작은 orchestration metadata를 분리하고, run input·credential/config·task output identifier가 왜 서로 다른 channel을 써야 하는지 판단하며 credential이 task data channel로 흐르지 않게 설계한다. |
+| **U6. Recovery, reprocessing, idempotence** | retry와 terminal failure, TaskInstance clear/re-run, catchup/backfill, logical input과 wall-clock time, partial side effect, idempotent modification | 같은 logical interval을 반복 실행해도 의도한 final invariant에 수렴하도록 side effect를 수정하고, retry·clear/re-run·historical reprocessing 방식을 근거와 함께 선택한다. |
 | **U7. Evidence-first integration** | parsing → scheduling → dependency/state → task runtime → external output을 연결한 diagnosis와 전체 workflow 설계 | 작은 batch workflow를 작성·실행·실패·재처리하고, UI/CLI/log/metadata/output evidence로 동작과 원인을 end-to-end 설명한다. |
 
 ### Outcome Development and Assessment Coverage
@@ -118,13 +115,12 @@ TaskInstance state, data/side-effect boundary가 모두 잡힌 뒤에 다룬다.
 | O2 작은 Dag authoring/loading | U2 | 주어진 요구를 runnable Dag/dependency로 바꾸고 parse/load failure와 runtime failure를 구분한다. |
 | O3 schedule/data interval 이해 | U3 | 시간축 prediction과 실제 DagRun evidence가 일치하는지 설명한다. |
 | O4 TaskInstance lifecycle/task boundary | U4 | failure/retry trace를 해석하고 task split/merge 선택을 정당화한다. |
-| O5 data/configuration channel 선택 | U5 | Params/XCom/external storage/Connection/Variable 후보를 비교해 책임에 맞는 channel을 선택한다. |
-| O6 recovery/reprocessing/idempotence | U6 | retry/backfill 같은 반복 실행에서 invariant와 side effect를 검증하고 unsafe design을 수정한다. |
+| O5 data/configuration channel 선택 | U5 | Params/XCom/external storage/Connection/Variable 후보를 비교해 책임에 맞는 channel을 선택하고 credential boundary를 지킨다. |
+| O6 recovery/reprocessing/idempotence | U6 | retry, clear/re-run, backfill 같은 반복 실행에서 invariant와 side effect를 검증하고 unsafe design을 수정한다. |
 | O7 evidence-first diagnosis | U7 | 여러 layer의 evidence를 최소 순서로 모아 하나의 failure를 설명하고 수정 후 재검증한다. |
 
-U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 아니라, learner가
-**작은 workflow의 설계 → 예측 → 실행 → 관찰 → failure/reprocessing → 수정 → 재검증**을 독립적으로 수행하는 것으로
-평가한다.
+U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 아니라, learner가 **작은 workflow의 설계 → 예측 → 실행 →
+관찰 → failure/reprocessing → 수정 → 재검증**을 독립적으로 수행하는 것으로 평가한다.
 
 ### Current Material Mapping
 
@@ -134,15 +130,15 @@ U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 �
 | Current material | Curriculum coverage | 현재 gap |
 | --- | --- | --- |
 | [`01-mental-model.md`](textbook/01-mental-model.md) | U1 strong, U2 partial, U7 diagnostic foundation | learner가 작은 Dag를 직접 authoring하고 loading/import failure를 수정하는 progression이 얕다. |
-| [`02-scheduling-and-data-intervals.md`](textbook/02-scheduling-and-data-intervals.md) | U3 strong, U6 historical reprocessing partial | catchup/backfill evidence는 강하지만 retry/rerun/backfill을 하나의 repeated-logical-work model로 통합하는 cumulative judgment가 더 필요하다. |
-| [`03-task-design-and-state.md`](textbook/03-task-design-and-state.md) | U4 strong, U5 XCom/external-storage partial, U6 retry/idempotence strong | Params/Connection/Variable을 포함한 input/configuration boundary와 전체 end-to-end assessment가 부족하다. |
+| [`02-scheduling-and-data-intervals.md`](textbook/02-scheduling-and-data-intervals.md) | U3 strong, U6 historical reprocessing partial | catchup/backfill evidence는 강하지만 retry·clear/re-run·backfill을 하나의 repeated-logical-work model에서 비교하는 cumulative judgment가 더 필요하다. |
+| [`03-task-design-and-state.md`](textbook/03-task-design-and-state.md) | U4 strong, U5 XCom/external-storage/Param partial, U6 retry/idempotence strong | Param을 experiment control로 사용하지만 input/configuration boundary로 일반화하지 않았고 Connection/Variable/credential boundary와 전체 end-to-end assessment가 부족하다. |
 
 이 mapping은 다음 build slice를 고르는 evidence다. file coverage 자체를 curriculum completion으로 취급하지 않는다.
 
 ### Out of Scope for Basic
 
-다음은 core Basic outcome에 필요해질 때 curriculum delta로 다시 검토한다. 현재는 선행 학습으로 요구하거나 chapter를
-만들지 않는다.
+다음은 core Basic outcome에 필요해질 때 curriculum delta로 다시 검토한다. 현재는 선행 학습으로 요구하거나 chapter를 만들지
+않는다.
 
 - CeleryExecutor/KubernetesExecutor와 distributed production topology
 - Kubernetes 기반 HA deployment와 scheduler performance tuning
@@ -243,6 +239,7 @@ schema가 바뀔 수 있으므로 public authoring surface는 `airflow.sdk`를 �
 
 - [Apache Airflow — Architecture Overview](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html)
 - [Apache Airflow — Core Concepts](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/)
+- [Apache Airflow — Dag Runs](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/dag-run.html)
 - [Apache Airflow — Scheduler](https://airflow.apache.org/docs/apache-airflow/stable/concepts/scheduler.html)
 - [Apache Airflow — Params](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/params.html)
 - [Apache Airflow — Connections & Hooks](https://airflow.apache.org/docs/apache-airflow/3.3.1/authoring-and-scheduling/connections.html)
