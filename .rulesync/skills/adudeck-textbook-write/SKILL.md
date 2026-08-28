@@ -2,10 +2,11 @@
 name: adudeck-textbook-write
 description: >-
   Write or revise textbook chapters, sections, worked examples, exercises, and assessments from
-  an already defined scope, prerequisites, outcomes, and supplied context. Use for actual textbook
-  authoring or substantial deepening of thin material. Do not own curriculum research, source
-  selection, storage, publishing policy, or playground investigation design; use adudeck-playground
-  for hands-on learning investigations.
+  an already defined learning scope, learner prerequisites, outcomes, and supplied context. Use for
+  actual textbook authoring or substantial deepening of thin material. Do not own deck curriculum
+  research or decisions, deck build orchestration, storage, publishing policy, or playground
+  investigation design; use adudeck-deck-curriculum for deck curriculum work, adudeck-deck-build
+  for deck-level implementation, and adudeck-playground for hands-on learning investigations.
 targets: ["claudecode", "codexcli", "copilot", "copilotcli", "antigravity-ide", "antigravity-cli"]
 ---
 
@@ -16,14 +17,15 @@ targets: ["claudecode", "codexcli", "copilot", "copilotcli", "antigravity-ide", 
 Write instructional material that can serve as the learner's **primary explanation** for the
 supplied scope.
 
-Preserve upstream scope, prerequisites, and learning outcomes. Reuse supplied terminology when it
-is valid and treat authoritative context as a constraint, but do not silently propagate material
-conflicts, unsupported claims, or known stale details. Make local pedagogical choices when needed
-without turning authoring into curriculum design or broad research.
+Preserve upstream learning scope, learner prerequisites, and learning outcomes. Reuse supplied
+terminology when it is valid and treat authoritative context as a constraint, but do not silently
+propagate material conflicts, unsupported claims, or known stale details. Make local pedagogical
+choices when needed without turning authoring into curriculum design or broad research.
 
-If supplied scope, prerequisites, and learning outcomes are materially inconsistent, surface the
-mismatch instead of silently repairing it by expanding scope, redefining prerequisites, or changing
-outcomes.
+If supplied learning scope, learner prerequisites, and learning outcomes are materially
+inconsistent, surface the mismatch instead of silently repairing it by expanding scope, redefining
+prerequisites, or changing outcomes. Route the deck curriculum decision to
+`adudeck-deck-curriculum`.
 
 Follow `adudeck-textbook` when available. Otherwise preserve the same minimum standard: develop
 concepts progressively, expose reasoning in examples, require active practice, and revise
@@ -37,7 +39,7 @@ playground validation.
 
 ## Correctness Boundary
 
-Do not own curriculum research or source selection. When material correctness depends on a
+Do not own deck curriculum research or source selection. When material correctness depends on a
 version-sensitive, unstable, conflicting, or otherwise uncertain externally verifiable detail,
 verify that narrow detail against supplied authoritative context or an appropriate authoritative
 source, preferring primary sources when they materially improve correctness; for versioned tools
@@ -56,9 +58,10 @@ distinct.
 
 ## Procedure
 
-1. Identify the learner level, scope, prerequisites, and outcomes from the supplied context.
-1. Choose the smallest coherent chapter or section sequence that teaches that scope, ordered by
-   conceptual dependency.
+1. Identify the learner level, learning scope, learner prerequisites, and outcomes from the supplied
+   context.
+1. Preserve the accepted deck curriculum unit order. Within the assigned unit or slice, choose the
+   smallest coherent local section sequence, ordered by conceptual dependency.
 1. Develop each major concept from motivation or prerequisite connection into a precise model,
    explanation, worked application, and practice.
 1. Add misconceptions, counterexamples, boundaries, or failure cases where a plausible wrong
@@ -160,3 +163,11 @@ scope and learning intent but surface the conflict instead of embedding it more 
 rewrite.
 
 A short section is acceptable. A shallow section is not.
+
+## Routing
+
+- Use `adudeck-deck-curriculum` when authoring exposes a learner-prerequisite, learning-scope,
+  outcome, dependency, or sequence problem in the upstream deck learning contract.
+- Use `adudeck-deck-build` to choose and integrate incremental learning slices across the deck.
+- Use `adudeck-textbook` for the overall textbook quality contract.
+- Use `adudeck-playground` for hands-on investigation design and validation.
