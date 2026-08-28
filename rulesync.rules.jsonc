@@ -1,0 +1,13 @@
+{
+  "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
+  "targets": {
+    "agentsmd": {
+      "rules": {
+        "ruleDiscoveryMode": "none"
+      }
+    },
+    "copilot": ["rules"]
+  },
+  "outputRoots": ["."],
+  "delete": true
+}
