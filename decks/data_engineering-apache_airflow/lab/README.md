@@ -67,9 +67,9 @@ host / filesystem readiness
 첫 실행에서는 `uv`가 Python, Airflow release constraints와 package를 resolve해야 하므로 network access와 package cache
 준비가 필요할 수 있다.
 
-preflight 성공은 **metadata DB가 준비되었거나 expected Dag가 DB-aware CLI surface에 나타나거나 scheduler-backed runtime이
-정상이라는 증거가 아니다.** 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source import 문제를 최대한 먼저
-분리하는 것이다.
+preflight 성공은 **metadata DB가 준비되었거나 expected Dag가 DB-aware CLI surface에 나타나거나 scheduler-backed
+runtime이 정상이라는 증거가 아니다.** 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source import 문제를
+최대한 먼저 분리하는 것이다.
 
 ## Verification ladder
 
@@ -128,8 +128,8 @@ U2 starter의 task definition도 확인한다.
 bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
 ```
 
-이 단계에서 metadata DB와 Airflow schema가 존재하고 Dag/task definition을 찾을 수 있지만 scheduler는 아직 실행하지 않았다.
-다음을 구분한다.
+이 단계에서 metadata DB와 Airflow schema가 존재하고 Dag/task definition을 찾을 수 있지만 scheduler는 아직 실행하지
+않았다. 다음을 구분한다.
 
 ```text
 metadata schema exists
@@ -173,8 +173,8 @@ Deck directory에서 실행한다.
 bash lab/airflow.sh standalone
 ```
 
-standalone은 이미 준비한 metadata DB를 사용하면서 scheduler, Dag Processor, API/UI 등 local runtime component를 시작한다.
-terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
+standalone은 이미 준비한 metadata DB를 사용하면서 scheduler, Dag Processor, API/UI 등 local runtime component를
+시작한다. terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
 
 별도 terminal에서 scheduler가 사용하는 environment와 같은 wrapper로 Dag를 확인한다.
 
