@@ -15,7 +15,10 @@ python.uv_venv_auto = "source"
 
 [tasks."rulesync:doctor"]
 description = "Validate Rulesync configuration"
-run = "rulesync doctor --strict"
+run = """
+rulesync doctor --strict
+rulesync doctor --strict --config rulesync.rules.jsonc
+"""
 
 [tasks."rulesync:install"]
 description = "Install external Rulesync dependencies"
@@ -26,7 +29,7 @@ description = "Generate agent projections from canonical Rulesync assets"
 run = """
 mise run rulesync:install
 rulesync generate
-rulesync generate --targets agentsmd,copilot --features rules
+rulesync generate --config rulesync.rules.jsonc
 """
 
 [tasks."rulesync:check"]
@@ -34,7 +37,7 @@ description = "Check generated Rulesync projections for drift"
 run = """
 rulesync install --frozen
 rulesync generate --check
-rulesync generate --check --targets agentsmd,copilot --features rules
+rulesync generate --check --config rulesync.rules.jsonc
 """
 
 [tasks."format:markdown"]
