@@ -115,8 +115,8 @@ TaskInstance state, data/side-effect boundary가 모두 잡힌 뒤에 다룬다.
 | O6 recovery/reprocessing/idempotence | U6 | retry, clear/re-run, backfill 같은 반복 실행에서 invariant와 side effect를 검증하고 unsafe design을 수정한다. |
 | O7 evidence-first diagnosis | U7 | 여러 layer의 evidence를 최소 순서로 모아 하나의 failure를 설명하고 수정 후 재검증한다. |
 
-U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 아니다. Learner가 다음 흐름을 독립적으로 수행하는 것으로
-평가한다.
+U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 아니다. Learner가 다음 흐름을 독립적으로 수행하는
+것으로 평가한다.
 
 ```text
 작은 workflow 설계
@@ -160,9 +160,10 @@ File coverage만으로 curriculum completion을 판단하지 않는다.
 
 현재 material을 보존하면서 다음 build loop에서 우선할 gap은 다음과 같다.
 
-1. **U2 Dag authoring and loading** — learner가 작은 Dag를 직접 만들고 parse/load/import failure를 수정하는 end-to-end slice.
-2. **U5 Data and configuration boundaries** — Params, XCom, external storage, Connection, Variable의 책임을 비교하고 올바른
-   channel을 선택하는 slice.
+1. **U2 Dag authoring and loading** — learner가 작은 Dag를 직접 만들고 parse/load/import failure를 수정하는 end-to-end
+   slice.
+2. **U5 Data and configuration boundaries** — Params, XCom, external storage, Connection, Variable의 책임을 비교하고
+   올바른 channel을 선택하는 slice.
 3. **U7 Evidence-first integration** — 작은 workflow 하나를 설계·실행·실패·재처리하고 최소 evidence로 end-to-end
    diagnosis와 수정 후 재검증까지 수행하는 cumulative slice.
 
@@ -187,5 +188,5 @@ Discovery
 ## Version and Authority Baseline
 
 현재 material version baseline은 Apache Airflow **3.3.1**이다. Public authoring surface는 `airflow.sdk`를 사용하고,
-internal metadata DB 관측은 학습용 read-only probe로 제한한다. Version-sensitive API, CLI, UI, internal schema를 다룰 때는
-현재 primary documentation과 실제 lab evidence를 구분해 검증한다.
+internal metadata DB 관측은 학습용 read-only probe로 제한한다. Version-sensitive API, CLI, UI, internal schema를 다룰
+때는 현재 primary documentation과 실제 lab evidence를 구분해 검증한다.

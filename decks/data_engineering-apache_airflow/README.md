@@ -9,11 +9,11 @@ Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라,
 ## Curriculum
 
 목표 learner level은 **Basic**이다. 상세 goal, learner prerequisites, learning outcomes, concept dependencies, unit
-architecture, assessment coverage, 현재 textbook gap과 다음 build handoff는 [Basic Curriculum Plan](docs/curriculum.md)에
-정리한다.
+architecture, assessment coverage, 현재 textbook gap과 다음 build handoff는
+[Basic Curriculum Plan](docs/curriculum.md)에 정리한다.
 
-Curriculum unit은 chapter/file 경계와 동일하지 않다. 현재 textbook을 먼저 보존하고, review된 learning slice 단위로 필요한
-부분만 점진적으로 확장한다.
+Curriculum unit은 chapter/file 경계와 동일하지 않다. 현재 textbook을 먼저 보존하고, review된 learning slice 단위로
+필요한 부분만 점진적으로 확장한다.
 
 ## Learning Path
 
