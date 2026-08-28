@@ -44,7 +44,7 @@ description = "Auto-format repository-owned Markdown with rumdl"
 run = '''rumdl fmt --exclude "AGENTS.md,**/AGENTS.md,AGENTS.override.md,**/AGENTS.override.md,.github/copilot-instructions.md,.github/instructions/**,.github/skills/**,.agents/**,.codex/**" .'''
 
 [tasks."format:json"]
-description = "Check JSON and JSONC with Biome"
+description = "Auto-format JSON and JSONC with Biome"
 run = "biome format --write ."
 
 [tasks."format:toml"]
