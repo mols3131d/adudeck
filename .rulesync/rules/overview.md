@@ -19,8 +19,6 @@ description: Repository-wide contract for the adudeck agentic learning workspace
 - Use another storage only when the user explicitly identifies or requests it for the current deck or task.
 - Do not infer, migrate, mirror, split, or synchronize a deck across storages without explicit instruction.
 - Preserve a deck as one cohesive learning workspace unit regardless of storage.
-- For Notion deck storage, follow `docs/notion.md` and represent deck state through properties rather than filesystem
-  paths.
 
 ## Authority
 
