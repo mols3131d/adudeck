@@ -156,6 +156,16 @@ U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 �
 
 File coverage만으로 curriculum completion을 판단하지 않는다.
 
+## Practice Scaffold Status
+
+`lab/`에는 현재 다음 learning slice의 **실습 준비 상태**를 만든다.
+
+- **U2** — `dags/exercises/u2_authoring_starter.py`: parser-safe starter, dependency 수정, controlled parse/load failure와 복구를 위한 시작점.
+- **U5** — `dags/exercises/u5_boundaries_starter.py`: Param, TaskFlow/XCom identifier, fixture/output file, Variable, Connection의 책임을 비교하기 위한 safe baseline.
+- **Shared** — deterministic fixture, read-only metadata probe, run snapshot helper, lab-owned reset helper.
+
+이 scaffold는 learning outcome을 이미 달성했다는 의미가 아니다. Repository CI/static validation과 실제 Airflow runtime에서의 learner-visible validation을 구분한다. U7 cumulative starter는 U2/U5 실습을 review한 뒤 필요 범위를 결정한다.
+
 ## Build Handoff
 
 현재 material을 보존하면서 다음 build loop에서 우선할 gap은 다음과 같다.
