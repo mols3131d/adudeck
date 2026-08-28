@@ -1,1 +1,1 @@
-{"_meta":{"kind":"rules","instructions":"Do not load repository path Rules from this file. CHATBOT.md already applies them through the root-to-target AGENTS.md walk; this file records that routing boundary only."}}
+{"_meta":{"kind":"rules","instructions":"Rule routing for this chatbot is delegated to CHATBOT.md's root-to-target AGENTS.md walk. Do not load additional repository path Rules from this file."}}
