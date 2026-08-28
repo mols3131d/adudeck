@@ -21,24 +21,18 @@ run = "rulesync doctor --strict"
 description = "Resolve external Rulesync dependencies"
 run = "rulesync install"
 
-[tasks."rulesync:normalize-agents"]
-description = "Keep root AGENTS.md to the canonical Rule body"
+[tasks."rulesync:generate"]
+description = "Generate agent projections from canonical Rulesync assets"
 run = '''
+rulesync install --frozen
+rulesync generate
+rulesync generate --targets agentsmd,copilot --features rules
 if [ "$(head -n 1 AGENTS.md)" != "# Repository Contract" ]; then
   sed -n '/^# Repository Contract$/,$p' AGENTS.md > AGENTS.md.tmp
   test -s AGENTS.md.tmp || { rm -f AGENTS.md.tmp; exit 1; }
   mv AGENTS.md.tmp AGENTS.md
 fi
 '''
-
-[tasks."rulesync:generate"]
-description = "Generate agent projections from canonical Rulesync assets"
-run = """
-rulesync install --frozen
-rulesync generate
-rulesync generate --targets agentsmd,copilot --features rules
-mise run rulesync:normalize-agents
-"""
 
 [tasks."rulesync:check"]
 description = "Check frozen Skills, Copilot Rules, and the normalized root AGENTS.md invariant"
