@@ -65,6 +65,8 @@ metadata DB는 Airflow의 internal implementation surface다. 이 deck의 `inspe
 lab은 Apache Airflow 3.3.1의 `standalone` mode를 사용한다. production topology를 재현하려는 환경이 아니라,
 **한 컴퓨터에서 Dag Processor, scheduler, API/UI, executor/task execution과 metadata state를 관찰하기 위한 학습 환경**이다.
 
+실습 폴더 구조, U2/U5 starter DAG, fixture, snapshot/reset helper의 사용법은 [Lab Guide](lab/README.md)에 정리한다.
+
 ### Runtime Requirements
 
 - `uv`를 실행할 수 있는 local environment
