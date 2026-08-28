@@ -18,7 +18,7 @@ Curriculum unit은 chapter/file 경계와 동일하지 않다. 현재 textbook�
 ## Learning Path
 
 1. [Mental model: 정의와 실행을 분리해서 관찰하기](textbook/01-mental-model.md)
-2. [Scheduling: data interval을 시간축과 runtime에서 검증하기](textbook/02-scheduling-and-data-intervals.md)
+2. [Scheduling: data interval과 Airflow 3 timetable semantics를 검증하기](textbook/02-scheduling-and-data-intervals.md)
 3. [Task design: failure, retry, side effect를 직접 관찰하기](textbook/03-task-design-and-state.md)
 
 각 chapter는 설명과 실습을 별개 자료로 취급하지 않는다. 실습 결과 자체가 다음 설명의 evidence가 된다.
@@ -108,13 +108,19 @@ UI는 기본 API Server port인 `http://localhost:8080`에서 확인한다.
 
 작성 기준은 Apache Airflow 3.3.1이다. Airflow 3에서는 standalone Dag Processor가 필수 component이고, executor는 별도
 daemon이 아니라 scheduler 안에서 사용되는 execution abstraction이다. minor release에서 CLI, UI, internal metadata
-schema가 바뀔 수 있으므로 public authoring surface는 `airflow.sdk`를 사용하고 internal DB 관측은 read-only로 제한한다.
+schema가 바뀔 수 있으므로 Dag/task authoring은 `airflow.sdk`를 중심으로 사용하고, scheduling lab처럼 필요한 경우에는
+Airflow가 public interface로 문서화한 `airflow.timetables`를 사용한다. Internal DB 관측은 read-only로 제한한다.
+
+Airflow 3에서는 bare cron string이 기본적으로 `CronTriggerTimetable` semantics를 사용한다. 이 deck의 scheduling chapter는
+연속 data interval을 학습하기 위해 explicit `CronDataIntervalTimetable`을 사용하며, 이 선택을 Airflow 전체의 default로
+일반화하지 않는다.
 
 ## References
 
 - [Apache Airflow — Architecture Overview](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html)
 - [Apache Airflow — Core Concepts](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/)
 - [Apache Airflow — Dag Runs](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/dag-run.html)
+- [Apache Airflow — Timetables](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/timetable.html)
 - [Apache Airflow — Scheduler](https://airflow.apache.org/docs/apache-airflow/stable/concepts/scheduler.html)
 - [Apache Airflow — Params](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/params.html)
 - [Apache Airflow — Connections & Hooks](https://airflow.apache.org/docs/apache-airflow/3.3.1/authoring-and-scheduling/connections.html)
