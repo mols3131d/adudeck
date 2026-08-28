@@ -28,7 +28,6 @@ rulesync install --frozen
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
 sh .rulesync/scripts/project-root-agents.sh
-uv run python .rulesync/skills/.curated/mols-chatbot-bootstrap/scripts/generate_routes.py --repo . --skills-root .rulesync/skills --output-dir .agents/route --kinds both
 """
 
 [tasks."rulesync:check"]
