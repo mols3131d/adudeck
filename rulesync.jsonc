@@ -21,7 +21,11 @@
         "mols-chatbot-bootstrap",
         "mols-ci-design",
         "mols-markdown-for-human",
-        "mols-markdown-maintenance"
+        "mols-markdown-maintenance",
+        "mols-mermaid-diagram",
+        "mols-mermaid-chart",
+        "mols-rpi",
+        "technical-document-fidelity"
       ]
     }
   ],
