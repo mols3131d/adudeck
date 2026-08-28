@@ -23,29 +23,21 @@ run = "rulesync install"
 
 [tasks."rulesync:generate"]
 description = "Generate agent projections from canonical Rulesync assets"
-run = '''
+run = """
 rulesync install --frozen
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
-awk '
-NR == 1 && $0 == "---" { frontmatter = 1; next }
-frontmatter && $0 == "---" { frontmatter = 0; next }
-!frontmatter { print }
-' .rulesync/rules/overview.md | sed '/./,$!d' > AGENTS.md
-'''
+sh .rulesync/scripts/project-root-agents.sh
+"""
 
 [tasks."rulesync:check"]
 description = "Check frozen Skills, Copilot Rules, and the root AGENTS.md projection"
-run = '''
+run = """
 rulesync install --frozen
 rulesync generate --check
 rulesync generate --check --targets copilot --features rules
-awk '
-NR == 1 && $0 == "---" { frontmatter = 1; next }
-frontmatter && $0 == "---" { frontmatter = 0; next }
-!frontmatter { print }
-' .rulesync/rules/overview.md | sed '/./,$!d' | cmp -s AGENTS.md -
-'''
+sh .rulesync/scripts/project-root-agents.sh --check
+"""
 
 [tasks."format:markdown"]
 description = "Auto-format repository-owned Markdown with rumdl"
