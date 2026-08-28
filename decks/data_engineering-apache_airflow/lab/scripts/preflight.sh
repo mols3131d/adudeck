@@ -5,13 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LAB_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 AIRFLOW_PYTHON_VERSION="${ADUDECK_AIRFLOW_PYTHON:-3.12}"
 
-EXPECTED_DAGS=(
-  "adudeck_observable_runtime"
-  "adudeck_observable_schedule"
-  "adudeck_u2_authoring_starter"
-  "adudeck_u5_boundaries_starter"
-)
-
 FAILURES=0
 
 pass() {
@@ -80,27 +73,12 @@ else
 fi
 
 echo
-echo "== Local Dag discovery =="
-if DAG_LIST="$(bash "${LAB_DIR}/airflow.sh" dags list --local)"; then
-  printf '%s\n' "${DAG_LIST}"
-  pass "local Dag discovery command completed"
-  for dag_id in "${EXPECTED_DAGS[@]}"; do
-    if grep -Fq "${dag_id}" <<<"${DAG_LIST}"; then
-      pass "Dag discovered: ${dag_id}"
-    else
-      fail "expected Dag not discovered: ${dag_id}"
-    fi
-  done
-else
-  fail "local Dag discovery failed; inspect the command output above"
-fi
-
-echo
-echo "== Local import-error surface =="
+echo "== Local source import-error surface =="
+echo "This check parses local source without treating serialized DB content as the source of truth."
 if bash "${LAB_DIR}/airflow.sh" dags list-import-errors --local -o table; then
-  pass "local import-error inspection command completed"
+  pass "local source has no reported import errors"
 else
-  fail "could not inspect local import errors"
+  fail "local source has import errors; inspect the table above before creating runtime state"
 fi
 
 echo
@@ -109,5 +87,5 @@ if (( FAILURES > 0 )); then
   exit 1
 fi
 
-echo "Preflight complete. The environment is ready for the next verification layer."
-echo "Next: use the verification ladder in lab/README.md before starting standalone."
+echo "Preflight complete. No metadata schema or scheduler-backed runtime has been claimed yet."
+echo "Next: run `bash lab/airflow.sh db migrate`, then verify expected Dags as described in lab/README.md."
