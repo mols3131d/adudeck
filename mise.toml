@@ -15,10 +15,7 @@ python.uv_venv_auto = "source"
 
 [tasks."rulesync:doctor"]
 description = "Validate Rulesync configuration"
-run = """
-rulesync doctor --strict
-rulesync doctor --strict --config rulesync.rules.jsonc
-"""
+run = "rulesync doctor --strict"
 
 [tasks."rulesync:install"]
 description = "Install external Rulesync dependencies"
@@ -29,7 +26,8 @@ description = "Generate agent projections from canonical Rulesync assets"
 run = """
 mise run rulesync:install
 rulesync generate
-rulesync generate --config rulesync.rules.jsonc
+rulesync generate --targets agentsmd,copilot --features rules
+uv run python .rulesync/scripts/normalize_agents.py
 """
 
 [tasks."rulesync:check"]
@@ -37,7 +35,8 @@ description = "Check generated Rulesync projections for drift"
 run = """
 rulesync install --frozen
 rulesync generate --check
-rulesync generate --check --config rulesync.rules.jsonc
+rulesync generate --check --targets copilot --features rules
+uv run python .rulesync/scripts/normalize_agents.py --check
 """
 
 [tasks."format:markdown"]
@@ -45,7 +44,7 @@ description = "Auto-format repository-owned Markdown with rumdl"
 run = '''rumdl fmt --exclude "AGENTS.md,**/AGENTS.md,AGENTS.override.md,**/AGENTS.override.md,.github/copilot-instructions.md,.github/instructions/**,.github/skills/**,.agents/**,.codex/**" .'''
 
 [tasks."format:json"]
-description = "Auto-format JSON and JSONC with Biome"
+description = "Check JSON and JSONC with Biome"
 run = "biome format --write ."
 
 [tasks."format:toml"]
