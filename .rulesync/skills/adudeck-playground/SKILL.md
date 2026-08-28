@@ -4,7 +4,8 @@ description: >-
   Design, write, revise, or review executable and interactive learning playgrounds that expose
   mechanisms through direct manipulation and observable system evidence. Use when asked for a
   playground or when learning requires runnable experiments, state inspection, controlled failure
-  or variation, or lab artifacts. Do not own curriculum, textbook prose, storage, or publishing.
+  or variation, or lab artifacts. Do not own deck curriculum, deck build orchestration, textbook
+  prose, storage, or publishing.
 targets: ["claudecode", "codexcli", "copilot", "copilotcli", "antigravity-ide", "antigravity-cli"]
 ---
 
@@ -16,13 +17,14 @@ A playground is a **hands-on learning environment for investigating a mechanism*
 recipe whose success criterion is only that the final output appears.
 
 Own the experiment design, hands-on learning surface, and experimental evidence needed to expose
-the target mechanism. Treat scope, prerequisites, learning outcomes, terminology, and supplied
-reference context as upstream inputs. Do not expand curriculum, choose curriculum sources, choose
-storage, or replace the textbook explanation. Compose with `adudeck-textbook-write` when the
-playground is embedded in a textbook chapter.
+the target mechanism. Treat learning scope, learner prerequisites, learning outcomes, terminology,
+and supplied reference context as upstream inputs. Do not expand deck curriculum, choose curriculum
+sources, choose storage, orchestrate deck implementation, or replace the textbook explanation.
+Compose with `adudeck-textbook-write` when the playground is embedded in a textbook chapter.
 
-If the upstream scope, prerequisites, and learning outcomes are materially inconsistent, surface
-the mismatch instead of using experiment design to silently redefine the learning contract.
+If the upstream learning scope, learner prerequisites, and learning outcomes are materially
+inconsistent, surface the mismatch instead of using experiment design to silently redefine the
+learning contract. Route that deck curriculum decision to `adudeck-deck-curriculum`.
 
 `Playground` names a pedagogical responsibility, not a required directory, filename, or environment
 shape. Reuse the smallest structure that already fits the deck; do not introduce a `playground/`
@@ -121,7 +123,7 @@ boundary explicit. Apply repository coding guidance when code-facing implementat
 
 ## Technical Verification and Validation
 
-Do not turn playground work into curriculum research. When behavior depends on version-sensitive
+Do not turn playground work into deck curriculum research. When behavior depends on version-sensitive
 APIs, commands, configuration, runtime support, or diagnostic interfaces, verify those details
 against supplied authoritative context or an appropriate authoritative source; for versioned tools
 and APIs, prefer current primary documentation. Use verification only to make the defined
@@ -167,6 +169,9 @@ a mandatory ritual.
 
 ## Routing
 
+- Use `adudeck-deck-curriculum` when playground work exposes an upstream learner-prerequisite,
+  learning-scope, outcome, dependency, or sequence problem.
+- Use `adudeck-deck-build` to integrate playground work into incremental deck progression.
 - Use `adudeck-textbook` for the overall textbook standard and whether hands-on learning is needed
   for competence.
 - Use `adudeck-textbook-write` for textbook prose, worked explanations, exercises, assessments, and
