@@ -20,6 +20,7 @@ lab/
 ├── fixtures/
 │   └── orders.jsonl
 ├── scripts/
+│   ├── preflight.sh
 │   ├── reset.sh
 │   └── snapshot.sh
 └── output/                  # runtime-generated, gitignored
@@ -31,7 +32,82 @@ DAG는 learner가 직접 prediction, modification, failure, comparison을 수행
 현재 scaffold는 curriculum의 **U2 Dag authoring/loading**과 **U5 data/configuration boundaries**까지만 준비한다. U7
 cumulative integration은 앞 두 slice를 review한 뒤 추가한다.
 
-## Start the runtime
+## Learning preparation
+
+Airflow 3.3.1은 Python 3.10~3.14에서 테스트되며 local development에는 SQLite를 사용할 수 있다. Airflow 자체는 POSIX
+환경을 전제로 하므로 Windows에서는 WSL2나 Linux 환경을 사용한다. 이 lab은 production deployment가 아니라 local learning
+환경이므로 SQLite와 `standalone`을 의도적으로 사용한다.
+
+학습을 시작하기 전에 Deck directory에서 다음을 실행한다.
+
+```bash
+bash lab/scripts/preflight.sh
+```
+
+preflight는 다음을 확인한다.
+
+```text
+host / filesystem readiness
+→ uv 사용 가능 여부
+→ Airflow 3.3.1 wrapper resolution
+→ local Dag discovery
+→ local import-error inspection surface
+```
+
+첫 실행에서는 `uvx`가 Airflow package를 resolve해야 하므로 network access와 package cache 준비가 필요할 수 있다.
+
+preflight 성공은 **scheduler-backed runtime이 정상이라는 증거가 아니다.** 아직 DagRun과 TaskInstance를 실제 control plane에
+생성하지 않았다. 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source 문제를 최대한 먼저 분리하는 것이다.
+
+## Verification ladder
+
+Airflow 학습에서는 서로 다른 검증 수준을 섞지 않는다. 다음 순서로 한 단계씩 올라간다.
+
+```text
+L0. environment + local source discovery
+        ↓
+L1. isolated task / Dag execution test
+        ↓
+L2. standalone scheduler-backed execution
+        ↓
+L3. cross-view runtime observation
+        ↓
+L4. controlled failure / modification / re-observation
+```
+
+### L0 — source가 보이는가
+
+```bash
+bash lab/scripts/preflight.sh
+bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
+```
+
+이 단계에서 확인하는 것은 source가 Airflow authoring surface로 해석될 수 있는지다. Task가 목록에 보인다고 실제
+TaskInstance가 실행된 것은 아니다.
+
+### L1 — scheduler 없이 task/Dag code를 실행할 수 있는가
+
+Airflow 공식 tutorial의 local testing path를 사용한다.
+
+```bash
+bash lab/airflow.sh tasks test \
+  adudeck_u2_authoring_starter \
+  inspect_source \
+  2026-01-01
+```
+
+전체 Dag도 local test할 수 있다.
+
+```bash
+bash lab/airflow.sh dags test \
+  adudeck_u2_authoring_starter \
+  2026-01-01
+```
+
+`tasks test`와 `dags test`는 local test execution이다. 실제 scheduler-backed DagRun/TaskInstance state를 metadata DB에
+남기는 실행과 동일하게 해석하지 않는다. 이 차이가 다음 단계의 학습 대상이다.
+
+### L2 — 실제 control-plane runtime을 시작한다
 
 Deck directory에서 실행한다.
 
@@ -39,12 +115,20 @@ Deck directory에서 실행한다.
 bash lab/airflow.sh standalone
 ```
 
-별도 terminal에서 DAG loading 상태를 확인한다. U2의 controlled parse failure를 확인할 때는 serialized metadata가 아니라
-현재 source를 직접 parse하는 local mode를 사용한다.
+standalone terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
+
+별도 terminal에서 scheduler가 사용하는 environment와 같은 wrapper로 Dag를 확인한다.
+
+```bash
+bash lab/airflow.sh dags list
+bash lab/airflow.sh dags list-import-errors -o table
+```
+
+U2의 controlled parse failure를 현재 source 자체에서 확인할 때는 serialized metadata 대신 local mode를 사용한다.
 
 ```bash
 bash lab/airflow.sh dags list --local
-bash lab/airflow.sh dags list-import-errors --local
+bash lab/airflow.sh dags list-import-errors --local -o table
 ```
 
 `airflow.sh`는 이 deck의 disposable local state만 사용하고 Apache Airflow 3.3.1을 고정한다. U5 실습을 위해 teaching-only
@@ -57,6 +141,49 @@ Variable과 Connection default도 제공한다. 이 값은 실제 credential이 
 Airflow 3에서 bare cron string은 기본적으로 `CronTriggerTimetable` semantics를 사용한다. Scheduling chapter의 reference
 DAG는 연속 data interval을 학습하기 위해 `CronDataIntervalTimetable`을 명시적으로 사용한다. 따라서 해당 실습에서 보이는
 `[data_interval_start, data_interval_end)`를 모든 cron Dag의 기본 동작으로 일반화하지 않는다.
+
+### L3 — 같은 runtime object를 여러 면에서 연결한다
+
+실제 Dag를 trigger한 뒤 최소한 다음을 연결한다.
+
+```text
+UI / Grid
+CLI DagRun + TaskInstance state
+component / task log
+read-only metadata probe
+external output
+```
+
+단순히 모든 화면을 여는 것이 목적이 아니다. `dag_id`, `run_id`, `task_id`, `try_number` 같은 identity를 사용해 서로 다른
+surface가 **같은 logical execution**을 가리키는지 설명한다.
+
+### L4 — 한 조건을 바꾸고 다시 본다
+
+마지막에 failure mode, dependency, Param, task boundary, side effect 중 하나를 바꾼다.
+
+```text
+prediction
+→ intervention
+→ observation
+→ explanation
+→ invariant 확인
+```
+
+baseline과 variation을 구분하지 않으면 단순 실행 tutorial에 머무르게 된다.
+
+## First learning session
+
+처음부터 모든 lab을 돌리지 않는다. 첫 session의 권장 path는 다음과 같다.
+
+1. `bash lab/scripts/preflight.sh`로 environment/source boundary를 확인한다.
+2. `textbook/01-mental-model.md`의 definition/runtime separation을 읽는다.
+3. U2 starter의 task/dependency를 읽고 `tasks list` 결과를 예측한다.
+4. `tasks test`와 `dags test`로 local execution evidence를 본다.
+5. `standalone`을 시작하고 같은 Dag를 실제로 trigger한다.
+6. `snapshot.sh`로 scheduler-backed DagRun/TaskInstance를 관찰한다.
+7. local test와 scheduler-backed execution 사이에서 **생긴 state와 생기지 않은 state**를 비교한다.
+
+이 비교를 설명할 수 있어야 다음 failure/retry나 scheduling 실습으로 넘어간다.
 
 ## Practice loop
 
@@ -99,12 +226,18 @@ Python file exists
 !=
 Dag parsed / loaded
 !=
-DagRun exists
+local tasks/dags test succeeds
 !=
-TaskInstance executed
+scheduler-backed DagRun exists
+!=
+TaskInstance executed by the runtime
 ```
 
 실습 중 starter를 깨뜨리는 것은 허용된 controlled failure다. 원인을 evidence로 확인한 뒤 정상 parse 상태로 복구한다.
+
+Airflow의 Dag file은 단순히 한 번 실행되는 application entrypoint가 아니다. Dag Processor가 반복해서 parse하므로 top-level
+code에는 network/database 호출 같은 무거운 work를 두지 않는다. U2에서는 같은 work를 top-level과 task body에 각각 놓았을
+때 **언제 실행되는가**를 구분하는 것이 중요하다.
 
 ## U5 — Data and configuration boundaries starter
 
@@ -154,6 +287,9 @@ bash lab/airflow.sh dags trigger \
   adudeck_u5_boundaries_starter
 ```
 
+`region`은 JSON Schema 기반 Param validation을 사용한다. 허용되지 않은 값을 넣었을 때 DagRun이 만들어지는지 먼저
+예측하고 UI/CLI evidence로 확인한다. Validation failure와 task runtime failure를 같은 failure로 취급하지 않는다.
+
 ## Observe one run
 
 Dag 전체 run 목록:
@@ -190,9 +326,15 @@ bash lab/scripts/reset.sh --all
 
 `--all`은 `lab/.airflow/`와 `lab/output/`만 삭제한다. fixture, DAG source, textbook은 건드리지 않는다.
 
+reset 후에는 다시 preflight/L0부터 시작할 필요는 없다. 다만 source나 package 조건을 바꿨다면 preflight를 다시 실행하고,
+runtime state만 초기화했다면 L2부터 재실행해 같은 prediction이 재현되는지 확인한다.
+
 ## Validation boundary
 
 Repository CI와 Python syntax check는 committed source의 syntax/format과 repository consistency를 확인한다. 그것만으로
-Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. 실제 `standalone` runtime에서 Dag loading, task execution,
-UI/CLI/metadata observation, Connection/Variable resolution이 learner-visible evidence와 일치하는지는 별도의 runtime
-validation이 필요하다.
+Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. `preflight`, `tasks test`, `dags test`, `standalone`, cross-view
+observation도 각각 서로 다른 validation level이다.
+
+실제 `standalone` runtime에서 Dag loading, scheduler-backed task execution, UI/CLI/metadata observation,
+Connection/Variable resolution, controlled failure/recovery가 learner-visible evidence와 일치하는지는 별도의 runtime validation이
+필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로 통과한 것으로 간주하지 않는다.
