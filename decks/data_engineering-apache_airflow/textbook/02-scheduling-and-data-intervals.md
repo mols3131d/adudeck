@@ -19,8 +19,8 @@ catchup, backfill이 서로 무관한 옵션처럼 보인다.
 그리고 시간축으로 결과를 **먼저 예측한 뒤**, 실제 2분 schedule Dag를 UI, CLI, log, metadata DB, output에서 관찰한다.
 
 Airflow 3에서는 여기서 한 가지를 먼저 고정해야 한다. Bare cron string을 `schedule="*/2 * * * *"`처럼 넘기면
-`[scheduler] create_cron_data_intervals=False`가 기본이므로 `CronTriggerTimetable`이 선택된다. 이 timetable은 cron tick에
-run을 trigger하는 데 초점을 두며 기본 data interval은 한 점이다. 이 chapter는 batch data interval을 학습하는 것이
+`[scheduler] create_cron_data_intervals=False`가 기본이므로 `CronTriggerTimetable`이 선택된다. 이 timetable은 cron
+tick에 run을 trigger하는 데 초점을 두며 기본 data interval은 한 점이다. 이 chapter는 batch data interval을 학습하는 것이
 목표이므로 lab Dag에서 **`CronDataIntervalTimetable`을 명시적으로 사용한다.** 따라서 아래의 연속 interval 설명을 모든
 Airflow cron schedule의 기본 동작으로 일반화하지 않는다.
 
@@ -70,8 +70,8 @@ execution time != data time
 따라서 첫 scheduled run이 `start_date`와 같은 순간에 즉시 실행되지 않는 것을 "하루 늦게 실행되는 bug"라고 보면 안 된다.
 
 반대로 `CronTriggerTimetable` 같은 trigger timetable은 같은 cron 표현을 사용해도 scheduling과 data interval을 다르게
-모델링한다. Airflow에서 `schedule` 표현만 보고 interval semantics를 추정하지 않고 **어떤 timetable이 실제로 선택되었는지**
-확인하는 습관을 갖는다.
+모델링한다. Airflow에서 `schedule` 표현만 보고 interval semantics를 추정하지 않고
+**어떤 timetable이 실제로 선택되었는지** 확인하는 습관을 갖는다.
 
 ## 3. DagRun의 시간 정보를 분리한다
 
