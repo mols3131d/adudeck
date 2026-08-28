@@ -84,7 +84,7 @@ description = "Configure repository-local Git defaults"
 run = "git config --local commit.template .gitmessage"
 
 [tasks."hooks:install"]
-description = "Configure repository Git hooks"
+description = "Install repository Git hooks"
 run = "lefthook install"
 
 [tasks.setup]
