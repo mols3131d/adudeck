@@ -96,8 +96,8 @@ L5. controlled failure / modification / re-observation
 bash lab/scripts/preflight.sh
 ```
 
-`dags list --local`은 serialized DB content 대신 현재 local source를 parse한다. 이 단계에서 expected Dag가 발견된다는 것은
-source discovery/parsing evidence이지 DagRun이나 TaskInstance가 존재한다는 뜻이 아니다.
+`dags list --local`은 serialized DB content 대신 현재 local source를 parse한다. 이 단계에서 expected Dag가 발견된다는
+것은 source discovery/parsing evidence이지 DagRun이나 TaskInstance가 존재한다는 뜻이 아니다.
 
 ### L1 — control-plane storage의 schema를 준비한다
 
@@ -155,8 +155,8 @@ Deck directory에서 실행한다.
 bash lab/airflow.sh standalone
 ```
 
-standalone은 이미 준비한 metadata DB를 사용하면서 scheduler, Dag Processor, API/UI 등 local runtime component를 시작한다.
-terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
+standalone은 이미 준비한 metadata DB를 사용하면서 scheduler, Dag Processor, API/UI 등 local runtime component를
+시작한다. terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
 
 별도 terminal에서 scheduler가 사용하는 environment와 같은 wrapper로 Dag를 확인한다.
 
