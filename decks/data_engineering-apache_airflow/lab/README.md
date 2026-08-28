@@ -192,6 +192,7 @@ bash lab/scripts/reset.sh --all
 
 ## Validation boundary
 
-Repository CI와 Python syntax check는 starter가 parse 가능한 Python source라는 수준을 확인할 수 있다. 실제 Airflow
-runtime에서 DAG loading, task execution, UI/CLI/metadata 관측, Connection/Variable resolution까지 성공했는지는 별도의
-runtime evidence가 필요하다.
+Repository CI와 Python syntax check는 committed source의 syntax/format과 repository consistency를 확인한다. 그것만으로
+Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. 실제 `standalone` runtime에서 Dag loading, task execution,
+UI/CLI/metadata observation, Connection/Variable resolution이 learner-visible evidence와 일치하는지는 별도의 runtime
+validation이 필요하다.
