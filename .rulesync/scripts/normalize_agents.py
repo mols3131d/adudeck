@@ -40,6 +40,11 @@ def normalize_file(path: Path) -> bool:
     return True
 
 
+def projection_text(content: str) -> str:
+    """Ignore only terminal line-ending differences in generated Markdown."""
+    return content.rstrip("\r\n")
+
+
 def compare_projection(repo: Path) -> int:
     with tempfile.TemporaryDirectory(prefix="adudeck-agents-") as tmp:
         output = Path(tmp)
@@ -75,7 +80,7 @@ def compare_projection(repo: Path) -> int:
 
             expected = candidate.read_text(encoding="utf-8")
             actual = tracked.read_text(encoding="utf-8")
-            if expected == actual:
+            if projection_text(expected) == projection_text(actual):
                 continue
 
             print(f"projection drift: {relative}")
