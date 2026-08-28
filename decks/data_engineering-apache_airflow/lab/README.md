@@ -56,8 +56,9 @@ host / filesystem readiness
 
 첫 실행에서는 `uvx`가 Airflow package를 resolve해야 하므로 network access와 package cache 준비가 필요할 수 있다.
 
-preflight 성공은 **scheduler-backed runtime이 정상이라는 증거가 아니다.** 아직 DagRun과 TaskInstance를 실제 control plane에
-생성하지 않았다. 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source 문제를 최대한 먼저 분리하는 것이다.
+preflight 성공은 **scheduler-backed runtime이 정상이라는 증거가 아니다.** 아직 DagRun과 TaskInstance를 실제 control
+plane에 생성하지 않았다. 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source 문제를 최대한 먼저 분리하는
+것이다.
 
 ## Verification ladder
 
@@ -235,9 +236,9 @@ TaskInstance executed by the runtime
 
 실습 중 starter를 깨뜨리는 것은 허용된 controlled failure다. 원인을 evidence로 확인한 뒤 정상 parse 상태로 복구한다.
 
-Airflow의 Dag file은 단순히 한 번 실행되는 application entrypoint가 아니다. Dag Processor가 반복해서 parse하므로 top-level
-code에는 network/database 호출 같은 무거운 work를 두지 않는다. U2에서는 같은 work를 top-level과 task body에 각각 놓았을
-때 **언제 실행되는가**를 구분하는 것이 중요하다.
+Airflow의 Dag file은 단순히 한 번 실행되는 application entrypoint가 아니다. Dag Processor가 반복해서 parse하므로
+top-level code에는 network/database 호출 같은 무거운 work를 두지 않는다. U2에서는 같은 work를 top-level과 task body에
+각각 놓았을 때 **언제 실행되는가**를 구분하는 것이 중요하다.
 
 ## U5 — Data and configuration boundaries starter
 
@@ -336,5 +337,5 @@ Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. `preflight`, `
 observation도 각각 서로 다른 validation level이다.
 
 실제 `standalone` runtime에서 Dag loading, scheduler-backed task execution, UI/CLI/metadata observation,
-Connection/Variable resolution, controlled failure/recovery가 learner-visible evidence와 일치하는지는 별도의 runtime validation이
-필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로 통과한 것으로 간주하지 않는다.
+Connection/Variable resolution, controlled failure/recovery가 learner-visible evidence와 일치하는지는 별도의 runtime
+validation이 필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로 통과한 것으로 간주하지 않는다.
