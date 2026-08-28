@@ -1,10 +1,5 @@
 # Routes
 
-When this entrypoint is loaded, immediately read the complete linked route metadata before continuing. Do not stop at this file.
+Read [Skills](skills.jsonl) and [Rules](rules.jsonl), then follow each file's `_meta.instructions`.
 
-- [Skills](skills.jsonl)
-- [Rules](rules.jsonl)
-
-After loading both route files, follow each `_meta.instructions` and load every selected Skill or matching Rule source before performing the task.
-
-This directory is compatibility routing metadata only. Canonical Skill and Rule sources remain authoritative.
+This directory routes assets only; canonical sources remain authoritative.
