@@ -30,7 +30,7 @@ else
 fi
 
 echo
- echo "== Recent external outputs =="
+echo "== Recent external outputs =="
 if [[ -d "${LAB_DIR}/output" ]]; then
   find "${LAB_DIR}/output" -maxdepth 3 -type f -print | sort | tail -n 20
 else
