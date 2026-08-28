@@ -49,6 +49,7 @@ format 가능한 문제는 자동 수정하고, CI는 빠르고 결정적인 검
 
 ## Docs
 
+- [`docs/VISON.md`](docs/VISON.md) — workspace vision과 learning principles
 - [`docs/README.md`](docs/README.md) — 문서 배치와 정책 index
 - [`docs/decks.md`](docs/decks.md) — deck storage, state, content 원칙
 - [`docs/automation.md`](docs/automation.md) — local/CI/cloud automation 경계
