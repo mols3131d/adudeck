@@ -11,7 +11,10 @@
   "features": ["skills"],
   "sources": [
     {
-      "source": "mols3131d/mols-agent-assets@main:src/rulesync/.rulesync/skills",
+      "source": "https://github.com/mols3131d/mols-agent-assets.git",
+      "transport": "git",
+      "ref": "main",
+      "path": "src/rulesync/.rulesync/skills",
       "skills": [
         "guidance-context",
         "clarify-code",
