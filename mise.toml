@@ -18,12 +18,18 @@ description = "Validate Rulesync configuration"
 run = "rulesync doctor --strict"
 
 [tasks."rulesync:generate"]
-description = "Generate tracked agent projections from canonical Rulesync assets"
-run = "rulesync generate"
+description = "Generate agent projections from canonical Rulesync assets"
+run = """
+rulesync generate
+rulesync generate --targets agentsmd,copilot --features rules
+"""
 
 [tasks."rulesync:check"]
 description = "Check generated Rulesync projections for drift"
-run = "rulesync generate --check"
+run = """
+rulesync generate --check
+rulesync generate --check --targets agentsmd,copilot --features rules
+"""
 
 [tasks."format:markdown"]
 description = "Auto-format repository-owned Markdown with rumdl"
