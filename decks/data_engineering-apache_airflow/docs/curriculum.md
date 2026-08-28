@@ -161,8 +161,8 @@ File coverage만으로 curriculum completion을 판단하지 않는다.
 
 ## Learning Readiness Status
 
-학습 준비는 curriculum completion과 별도다. Learner가 실습을 시작하기 전에 **환경 문제, source parsing 문제, metadata setup,
-local test, scheduler-backed runtime 문제를 서로 분리할 수 있는 진입 경로**가 필요하다.
+학습 준비는 curriculum completion과 별도다. Learner가 실습을 시작하기 전에 **환경 문제, source parsing 문제, metadata
+setup, local test, scheduler-backed runtime 문제를 서로 분리할 수 있는 진입 경로**가 필요하다.
 
 현재 lab은 다음 verification ladder를 제공한다.
 
@@ -175,8 +175,8 @@ L0 environment + local source discovery
 → L5 controlled failure / modification / re-observation
 ```
 
-- `lab/scripts/preflight.sh`는 host/filesystem, `uv`, constrained Airflow wrapper resolution, expected local Dag discovery,
-  import-error surface를 확인한다.
+- `lab/scripts/preflight.sh`는 host/filesystem, `uv`, constrained Airflow wrapper resolution, expected local Dag
+  discovery, import-error surface를 확인한다.
 - `lab/airflow.sh`는 Apache Airflow 3.3.1, Python 3.12 기본값, 해당 release의 official constraints를 함께 사용해 fresh
   machine의 dependency drift를 줄인다. Python baseline은 필요할 때 `ADUDECK_AIRFLOW_PYTHON`으로 override할 수 있지만
   Airflow 3.3.1이 지원하는 Python 범위 안에서 사용한다.
@@ -193,7 +193,8 @@ L0 environment + local source discovery
 
 현재 `lab/`에는 U2와 U5를 시작할 수 있는 scaffold와 공용 learning-preparation helper가 있다.
 
-- `lab/dags/exercises/u2_authoring_starter.py` — parser-safe authoring/loading baseline과 controlled parse failure 시작점
+- `lab/dags/exercises/u2_authoring_starter.py` — parser-safe authoring/loading baseline과 controlled parse failure
+  시작점
 - `lab/dags/exercises/u5_boundaries_starter.py` — Param/XCom/file/Variable/Connection responsibility 비교 시작점
 - `lab/fixtures/orders.jsonl` — deterministic business-data fixture
 - `lab/scripts/preflight.sh` — environment/toolchain/local source readiness check
@@ -209,9 +210,9 @@ U7 cumulative integration starter는 U2/U5/U6의 실제 학습 흐름을 먼저 
 
 현재 material을 보존하면서 다음 build loop에서 우선할 gap은 다음과 같다.
 
-1. **Learning-environment calibration** — fresh/disposable state에서 preflight → `db migrate` → local test → standalone →
-   cross-view observation을 실제로 실행해 documentation-backed expectation과 learner-visible runtime evidence가 일치하는지
-   확인한다.
+1. **Learning-environment calibration** — fresh/disposable state에서 preflight → `db migrate` → local test → standalone
+   → cross-view observation을 실제로 실행해 documentation-backed expectation과 learner-visible runtime evidence가
+   일치하는지 확인한다.
 2. **U2 Dag authoring and loading** — learner가 작은 Dag를 직접 만들고 parse/load/import failure를 수정하며 local test와
    scheduler-backed execution을 구분하는 end-to-end slice.
 3. **U5 Data and configuration boundaries** — Params, XCom, external storage, Connection, Variable의 책임과 resolution
