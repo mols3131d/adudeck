@@ -3,9 +3,10 @@ name: adudeck-textbook
 description: >-
   Define and review the adudeck textbook contract. Use for textbook structure, instructional
   depth, chapter quality, exercises, assessment, hands-on learning integration, or deciding
-  whether material qualifies as a textbook. Do not use for external research, curriculum design,
-  source collection, storage, or writing the textbook prose; use adudeck-textbook-write for
-  authoring and adudeck-playground for hands-on learning investigations.
+  whether material qualifies as a textbook. Do not use for external research, deck curriculum
+  design, deck build orchestration, source collection, storage, or writing the textbook prose; use
+  adudeck-deck-curriculum for deck curriculum work, adudeck-deck-build for deck-level implementation,
+  adudeck-textbook-write for authoring, and adudeck-playground for hands-on investigations.
 targets: ["claudecode", "codexcli", "copilot", "copilotcli", "antigravity-ide", "antigravity-cli"]
 ---
 
@@ -16,15 +17,15 @@ targets: ["claudecode", "codexcli", "copilot", "copilotcli", "antigravity-ide", 
 A textbook is a **primary learning resource for a defined scope**, not a summary, outline,
 reference page, lecture note, blog post, or step-by-step tutorial.
 
-Own only the textbook standard and quality gate. Treat scope, prerequisites, learning outcomes,
-and supplied authoritative context as upstream inputs. Do not research, expand the curriculum,
-choose sources, write the actual textbook prose, design hands-on playgrounds, or decide where it is
-stored or published.
+Own only the textbook standard and quality gate. Treat learning scope, learner prerequisites,
+learning outcomes, and supplied authoritative context as upstream inputs. Do not research, expand
+the deck curriculum, choose sources, write the actual textbook prose, design hands-on playgrounds,
+orchestrate deck implementation, or decide where it is stored or published.
 
-If scope, prerequisites, and learning outcomes are materially inconsistent, treat the learning
-contract as unresolved. Do not quality-pass material that silently compensates by redefining or
-expanding those upstream decisions; require the inconsistency to be surfaced for upstream
-resolution.
+If learning scope, learner prerequisites, and learning outcomes are materially inconsistent, treat
+the learning contract as unresolved. Do not quality-pass material that silently compensates by
+redefining or expanding those upstream decisions; require the inconsistency to be surfaced for
+upstream resolution through `adudeck-deck-curriculum`.
 
 Do not quality-pass material merely because it is pedagogically complete when important claims
 conflict with supplied authoritative context, rely on unsupported detail, or conceal a material
@@ -110,6 +111,9 @@ and its material claims are consistent with the authoritative context available 
 
 ## Routing
 
-Use `adudeck-textbook-write` to write or revise textbook prose, chapters, worked examples,
-exercises, and assessments. Use `adudeck-playground` to design, implement, revise, or review
-hands-on learning investigations.
+- Use `adudeck-deck-curriculum` to establish, revise, or audit the upstream deck learning contract
+  and curriculum sequence.
+- Use `adudeck-deck-build` to orchestrate incremental deck implementation and integration review.
+- Use `adudeck-textbook-write` to write or revise textbook prose, chapters, worked examples,
+  exercises, and assessments.
+- Use `adudeck-playground` to design, implement, revise, or review hands-on learning investigations.
