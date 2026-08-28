@@ -111,9 +111,9 @@ daemon이 아니라 scheduler 안에서 사용되는 execution abstraction이다
 schema가 바뀔 수 있으므로 Dag/task authoring은 `airflow.sdk`를 중심으로 사용하고, scheduling lab처럼 필요한 경우에는
 Airflow가 public interface로 문서화한 `airflow.timetables`를 사용한다. Internal DB 관측은 read-only로 제한한다.
 
-Airflow 3에서는 bare cron string이 기본적으로 `CronTriggerTimetable` semantics를 사용한다. 이 deck의 scheduling chapter는
-연속 data interval을 학습하기 위해 explicit `CronDataIntervalTimetable`을 사용하며, 이 선택을 Airflow 전체의 default로
-일반화하지 않는다.
+Airflow 3에서는 bare cron string이 기본적으로 `CronTriggerTimetable` semantics를 사용한다. 이 deck의 scheduling
+chapter는 연속 data interval을 학습하기 위해 explicit `CronDataIntervalTimetable`을 사용하며, 이 선택을 Airflow 전체의
+default로 일반화하지 않는다.
 
 ## References
 
