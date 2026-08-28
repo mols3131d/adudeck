@@ -124,9 +124,9 @@ core mental model과 관측 방법이 잡힌 뒤 실제 필요가 생길 때 확
 
 ## Learning Path
 
-1. [Mental model: 정의와 실행을 분리해서 관찰하기](01-mental-model.md)
-2. [Scheduling: data interval을 시간축과 runtime에서 검증하기](02-scheduling-and-data-intervals.md)
-3. [Task design: failure, retry, side effect를 직접 관찰하기](03-task-design-and-state.md)
+1. [Mental model: 정의와 실행을 분리해서 관찰하기](textbook/01-mental-model.md)
+2. [Scheduling: data interval을 시간축과 runtime에서 검증하기](textbook/02-scheduling-and-data-intervals.md)
+3. [Task design: failure, retry, side effect를 직접 관찰하기](textbook/03-task-design-and-state.md)
 
 각 chapter는 설명과 실습을 별개 자료로 취급하지 않는다. 실습 결과 자체가 다음 설명의 evidence가 된다.
 
