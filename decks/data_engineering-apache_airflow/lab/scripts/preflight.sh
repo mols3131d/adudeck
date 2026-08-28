@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LAB_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+AIRFLOW_PYTHON_VERSION="${ADUDECK_AIRFLOW_PYTHON:-3.12}"
 
 FAILURES=0
 
@@ -23,6 +24,7 @@ echo "== Host prerequisites =="
 
 if command -v uv >/dev/null 2>&1; then
   pass "uv available: $(uv --version)"
+  pass "lab Python baseline requested through uv: ${AIRFLOW_PYTHON_VERSION}"
 else
   fail "uv is required. Install uv before starting this lab."
 fi
@@ -60,10 +62,12 @@ fi
 
 echo
 echo "== Airflow toolchain =="
+echo "The wrapper resolves Apache Airflow 3.3.1 with the matching release constraints."
+echo "A fresh machine may download Python ${AIRFLOW_PYTHON_VERSION}, the constraints file, and packages on this step."
 AIRFLOW_VERSION_OUTPUT="$(bash "${LAB_DIR}/airflow.sh" version)"
 printf '%s\n' "${AIRFLOW_VERSION_OUTPUT}"
 if grep -Fq "3.3.1" <<<"${AIRFLOW_VERSION_OUTPUT}"; then
-  pass "Apache Airflow 3.3.1 resolved through the lab wrapper"
+  pass "Apache Airflow 3.3.1 resolved through the constrained lab wrapper"
 else
   fail "expected Apache Airflow 3.3.1 from lab/airflow.sh"
 fi
