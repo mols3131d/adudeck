@@ -61,25 +61,24 @@ preflight는 다음을 확인한다.
 host / filesystem readiness
 → uv 사용 가능 여부
 → constrained Airflow 3.3.1 wrapper resolution
-→ local Dag discovery
-→ expected Dag presence
-→ local import-error inspection surface
+→ local source import-error surface
 ```
 
 첫 실행에서는 `uv`가 Python, Airflow release constraints와 package를 resolve해야 하므로 network access와 package cache
 준비가 필요할 수 있다.
 
-preflight 성공은 **metadata DB가 준비되었거나 scheduler-backed runtime이 정상이라는 증거가 아니다.** 준비 단계의 목적은
-runtime 문제를 보기 전에 host/package/source 문제를 최대한 먼저 분리하는 것이다.
+preflight 성공은 **metadata DB가 준비되었거나 expected Dag가 DB-aware CLI surface에 나타나거나 scheduler-backed runtime이
+정상이라는 증거가 아니다.** 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source import 문제를 최대한 먼저
+분리하는 것이다.
 
 ## Verification ladder
 
 Airflow 학습에서는 서로 다른 검증 수준을 섞지 않는다. 다음 순서로 한 단계씩 올라간다.
 
 ```text
-L0. environment + local source discovery
+L0. environment + local import surface
         ↓
-L1. metadata schema initialization
+L1. metadata schema + Dag discovery
         ↓
 L2. isolated task / Dag execution test
         ↓
@@ -90,16 +89,17 @@ L4. cross-view runtime observation
 L5. controlled failure / modification / re-observation
 ```
 
-### L0 — source가 Airflow에 보이는가
+### L0 — toolchain과 local source import가 준비됐는가
 
 ```bash
 bash lab/scripts/preflight.sh
 ```
 
-`dags list --local`은 serialized DB content 대신 현재 local source를 parse한다. 이 단계에서 expected Dag가 발견된다는
-것은 source discovery/parsing evidence이지 DagRun이나 TaskInstance가 존재한다는 뜻이 아니다.
+이 단계에서는 `dags list-import-errors --local`을 사용해 serialized DB content 대신 현재 local source의 import-error
+surface를 본다. 오류가 없다는 것은 source import 단계의 evidence이지 metadata schema, DagModel, DagRun, TaskInstance가
+존재한다는 뜻이 아니다.
 
-### L1 — control-plane storage의 schema를 준비한다
+### L1 — control-plane storage를 만들고 Dag discovery를 확인한다
 
 Airflow 공식 tutorial처럼 local metadata schema를 먼저 초기화한다.
 
@@ -107,16 +107,34 @@ Airflow 공식 tutorial처럼 local metadata schema를 먼저 초기화한다.
 bash lab/airflow.sh db migrate
 ```
 
-그 뒤 task definition을 확인한다.
+그 다음 local Dag discovery를 확인한다.
+
+```bash
+bash lab/airflow.sh dags list --local
+```
+
+다음 네 Dag를 찾는다.
+
+```text
+adudeck_observable_runtime
+adudeck_observable_schedule
+adudeck_u2_authoring_starter
+adudeck_u5_boundaries_starter
+```
+
+U2 starter의 task definition도 확인한다.
 
 ```bash
 bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
 ```
 
-이 단계에서 metadata DB와 Airflow schema는 존재하지만 scheduler는 아직 실행하지 않았다. 다음을 구분한다.
+이 단계에서 metadata DB와 Airflow schema가 존재하고 Dag/task definition을 찾을 수 있지만 scheduler는 아직 실행하지 않았다.
+다음을 구분한다.
 
 ```text
 metadata schema exists
+!=
+Dag definition is discoverable
 !=
 scheduler is running
 !=
@@ -155,8 +173,8 @@ Deck directory에서 실행한다.
 bash lab/airflow.sh standalone
 ```
 
-standalone은 이미 준비한 metadata DB를 사용하면서 scheduler, Dag Processor, API/UI 등 local runtime component를
-시작한다. terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
+standalone은 이미 준비한 metadata DB를 사용하면서 scheduler, Dag Processor, API/UI 등 local runtime component를 시작한다.
+terminal을 닫지 않는다. 이후 이 terminal 자체가 component/task log observation surface가 된다.
 
 별도 terminal에서 scheduler가 사용하는 environment와 같은 wrapper로 Dag를 확인한다.
 
@@ -216,10 +234,10 @@ baseline과 variation을 구분하지 않으면 단순 실행 tutorial에 머무
 
 처음부터 모든 lab을 돌리지 않는다. 첫 session의 권장 path는 다음과 같다.
 
-1. `bash lab/scripts/preflight.sh`로 environment/source boundary를 확인한다.
+1. `bash lab/scripts/preflight.sh`로 environment/toolchain/local import boundary를 확인한다.
 2. `textbook/01-mental-model.md`의 definition/runtime separation을 읽는다.
 3. `db migrate`를 실행하고 **schema가 존재하는 것과 scheduler가 실행되는 것의 차이**를 적는다.
-4. U2 starter의 task/dependency를 읽고 `tasks list` 결과를 예측한다.
+4. `dags list --local`에서 expected Dag를 찾고 U2 starter의 `tasks list` 결과를 예측·확인한다.
 5. `tasks test`와 `dags test`로 local execution evidence를 본다.
 6. `standalone`을 시작하고 같은 Dag를 실제로 trigger한다.
 7. `snapshot.sh`로 scheduler-backed DagRun/TaskInstance를 관찰한다.
@@ -266,9 +284,11 @@ starter는 parser-safe한 두 task와 하나의 dependency만 제공한다. 다�
 ```text
 Python file exists
 !=
-Dag parsed / loaded
+local import surface has no error
 !=
 metadata schema exists
+!=
+Dag definition is discoverable
 !=
 local tasks/dags test succeeds
 !=
@@ -376,8 +396,8 @@ preflight/L0도 다시 수행한다.
 ## Validation boundary
 
 Repository CI와 Python syntax check는 committed source의 syntax/format과 repository consistency를 확인한다. 그것만으로
-Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. `preflight`, `db migrate`, `tasks test`, `dags test`, `standalone`,
-cross-view observation도 각각 서로 다른 validation level이다.
+Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. `preflight`, `db migrate`, `dags list --local`, `tasks test`,
+`dags test`, `standalone`, cross-view observation도 각각 서로 다른 validation level이다.
 
 실제 `standalone` runtime에서 Dag loading, scheduler-backed task execution, UI/CLI/metadata observation,
 Connection/Variable resolution, controlled failure/recovery가 learner-visible evidence와 일치하는지는 별도의 runtime
