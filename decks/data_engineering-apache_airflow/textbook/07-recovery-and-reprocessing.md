@@ -110,7 +110,8 @@ try 1
 
 이 과정에는 사람이 terminal state를 다시 열어 주는 operation이 필요하지 않다.
 
-반대로 task가 이미 `success` 또는 terminal `failed`인 뒤 **명시적으로 다시 실행하고 싶다면** retry policy만 기다릴 수 없다.
+반대로 task가 이미 `success` 또는 terminal `failed`인 뒤 **명시적으로 다시 실행하고 싶다면** retry policy만 기다릴 수
+없다.
 
 ```text
 TaskInstance terminal state
@@ -151,7 +152,8 @@ publish   success
 
 scheduler가 `transform`을 다시 실행한다.
 
-중요한 것은 **새 DagRun B를 만든 것이 아니라 기존 DagRun A의 selected TaskInstance를 다시 실행 대상으로 만들었다는 것**이다.
+중요한 것은
+**새 DagRun B를 만든 것이 아니라 기존 DagRun A의 selected TaskInstance를 다시 실행 대상으로 만들었다는 것**이다.
 
 Airflow는 clear된 task를 다시 진행하기 위해 finished DagRun을 `running`으로 되돌릴 수 있다.
 
@@ -235,8 +237,8 @@ bash lab/scripts/snapshot.sh \
 
 local learning environment에서도 broad clear를 습관화하지 않는다.
 
-Airflow 3.3.1의 `tasks clear`는 `start-date`, `end-date`, task regex 등으로 대상을 좁힐 수 있다. 이번 lab에서는 방금 기록한
-logical date와 `transform` task를 함께 지정한다.
+Airflow 3.3.1의 `tasks clear`는 `start-date`, `end-date`, task regex 등으로 대상을 좁힐 수 있다. 이번 lab에서는 방금
+기록한 logical date와 `transform` task를 함께 지정한다.
 
 먼저 confirmation prompt가 보여 주는 대상이 예상과 맞는지 확인한다.
 
@@ -338,8 +340,8 @@ API request 취소
 
 > 같은 logical input을 다시 실행했을 때 external state가 어떤 final invariant로 수렴하는가?
 
-예를 들어 publish가 deterministic run/partition key를 replace한다면 반복 실행 뒤에도 하나의 intended output으로 수렴할 수
-있다.
+예를 들어 publish가 deterministic run/partition key를 replace한다면 반복 실행 뒤에도 하나의 intended output으로 수렴할
+수 있다.
 
 반대로 append-only side effect라면 clear/re-run만으로 duplicate가 생길 수 있다.
 
@@ -448,8 +450,8 @@ normal scheduler가 자동으로 생성해야 한다.
 
 ## 15. code version도 별도 판단 축이다
 
-Airflow 3.3.1에는 cleared/rerun/backfilled task가 original Dag bundle version과 latest version 중 어느 쪽을 사용할지 제어하는
-`rerun_with_latest_version` 설정이 있다. 기본/fallback은 operation에 따라 다를 수 있다.
+Airflow 3.3.1에는 cleared/rerun/backfilled task가 original Dag bundle version과 latest version 중 어느 쪽을 사용할지
+제어하는 `rerun_with_latest_version` 설정이 있다. 기본/fallback은 operation에 따라 다를 수 있다.
 
 이번 Basic chapter에서는 bundle version policy 자체를 깊게 다루지 않는다. 대신 다음 경계를 기억한다.
 
@@ -459,14 +461,15 @@ Airflow 3.3.1에는 cleared/rerun/backfilled task가 original Dag bundle version
 "반드시 동일한 source code version으로 실행한다"
 ```
 
-bug fix 뒤 historical work를 다시 처리하는 운영에서는 **logical identity와 code version을 별도로 확인해야 한다.** Local lab의
-관찰도 실제 log/source evidence를 기준으로 해석하고 source version을 추측하지 않는다.
+bug fix 뒤 historical work를 다시 처리하는 운영에서는 **logical identity와 code version을 별도로 확인해야 한다.** Local
+lab의 관찰도 실제 log/source evidence를 기준으로 해석하고 source version을 추측하지 않는다.
 
 ## 16. 흔한 잘못된 mental model
 
 ### "retry와 clear는 둘 다 다시 실행하니 같다"
 
-retry는 current TaskInstance retry policy의 다음 try이고, clear는 이미 존재하는 task state를 명시적으로 reset하는 operation이다.
+retry는 current TaskInstance retry policy의 다음 try이고, clear는 이미 존재하는 task state를 명시적으로 reset하는
+operation이다.
 
 ### "clear하면 새 DagRun이 생긴다"
 
@@ -486,7 +489,8 @@ Airflow metadata state와 external state는 별도다.
 
 ### "bug fix 후 clear하면 항상 새 code가 사용된다"
 
-Airflow 3.3.1의 rerun bundle-version behavior는 설정/Dag policy에 따라 달라질 수 있으므로 실제 version policy를 확인한다.
+Airflow 3.3.1의 rerun bundle-version behavior는 설정/Dag policy에 따라 달라질 수 있으므로 실제 version policy를
+확인한다.
 
 ## 17. Practice
 
@@ -529,8 +533,8 @@ extract -> transform -> load
 published-events.log
 ```
 
-같은 DagRun을 clear/re-run하면 duplicate line이 생긴다. 같은 logical run에 대해 final state가 하나로 수렴하도록 output identity와
-write strategy를 수정하는 방향을 설계한다.
+같은 DagRun을 clear/re-run하면 duplicate line이 생긴다. 같은 logical run에 대해 final state가 하나로 수렴하도록 output
+identity와 write strategy를 수정하는 방향을 설계한다.
 
 ### D. Diagnosis
 
@@ -555,9 +559,9 @@ external side effect가 왜 다시 발생할 수 있는가
 
 ### 2. Controlled re-run
 
-local lab의 한 completed DagRun에서 selected TaskInstance를 정확히 좁혀 clear하고, 같은 run identity에서 state가 다시 진행되는
-것을 UI/CLI/log/metadata/output evidence로 설명한다. 그 다음 downstream까지 포함하는 variation을 수행하거나, 포함하지 않아야
-하는 이유를 business invariant로 정당화한다.
+local lab의 한 completed DagRun에서 selected TaskInstance를 정확히 좁혀 clear하고, 같은 run identity에서 state가 다시
+진행되는 것을 UI/CLI/log/metadata/output evidence로 설명한다. 그 다음 downstream까지 포함하는 variation을 수행하거나,
+포함하지 않아야 하는 이유를 business invariant로 정당화한다.
 
 평가 기준:
 
@@ -568,5 +572,5 @@ local lab의 한 completed DagRun에서 selected TaskInstance를 정확히 좁�
 - external side effect가 metadata clear로 rollback되지 않음을 이해했는가?
 - task selector와 downstream 범위를 무작정 넓히지 않았는가?
 
-이 기준을 만족하면 U6의 핵심 outcome인 **반복 실행 mechanism을 logical work와 state identity에 맞게 선택하고, re-run에서도
-side-effect invariant를 유지하는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 U6의 핵심 outcome인 **반복 실행 mechanism을 logical work와 state identity에 맞게 선택하고,
+re-run에서도 side-effect invariant를 유지하는 능력**을 갖춘 것으로 본다.
