@@ -68,8 +68,8 @@ Filesystem deck의 root는 작은 semantic surface만 공유한다.
   내부 구조가 있다면 구체적인 학습 필요가 생기기 전까지 그 deck 안의 일관성을 우선한다.
 - 다른 top-level directory도 구체적인 deck-local 책임이 있을 때 사용할 수 있다. `textbook/`이나 `playground/`와 같은
   책임을 나누는 competing namespace는 새로 만들지 않는다.
-- 이 layout은 기존 deck을 자동 migration하지 않는다. 기존 구조를 재정리하거나 해당 책임의 새 material을 분리할 때
-  이 semantic surface로 수렴하며, migration 자체는 별도 작업으로 다룬다.
+- 기존 deck의 다른 naming이나 layout은 명시적으로 migration하기 전까지 그 deck 안의 일관성을 유지한다. Migration을
+  시작하면 같은 책임을 legacy namespace와 canonical surface에 나누지 말고 해당 책임 전체를 일관되게 수렴시킨다.
 
 ## Content
 
