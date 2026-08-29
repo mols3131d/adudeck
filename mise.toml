@@ -80,8 +80,13 @@ description = "Run the minimal local runtime smoke test"
 run = "uv run python -c 'import sys; assert sys.version_info[:2] == (3, 14)'"
 
 [tasks."test:dataset-generator"]
-description = "Run dataset generator unit tests"
-run = "PYTHONPATH=tools/dataset_generator/src uv run --no-project --with Faker==40.37.0 python -m unittest discover -s tools/dataset_generator/tests -v"
+description = "Run dataset generator unit tests and CLI smoke test"
+run = '''
+uv run --project tools/dataset_generator python -m unittest discover -s tools/dataset_generator/tests -v
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir"' EXIT
+uv run --project tools/dataset_generator adudeck-data generate ecommerce --output "$tmp_dir" --users 2 --products 2 --orders 2 --seed 1
+'''
 
 [tasks."git:setup"]
 description = "Configure repository-local Git defaults"
