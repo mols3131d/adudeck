@@ -131,7 +131,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run one scheduler-backed DagRun
+      - name: Run scheduler-backed recovery experiment
         working-directory: decks/data_engineering-apache_airflow
         run: |
           set -euo pipefail
@@ -164,23 +164,89 @@ jobs:
           bash lab/airflow.sh dags unpause adudeck_observable_runtime
 
           run_id="adudeck_calibration_${GITHUB_RUN_ID}"
+          logical_date="2026-08-27T00:00:00+00:00"
           bash lab/airflow.sh dags trigger \
             -r "$run_id" \
+            -l "$logical_date" \
             -c '{"failure_mode":"none"}' \
             adudeck_observable_runtime
 
-          final_state=""
+          wait_for_run_success() {
+            local final_state=""
+            for _ in $(seq 1 120); do
+              state="$(bash lab/airflow.sh dags state adudeck_observable_runtime "$run_id" 2>/dev/null | grep -E '^(queued|running|success|failed)$' | tail -n 1 || true)"
+              if [[ "$state" == "success" || "$state" == "failed" ]]; then
+                final_state="$state"
+                break
+              fi
+              sleep 2
+            done
+            if [[ "$final_state" != "success" ]]; then
+              echo "scheduler-backed calibration run ended as: ${final_state:-unknown}" >&2
+              bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id" || true
+              exit 1
+            fi
+          }
+
+          wait_for_run_success
+          bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
+
+          export RUN_ID_FOR_PROBE="$run_id"
+          export LOGICAL_DATE_FOR_PROBE="$logical_date"
+          before_end="$(python - <<'PY'
+          import os, sqlite3
+          db = sqlite3.connect('lab/.airflow/airflow.db')
+          row = db.execute(
+              "SELECT end_date FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
+              ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
+          ).fetchone()
+          assert row and row[0], row
+          print(row[0])
+          PY
+          )"
+
+          python - <<'PY'
+          import os, sqlite3
+          db = sqlite3.connect('lab/.airflow/airflow.db')
+          row = db.execute(
+              'SELECT run_id, logical_date FROM dag_run WHERE dag_id=? AND run_id=?',
+              ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
+          ).fetchone()
+          assert row and row[0] == os.environ['RUN_ID_FOR_PROBE'], row
+          assert row[1] is not None and row[1].startswith('2026-08-27'), row
+          print(f'validated run identity: {row}')
+          PY
+
+          bash lab/airflow.sh tasks clear \
+            adudeck_observable_runtime \
+            -s "$logical_date" \
+            -e "$logical_date" \
+            -t '^transform$' \
+            -y
+
+          rerun_observed=false
           for _ in $(seq 1 120); do
-            state="$(bash lab/airflow.sh dags state adudeck_observable_runtime "$run_id" 2>/dev/null | grep -E '^(queued|running|success|failed)$' | tail -n 1 || true)"
-            if [[ "$state" == "success" || "$state" == "failed" ]]; then
-              final_state="$state"
+            current="$(python - <<'PY'
+          import os, sqlite3
+          db = sqlite3.connect('lab/.airflow/airflow.db')
+          row = db.execute(
+              "SELECT state, end_date FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
+              ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
+          ).fetchone()
+          print('|' .join('' if value is None else str(value) for value in row) if row else '|')
+          PY
+            )"
+            state="${current%%|*}"
+            end_date="${current#*|}"
+            if [[ "$state" == "success" && -n "$end_date" && "$end_date" != "$before_end" ]]; then
+              rerun_observed=true
               break
             fi
             sleep 2
           done
 
-          if [[ "$final_state" != "success" ]]; then
-            echo "scheduler-backed calibration run ended as: ${final_state:-unknown}" >&2
+          if [[ "$rerun_observed" != true ]]; then
+            echo "transform did not produce new same-run completion evidence after clear" >&2
             bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id" || true
             exit 1
           fi
