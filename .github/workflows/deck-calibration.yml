@@ -53,6 +53,32 @@ jobs:
           }
           trap cleanup EXIT
 
+          dag_ready=false
+          for _ in $(seq 1 60); do
+            if ! kill -0 "$airflow_pid" 2>/dev/null; then
+              echo "standalone exited before DagModel became available" >&2
+              exit 1
+            fi
+            if python - <<'PY'
+          import sqlite3
+          db = sqlite3.connect('lab/.airflow/airflow.db')
+          row = db.execute(
+              'SELECT 1 FROM dag WHERE dag_id=? LIMIT 1',
+              ('adudeck_observable_runtime',),
+          ).fetchone()
+          raise SystemExit(0 if row else 1)
+          PY
+            then
+              dag_ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$dag_ready" != true ]]; then
+            echo "Dag Processor did not create the expected DagModel" >&2
+            exit 1
+          fi
+
           bash lab/airflow.sh dags unpause adudeck_observable_runtime
 
           run_id="adudeck_calibration_${GITHUB_RUN_ID}"
