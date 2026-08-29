@@ -47,9 +47,30 @@ Filesystem deck directory name은 다음 형식을 기본으로 한다.
 
 예: `language-c`, `data_engineering-duckdb_python`.
 
+## Layout
+
+Filesystem deck의 root는 작은 semantic surface만 공유한다.
+
+```text
+<deck>/
+├── README.md
+├── textbook/
+└── playground/
+```
+
+- `README.md`는 deck의 entrypoint다.
+- `textbook/`은 primary textbook material이 있을 때 사용한다.
+- `playground/`는 hands-on investigation material이 있을 때 사용한다.
+- `textbook/`과 `playground/`는 optional이다. 현재 material이 요구할 때만 생성한다.
+- 각 surface의 내부 구조는 해당 deck이 소유한다. Flat file과 nested directory를 모두 허용하며, 하나의 응집된 학습
+  단위가 여러 file이나 resource를 함께 가져야 하면 directory로 bundle할 수 있다.
+- 내부 directory 이름이나 단계, chapter, bundle taxonomy를 repository-wide 규칙으로 표준화하지 않는다. 이미 선택한
+  내부 구조가 있다면 구체적인 학습 필요가 생기기 전까지 그 deck 안의 일관성을 우선한다.
+- Textbook이나 playground material이 존재하면 대응하는 semantic surface 안에 두고, 같은 책임의 parallel top-level
+  namespace를 추가로 만들지 않는다.
+
 ## Content
 
-- Filesystem deck에서는 `README.md`를 entrypoint로 둔다.
 - deck 내부 link는 relative path를 우선한다.
 - movable deck 내부에는 repository 위치에 의존하는 공통 정책 link를 두지 않는다.
 - directory와 file은 현재 content가 요구할 때 만든다. 예상되는 미래 구조를 미리 만들지 않는다.
