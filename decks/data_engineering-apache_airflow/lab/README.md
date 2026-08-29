@@ -384,14 +384,15 @@ bash lab/airflow.sh dags trigger \
 ```
 
 Run이 성공한 뒤 run 목록과 snapshot에서 지정한 `RUN_ID`와 `LOGICAL_DATE`가 실제 evidence와 일치하는지 확인한다. 그 다음
-broad operation을 바로 승인하지 않고 logical date와 task selector로 target을 좁힌다.
+broad operation을 바로 승인하지 않고 logical date와 task selector로 target을 좁힌다. 이 lab에서는 `-t 'transform'`을
+사용하고 confirmation에서 실제 target을 확인한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
   -s "$LOGICAL_DATE" \
   -e "$LOGICAL_DATE" \
-  -t '^transform$'
+  -t 'transform'
 ```
 
 같은 logical date에 다른 run이 있거나 confirmation target이 예상보다 넓으면 승인하지 않는다. 대상이 맞을 때만 disposable
