@@ -49,9 +49,9 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--raw",
+        "--full-response",
         action="store_true",
-        help="Also print response.to_dict() so output items can be inspected.",
+        help="Also print response.to_dict() so the full typed response can be inspected.",
     )
     return parser.parse_args()
 
@@ -90,7 +90,7 @@ def main() -> None:
     print("usage:")
     print(json.dumps(usage, ensure_ascii=False, indent=2))
 
-    if args.raw:
+    if args.full_response:
         print("\n== full typed response as dict ==")
         print(json.dumps(response.to_dict(), ensure_ascii=False, indent=2))
 
