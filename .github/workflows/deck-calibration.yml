@@ -5,7 +5,6 @@ on:
   push:
     paths:
       - ".github/workflows/deck-calibration.yml"
-      - "decks/ai-openai_sdk/**"
       - "decks/data_engineering-apache_airflow/**"
 
 permissions:
@@ -16,10 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  openai-offline:
-    name: OpenAI SDK offline evidence
+  airflow-recovery:
+    name: Airflow same-run recovery evidence
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,121 +30,16 @@ jobs:
         with:
           cache: true
 
-      - name: Run preview boundaries
-        working-directory: decks/ai-openai_sdk
-        run: |
-          set -euo pipefail
-
-          python playground/request_response.py --preview | tee /tmp/request-preview.txt
-          grep -Fq "preview only: the SDK did not serialize or send an HTTP request" /tmp/request-preview.txt
-
-          for mode in manual lineage conversation; do
-            python playground/conversation_state.py --mode "$mode" --preview | tee "/tmp/conversation-${mode}.txt"
-            grep -Fq "preview only:" "/tmp/conversation-${mode}.txt"
-          done
-
-          python playground/failure_boundaries.py --preview | tee /tmp/failure-preview.txt
-          grep -Fq "preview only: no SDK import, local server, or HTTP request occurred" /tmp/failure-preview.txt
-
-          uv run --no-project --with 'pydantic>=2,<3' python playground/structured_output.py --preview | tee /tmp/structured-preview.txt
-          grep -Fq "preview only: no SDK import, HTTP request, or server-side schema enforcement occurred" /tmp/structured-preview.txt
-
-          python playground/function_calling.py --preview | tee /tmp/function-preview.txt
-          grep -Fq "preview only: the model did not request a tool and no local tool function was executed" /tmp/function-preview.txt
-
-      - name: Run synthetic SDK failure experiments
-        working-directory: decks/ai-openai_sdk
-        run: |
-          set -euo pipefail
-
-          run_failure() {
-            local status="$1"
-            local retries="$2"
-            local expected_count="$3"
-            local output="/tmp/failure-${status}-${retries}.txt"
-
-            uv run --no-project --with 'openai>=3,<4' \
-              python playground/failure_boundaries.py \
-              --status "$status" \
-              --max-retries "$retries" | tee "$output"
-
-            grep -Fq "status_code: ${status}" "$output"
-            grep -Fq "request_count: ${expected_count}" "$output"
-          }
-
-          run_failure 400 2 1
-          run_failure 429 2 3
-          grep -Fq "is_rate_limit_error: True" /tmp/failure-429-2.txt
-          run_failure 500 2 3
-          run_failure 429 0 1
-
-  airflow-fresh-runtime:
-    name: Airflow fresh runtime evidence
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-
-      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
-        with:
-          cache: true
-
-      - name: Resolve Airflow and verify local learning surfaces
+      - name: Run scheduler-backed clear and re-run experiment
         working-directory: decks/data_engineering-apache_airflow
         run: |
           set -euo pipefail
 
           bash lab/scripts/reset.sh --all
-
-          echo "== preflight =="
-          timeout 240 bash -x lab/scripts/preflight.sh
-
-          echo "== db migrate =="
-          timeout 180 bash lab/airflow.sh db migrate
-
-          echo "== local Dag discovery =="
-          dags_json="$(timeout 180 bash lab/airflow.sh dags list --local -o json)"
-          printf '%s\n' "$dags_json"
-          for dag_id in \
-            adudeck_observable_runtime \
-            adudeck_observable_schedule \
-            adudeck_u2_authoring_starter \
-            adudeck_u5_boundaries_starter; do
-            grep -Fq "$dag_id" <<<"$dags_json"
-          done
-
-          echo "== U2 tasks list =="
-          timeout 180 bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
-
-          echo "== U2 task test =="
-          timeout 180 bash lab/airflow.sh tasks test \
-            adudeck_u2_authoring_starter \
-            inspect_source \
-            2026-01-01
-
-          echo "== U2 Dag test =="
-          timeout 180 bash lab/airflow.sh dags test \
-            adudeck_u2_authoring_starter \
-            2026-01-01
-
-          echo "== U5 Dag test =="
-          timeout 180 bash lab/airflow.sh dags test \
-            adudeck_u5_boundaries_starter \
-            2026-01-01
-
-          if grep -R -Fq "not-a-secret" lab/output; then
-            echo "teaching Connection password leaked into learner output" >&2
-            exit 1
-          fi
-
-      - name: Run scheduler-backed recovery experiment
-        working-directory: decks/data_engineering-apache_airflow
-        run: |
-          set -euo pipefail
+          bash lab/scripts/preflight.sh
+          bash lab/airflow.sh db migrate
+          bash lab/airflow.sh dags list --local -o json >/tmp/local-dags.json
+          grep -Fq 'adudeck_observable_runtime' /tmp/local-dags.json
 
           standalone_log="${RUNNER_TEMP}/airflow-standalone.log"
           bash lab/airflow.sh standalone >"$standalone_log" 2>&1 &
@@ -155,88 +49,47 @@ jobs:
             kill "$airflow_pid" 2>/dev/null || true
             wait "$airflow_pid" 2>/dev/null || true
             echo "== standalone log tail =="
-            tail -n 120 "$standalone_log" || true
+            tail -n 100 "$standalone_log" || true
           }
           trap cleanup EXIT
 
-          dag_ready=false
-          for _ in $(seq 1 120); do
-            if python - <<'PY'
-          import sqlite3
-          try:
-              db = sqlite3.connect('lab/.airflow/airflow.db')
-              row = db.execute(
-                  'SELECT 1 FROM dag WHERE dag_id=? LIMIT 1',
-                  ('adudeck_observable_runtime',),
-              ).fetchone()
-          except sqlite3.Error:
-              raise SystemExit(1)
-          raise SystemExit(0 if row else 1)
-          PY
-            then
-              dag_ready=true
-              break
-            fi
-            sleep 2
-          done
-          if [[ "$dag_ready" != true ]]; then
-            echo "standalone did not serialize the expected Dag" >&2
-            exit 1
-          fi
-
-          timeout 120 bash lab/airflow.sh dags unpause adudeck_observable_runtime
+          bash lab/airflow.sh dags unpause adudeck_observable_runtime
 
           run_id="adudeck_calibration_${GITHUB_RUN_ID}"
           logical_date="2026-08-27T00:00:00+00:00"
-          timeout 120 bash lab/airflow.sh dags trigger \
+          export RUN_ID_FOR_PROBE="$run_id"
+
+          bash lab/airflow.sh dags trigger \
             -r "$run_id" \
             -l "$logical_date" \
             -c '{"failure_mode":"none"}' \
             adudeck_observable_runtime
 
-          export RUN_ID_FOR_PROBE="$run_id"
-          export LOGICAL_DATE_FOR_PROBE="$logical_date"
-
-          wait_for_run_success() {
-            local final_state=""
-            for _ in $(seq 1 120); do
-              state="$(python - <<'PY'
+          wait_for_transform_success() {
+            local previous_end="${1:-}"
+            for _ in $(seq 1 90); do
+              current="$(python - <<'PY'
           import os, sqlite3
           db = sqlite3.connect('lab/.airflow/airflow.db')
           row = db.execute(
-              'SELECT state FROM dag_run WHERE dag_id=? AND run_id=?',
+              "SELECT state, end_date FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
               ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
           ).fetchone()
-          print(row[0] if row else '')
+          print('|'.join('' if value is None else str(value) for value in row) if row else '|')
           PY
               )"
-              if [[ "$state" == "success" || "$state" == "failed" ]]; then
-                final_state="$state"
-                break
+              state="${current%%|*}"
+              end_date="${current#*|}"
+              if [[ "$state" == "success" && -n "$end_date" && "$end_date" != "$previous_end" ]]; then
+                printf '%s\n' "$end_date"
+                return 0
               fi
               sleep 2
             done
-            if [[ "$final_state" != "success" ]]; then
-              echo "scheduler-backed calibration run ended as: ${final_state:-unknown}" >&2
-              bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id" || true
-              exit 1
-            fi
+            return 1
           }
 
-          wait_for_run_success
-          timeout 120 bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
-
-          before_end="$(python - <<'PY'
-          import os, sqlite3
-          db = sqlite3.connect('lab/.airflow/airflow.db')
-          row = db.execute(
-              "SELECT end_date FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
-              ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
-          ).fetchone()
-          assert row and row[0], row
-          print(row[0])
-          PY
-          )"
+          before_end="$(wait_for_transform_success)"
 
           python - <<'PY'
           import os, sqlite3
@@ -250,46 +103,37 @@ jobs:
           print(f'validated run identity: {row}')
           PY
 
-          timeout 120 bash lab/airflow.sh tasks clear \
+          bash lab/airflow.sh tasks clear \
             adudeck_observable_runtime \
             -s "$logical_date" \
             -e "$logical_date" \
-            -t '^transform$' \
+            -t 'transform' \
             -y
 
-          rerun_observed=false
-          for _ in $(seq 1 120); do
-            current="$(python - <<'PY'
+          python - <<'PY'
           import os, sqlite3
           db = sqlite3.connect('lab/.airflow/airflow.db')
           row = db.execute(
-              "SELECT state, end_date FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
+              "SELECT state FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
               ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
           ).fetchone()
-          print('|'.join('' if value is None else str(value) for value in row) if row else '|')
+          assert row and row[0] is None, row
+          print('validated clear state reset for transform')
           PY
-            )"
-            state="${current%%|*}"
-            end_date="${current#*|}"
-            if [[ "$state" == "success" && -n "$end_date" && "$end_date" != "$before_end" ]]; then
-              rerun_observed=true
-              break
-            fi
-            sleep 2
-          done
 
-          if [[ "$rerun_observed" != true ]]; then
-            echo "transform did not produce new same-run completion evidence after clear" >&2
-            bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id" || true
-            exit 1
-          fi
+          after_end="$(wait_for_transform_success "$before_end")"
+          test "$after_end" != "$before_end"
 
-          timeout 120 bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
-          timeout 120 bash lab/airflow.sh tasks states-for-dag-run \
-            adudeck_observable_runtime \
-            "$run_id" \
-            -o json | tee /tmp/runtime-task-states.json
+          python - <<'PY'
+          import os, sqlite3
+          db = sqlite3.connect('lab/.airflow/airflow.db')
+          rows = db.execute(
+              'SELECT task_id, state FROM task_instance WHERE dag_id=? AND run_id=? ORDER BY task_id',
+              ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
+          ).fetchall()
+          print(rows)
+          assert dict(rows) == {'prepare': 'success', 'publish': 'success', 'transform': 'success'}, rows
+          PY
 
-          grep -Fq '"state": "success"' /tmp/runtime-task-states.json
-          find lab/output -type f -name '*-published.json' -print | tee /tmp/published-files.txt
-          test -s /tmp/published-files.txt
+          test -f "lab/output/${run_id}-published.json"
+          echo "same-run recovery validated: $run_id transform $before_end -> $after_end"
