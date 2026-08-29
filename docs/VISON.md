@@ -23,7 +23,8 @@ business, 교육 상품, 공식 교육과정을 전제로 만들지 않는다.
 
 - Version-sensitive 주제는 현재 authoritative source와 supported behavior를 기준으로 다룬다.
 - Deprecated 또는 legacy approach가 현재의 기본 경로처럼 보이게 가르치지 않는다.
-- 역사적 맥락, migration, 비교, 재현성 등의 이유로 이전 방식이 필요하면 현재 방식과의 차이와 그 방식을 다루는 이유를 명확히 한다.
+- 역사적 맥락, migration, 비교, 재현성 등의 이유로 이전 방식이 필요하면 현재 방식과의 차이와 그 방식을 다루는 이유를
+  명확히 한다.
 - 단순히 가장 새로운 선택을 좇는 것을 목표로 하지 않는다. 현재 지원성, 안정성, 실제 적용 가능성과 학습 가치를 우선한다.
 
 ## Language
