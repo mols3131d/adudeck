@@ -107,9 +107,9 @@ persistence와 ownership이 다르다.
 | 6. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
 | 7. Integration | SDK 호출을 작은 application boundary로 감싼다. | testability·observability·upgrade 판단 | planned |
 
-현재 구현된 calibration slice는 [Client → Arguments → Request → Response](textbook/01-client-request-response.md)다. 이후 unit은
-이 slice의 explanation depth, worked state trace, playground observability, practice와 assessment 강도를 기준으로 증분
-구현한다.
+현재 구현된 calibration slice는 [Client → Arguments → Request → Response](textbook/01-client-request-response.md)다.
+이후 unit은 이 slice의 explanation depth, worked state trace, playground observability, practice와 assessment 강도를
+기준으로 증분 구현한다.
 
 ## Textbook + Lab Contract
 
@@ -142,8 +142,8 @@ validation boundary도 함께 설명할 수 있어야 한다.
 
 ## Lab Runtime
 
-첫 lab은 [playground/request_response.py](playground/request_response.py) 하나로 구성한다. PEP 723 inline dependency metadata를
-사용하므로 별도 lab package를 만들지 않는다.
+첫 lab은 [playground/request_response.py](playground/request_response.py) 하나로 구성한다. PEP 723 inline dependency
+metadata를 사용하므로 별도 lab package를 만들지 않는다.
 
 network call 없이 application이 `responses.create()`에 넘길 arguments만 먼저 본다.
 
