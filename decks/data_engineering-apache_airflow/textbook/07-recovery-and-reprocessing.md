@@ -187,26 +187,36 @@ backfill
 
 Append-only side effect라면 중복이 생길 수 있고, deterministic replace/upsert target이라면 수렴하기 쉽다.
 
-## 7. Playground: task와 logical date로 대상을 좁히고 같은 run을 추적한다
+## 7. Playground: identity를 먼저 고정하고 같은 run을 다시 연다
 
-먼저 `adudeck_observable_runtime`을 정상 실행한다.
+Airflow 3.3.1에서 manual trigger는 `--logical-date`를 생략하면 `logical_date=None`인 DagRun을 만들 수 있다. 그런데
+`tasks clear`의 selective task path는 task regex와 date range로 대상을 좁히므로, 이 실험에서는 **처음부터 명시적인
+logical date를 가진 run**을 만든다.
+
+Disposable lab state에서 한 번만 사용할 identity를 정한다.
 
 ```bash
+RUN_ID='adudeck_recovery_2026_08_27'
+LOGICAL_DATE='2026-08-27T00:00:00+00:00'
+
 bash lab/airflow.sh dags trigger \
+  -r "$RUN_ID" \
+  -l "$LOGICAL_DATE" \
   -c '{"failure_mode":"none"}' \
   adudeck_observable_runtime
+```
 
+이미 같은 `RUN_ID`를 사용한 적이 있다면 새 disposable state에서 시작하거나 다른 unique run ID를 사용한다. Run이 끝나면
+목록과 snapshot에서 **방금 지정한 두 identity가 실제 runtime evidence와 일치하는지** 확인한다.
+
+```bash
 bash lab/airflow.sh dags list-runs \
   adudeck_observable_runtime \
   -o table
-```
 
-`RUN_ID`와 `LOGICAL_DATE`를 기록하고 snapshot한다.
-
-```bash
 bash lab/scripts/snapshot.sh \
   adudeck_observable_runtime \
-  '<RUN_ID>'
+  "$RUN_ID"
 ```
 
 ### Prediction
@@ -215,47 +225,47 @@ bash lab/scripts/snapshot.sh \
 transform만 clear하면 새 RUN_ID가 생기는가?
 prepare도 다시 실행되는가?
 transform execution evidence는 어떻게 달라지는가?
-external output target은 같은 logical run을 유지하는가?
+external output target은 같은 run identity를 유지하는가?
 ```
 
 ### Narrow selector + confirmation
 
 Airflow 3.3.1의 `tasks clear`는 task regex와 start/end date로 범위를 좁힐 수 있지만 single `run_id` selector는 제공하지
-않는다. 따라서 먼저 run 목록에서 해당 `LOGICAL_DATE`가 의도한 run을 유일하게 가리키는지 확인하고, confirmation target도
-검토한다.
+않는다. 따라서 `LOGICAL_DATE`가 의도한 run을 가리키는지 run 목록에서 먼저 확인하고, confirmation target을 다시 검토한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
-  -s '<LOGICAL_DATE>' \
-  -e '<LOGICAL_DATE>' \
+  -s "$LOGICAL_DATE" \
+  -e "$LOGICAL_DATE" \
   -t '^transform$'
 ```
 
 같은 logical date에 다른 run이 있거나 confirmation target이 예상보다 넓다면 승인하지 않는다. 이 disposable lab에서는
-새로운 unique run을 만든 뒤 다시 시도하는 편이 가장 단순하다. 대상이 정확히 기대한 범위일 때만 `-y`를 사용한다.
+새로운 unique logical date/run identity로 다시 만드는 편이 가장 단순하다. 대상이 정확히 기대한 범위일 때만 `-y`를
+사용한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
-  -s '<LOGICAL_DATE>' \
-  -e '<LOGICAL_DATE>' \
+  -s "$LOGICAL_DATE" \
+  -e "$LOGICAL_DATE" \
   -t '^transform$' \
   -y
 ```
 
-같은 `<RUN_ID>`를 다시 snapshot한다.
+같은 `$RUN_ID`를 다시 snapshot한다.
 
 확인할 것:
 
 ```text
-DagRun identity
-selected TaskInstance state transition
-new execution log
-external output
+DagRun run_id와 logical_date가 유지되는가?
+selected TaskInstance state가 다시 진행되는가?
+새 execution log가 생기는가?
+external output target은 어떤 final state로 수렴하는가?
 ```
 
-Command가 성공했다는 사실보다 **의도한 logical work가 다시 실행되었다는 evidence**를 찾는다.
+Command가 성공했다는 사실보다 **의도한 logical work가 같은 run 안에서 다시 실행되었다는 evidence**를 찾는다.
 
 ### Variation: downstream 포함
 
@@ -264,8 +274,8 @@ Command가 성공했다는 사실보다 **의도한 logical work가 다시 실�
 ```bash
 bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
-  -s '<LOGICAL_DATE>' \
-  -e '<LOGICAL_DATE>' \
+  -s "$LOGICAL_DATE" \
+  -e "$LOGICAL_DATE" \
   -t '^transform$' \
   -d
 ```
@@ -306,8 +316,9 @@ bug fix 후 그 run의 transform/publish만 재계산
 
 ## 9. Version-sensitive note
 
-이 chapter는 Apache Airflow 3.3.1을 기준으로 한다. `tasks clear` selector/option과 clear·rerun 시 Dag bundle version
-behavior는 minor version에서 달라질 수 있으므로 실제 운영 전 current CLI/release note를 확인한다.
+이 chapter는 Apache Airflow 3.3.1을 기준으로 한다. Manual trigger의 logical-date semantics, `tasks clear`
+selector/option, clear·rerun 시 Dag bundle version behavior는 minor version에서 달라질 수 있으므로 실제 운영 전 current
+CLI/release note를 확인한다.
 
 학습 목표는 option 암기가 아니라 `existing task state reset`과 `historical run creation`을 구분하는 것이다.
 
@@ -316,6 +327,11 @@ behavior는 minor version에서 달라질 수 있으므로 실제 운영 전 cur
 ### "실패했으니 일단 clear"
 
 Retry가 아직 진행 중인지 먼저 본다.
+
+### "manual trigger면 항상 clear에 쓸 logical date가 생긴다"
+
+Airflow 3.3.1에서는 `--logical-date`를 생략한 manual run의 logical date가 `None`일 수 있다. Date selector를 학습하는 이
+실험에서는 identity를 명시적으로 만든다.
 
 ### "clear하면 새 DagRun이 생긴다"
 
@@ -366,6 +382,6 @@ logical input 기반 final invariant를 다시 설계한다.
 다음을 독립적으로 할 수 있으면 통과한다.
 
 1. retry / clear-re-run / backfill / catchup을 logical-work identity로 구분한다.
-2. Intended TaskInstance set을 좁게 선택하고 confirmation으로 범위를 검증한 뒤 same-run evidence를 연결한다.
+2. Reproducible run/logical-date identity를 만들고 intended TaskInstance set을 좁게 선택한 뒤 same-run evidence를 연결한다.
 3. Downstream을 함께 clear할지 side-effect contract로 판단한다.
 4. Repeated execution에서 wall-clock과 logical input을 구분해 idempotent target을 설계한다.
