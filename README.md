@@ -13,6 +13,7 @@
 .rulesync/           # canonical agent assets
 decks/               # default filesystem deck storage
 docs/                # repository-wide human-facing docs
+tools/               # reusable learning utilities
 rulesync.jsonc        # shared agent projection configuration
 mise.toml             # toolchain and repository tasks
 pyproject.toml        # uv-managed Python project
