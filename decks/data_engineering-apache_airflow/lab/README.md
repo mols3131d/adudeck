@@ -241,7 +241,8 @@ baseline과 variation을 구분하지 않으면 단순 실행 tutorial에 머무
 1. `bash lab/scripts/preflight.sh`로 environment/toolchain boundary를 확인한다.
 2. `textbook/01-mental-model.md`의 definition/runtime separation을 읽는다.
 3. `db migrate`를 실행하고 **schema가 존재하는 것과 scheduler가 실행되는 것의 차이**를 적는다.
-4. `dags list-import-errors --local`과 `dags list --local`에서 current source를 확인하고 U2 starter의 `tasks list` 결과를 예측·확인한다.
+4. `dags list-import-errors --local`과 `dags list --local`에서 current source를 확인하고 U2 starter의 `tasks list`
+   결과를 예측·확인한다.
 5. `tasks test`와 `dags test`로 local execution evidence를 본다.
 6. `standalone`을 시작하고 같은 Dag를 실제로 trigger한다.
 7. `snapshot.sh`로 scheduler-backed DagRun/TaskInstance를 관찰한다.
