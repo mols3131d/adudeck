@@ -27,8 +27,9 @@ mise install
 mise run setup
 ```
 
-VS Code에서는 `Terminal > Run Task... > adudeck: bootstrap`으로 같은 초기 설정을 실행할 수 있다. 이후 빠른 로컬 검증은
-`adudeck: check`, formatting은 `adudeck: format`을 사용한다.
+VS Code에서는 `Terminal > Run Task... > adudeck: bootstrap`으로 같은 초기 설정을 실행할 수 있다. 이후 formatting은
+`adudeck: format`, auto-fix를 포함한 빠른 로컬 검증은 `adudeck: fix & check`를 사용한다. `fix & check`는 formatting과
+generated projection을 갱신할 수 있다.
 
 `mise`가 repository toolchain을 관리하고, `uv`가 Python dependency와 `.venv`를 관리한다. Agent asset을 변경했을 때는
 `mise run rulesync:generate`로 projection을 갱신한다.
