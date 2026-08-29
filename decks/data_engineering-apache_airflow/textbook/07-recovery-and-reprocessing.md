@@ -190,7 +190,7 @@ Append-only side effect라면 중복이 생길 수 있고, deterministic replace
 ## 7. Playground: identity를 먼저 고정하고 같은 run을 다시 연다
 
 Airflow 3.3.1에서 manual trigger는 `--logical-date`를 생략하면 `logical_date=None`인 DagRun을 만들 수 있다. 그런데
-`tasks clear`의 selective task path는 task regex와 date range로 대상을 좁히므로, 이 실험에서는 **처음부터 명시적인
+`tasks clear`의 selective task path는 task selector와 date range로 대상을 좁히므로, 이 실험에서는 **처음부터 명시적인
 logical date를 가진 run**을 만든다.
 
 Disposable lab state에서 한 번만 사용할 identity를 정한다.
@@ -230,15 +230,16 @@ external output target은 같은 run identity를 유지하는가?
 
 ### Narrow selector + confirmation
 
-Airflow 3.3.1의 `tasks clear`는 task regex와 start/end date로 범위를 좁힐 수 있지만 single `run_id` selector는 제공하지
-않는다. 따라서 `LOGICAL_DATE`가 의도한 run을 가리키는지 run 목록에서 먼저 확인하고, confirmation target을 다시 검토한다.
+Airflow 3.3.1의 `tasks clear`는 task selector와 start/end date로 범위를 좁힐 수 있지만 single `run_id` selector는 제공하지
+않는다. 이 lab에서는 `-t 'transform'`을 사용하고, selector matching detail을 추정하는 대신 confirmation에서 실제 target을
+확인한다. 또한 `LOGICAL_DATE`가 의도한 run을 가리키는지 run 목록에서 먼저 확인한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
   -s "$LOGICAL_DATE" \
   -e "$LOGICAL_DATE" \
-  -t '^transform$'
+  -t 'transform'
 ```
 
 같은 logical date에 다른 run이 있거나 confirmation target이 예상보다 넓다면 승인하지 않는다. 이 disposable lab에서는
@@ -250,7 +251,7 @@ bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
   -s "$LOGICAL_DATE" \
   -e "$LOGICAL_DATE" \
-  -t '^transform$' \
+  -t 'transform' \
   -y
 ```
 
@@ -276,7 +277,7 @@ bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
   -s "$LOGICAL_DATE" \
   -e "$LOGICAL_DATE" \
-  -t '^transform$' \
+  -t 'transform' \
   -d
 ```
 
