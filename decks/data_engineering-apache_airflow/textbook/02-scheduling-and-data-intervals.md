@@ -18,6 +18,12 @@ catchup, backfill이 서로 무관한 옵션처럼 보인다.
 
 그리고 시간축으로 결과를 **먼저 예측한 뒤**, 실제 2분 schedule Dag를 UI, CLI, log, metadata DB, output에서 관찰한다.
 
+Airflow 3에서는 여기서 한 가지를 먼저 고정해야 한다. Bare cron string을 `schedule="*/2 * * * *"`처럼 넘기면
+`[scheduler] create_cron_data_intervals=False`가 기본이므로 `CronTriggerTimetable`이 선택된다. 이 timetable은 cron
+tick에 run을 trigger하는 데 초점을 두며 기본 data interval은 한 점이다. 이 chapter는 batch data interval을 학습하는 것이
+목표이므로 lab Dag에서 **`CronDataIntervalTimetable`을 명시적으로 사용한다.** 따라서 아래의 연속 interval 설명을 모든
+Airflow cron schedule의 기본 동작으로 일반화하지 않는다.
+
 ## 1. "언제 실행했는가"와 "어느 데이터를 담당하는가"는 다르다
 
 전날 주문을 집계하는 daily pipeline을 생각한다.
@@ -48,9 +54,9 @@ execution time != data time
 
 이 distinction이 retry와 partition 설계의 기반이다.
 
-## 2. schedule은 반복되는 interval을 만든다
+## 2. Data-interval timetable은 반복되는 interval을 만든다
 
-`@daily`처럼 continuous interval을 만드는 timetable을 단순화하면 다음과 같이 볼 수 있다.
+`CronDataIntervalTimetable`처럼 continuous interval을 만드는 timetable을 단순화하면 다음과 같이 볼 수 있다.
 
 ```text
 [08-25 00:00, 08-26 00:00)
@@ -62,6 +68,10 @@ execution time != data time
 사용하는 경계다.
 
 따라서 첫 scheduled run이 `start_date`와 같은 순간에 즉시 실행되지 않는 것을 "하루 늦게 실행되는 bug"라고 보면 안 된다.
+
+반대로 `CronTriggerTimetable` 같은 trigger timetable은 같은 cron 표현을 사용해도 scheduling과 data interval을 다르게
+모델링한다. Airflow에서 `schedule` 표현만 보고 interval semantics를 추정하지 않고
+**어떤 timetable이 실제로 선택되었는지** 확인하는 습관을 갖는다.
 
 ## 3. DagRun의 시간 정보를 분리한다
 
@@ -99,11 +109,14 @@ warehouse.orders/dt=2026-08-27
 
 ```text
 Dag ID: adudeck_observable_schedule
-schedule: */2 * * * *
+schedule: CronDataIntervalTimetable("*/2 * * * *", timezone="UTC")
 start_date: 2026-01-01 UTC
 catchup: False
 Task: expose_interval
 ```
+
+여기서 explicit timetable은 Airflow 3의 global cron default와 무관하게 실습의 interval semantics를 고정한다. 실습 중
+`data_interval_start < data_interval_end`가 실제로 성립하는지 먼저 확인하고 이후 prediction을 해석한다.
 
 2분 schedule은 production recommendation이 아니다. **사람이 오래 기다리지 않고 scheduler의 interval 계산을 관찰하기 위한
 instrumentation**이다.
@@ -147,7 +160,8 @@ bash lab/airflow.sh dags list
 
 ```text
 prediction
-logical/data interval: [12:04, 12:06)
+logical date: 12:04
+data interval: [12:04, 12:06)
 run eligible: 12:06 이후
 ```
 
@@ -365,6 +379,10 @@ bash lab/airflow.sh backfill create \
 현재 deck 작성 시각은 2026-08-28 KST이므로 이 범위는 이미 종료된 historical range다. 미래에 실습해도 계속 과거 범위로
 남는다.
 
+Airflow 3.3.1의 backfill date range는 inclusive다. 또한 동일 logical date의 기존 run을 다시 만들지 여부는
+`--reprocess-behavior`가 결정하며 기본값은 `none`이다. 이 lab의 첫 backfill은 해당 historical range에 기존 run이 없다는
+전제에서 진행하고, 이미 run이 있다면 dry-run 결과와 기존 run을 먼저 비교한다.
+
 ### 실행 전에 적을 것
 
 - 몇 개 run이 대상일 것으로 예상하는가?
@@ -455,7 +473,9 @@ DagRun이 존재한다고 Task가 즉시 실행되는 것은 아니다. dependen
 
 ### 1. Interval prediction
 
-`*/2 * * * *`에 대해 `10:00`, `10:02`, `10:04`, `10:06` 경계를 그리고 각 run의 interval과 run-after를 적는다.
+실습 Dag의 explicit `CronDataIntervalTimetable("*/2 * * * *", timezone="UTC")`에 대해 `10:00`, `10:02`, `10:04`,
+`10:06` 경계를 그리고 각 run의 interval과 run-after를 적는다. 그 다음 bare cron string을 사용하는 Airflow 3 기본
+`CronTriggerTimetable`이라면 어떤 값이 달라질지도 비교한다.
 
 ### 2. Cross-view timestamp audit
 
@@ -506,13 +526,17 @@ output JSON
 
 다음을 자신의 말로 설명할 수 있으면 다음 chapter로 간다.
 
-> Airflow schedule은 단순 wall-clock alarm이 아니다. DagRun은 logical/data interval을 갖고 timetable과 scheduler가 run
-> 생성 시점을 결정한다. task의 실제 실행은 늦어질 수 있지만 logical work는 유지되어야 한다. catchup은 normal scheduling
-> policy이고, backfill은 명시적인 historical reprocessing operation이다.
+> Airflow의 cron schedule은 하나의 semantics만 갖지 않는다. 이 chapter의 `CronDataIntervalTimetable`에서는 DagRun이
+> 연속 data interval을 갖고 interval 끝 이후에 scheduling될 수 있다. Airflow 3의 bare cron default인
+> `CronTriggerTimetable`은 다른 time model을 사용한다. 어떤 timetable인지 먼저 확인한 뒤 logical/data time과 실제
+> wall-clock execution time을 분리해야 한다. catchup은 normal scheduling policy이고, backfill은 명시적인 historical
+> reprocessing operation이다.
 
 ## References
 
 - [Scheduler](https://airflow.apache.org/docs/apache-airflow/stable/concepts/scheduler.html)
 - [Dag Run](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/dag-run.html)
+- [Timetables — trigger vs data interval](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/timetable.html)
+- [Configuration — create_cron_data_intervals](https://airflow.apache.org/docs/apache-airflow/3.3.1/configurations-ref.html)
 - [CLI Reference — next-execution / backfill](https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html)
 - [FAQ — start_date and data interval](https://airflow.apache.org/docs/apache-airflow/stable/faq.html)

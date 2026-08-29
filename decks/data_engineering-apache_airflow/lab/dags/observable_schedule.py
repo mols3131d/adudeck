@@ -9,6 +9,7 @@ from typing import Any
 
 import pendulum
 from airflow.sdk import dag, get_current_context, task
+from airflow.timetables.interval import CronDataIntervalTimetable
 
 OUTPUT_DIR = Path(os.environ.get("ADUDECK_AIRFLOW_OUTPUT_DIR", "/tmp/adudeck-airflow-output"))
 
@@ -23,7 +24,7 @@ def _render(value: Any) -> str | None:
 
 @dag(
     dag_id="adudeck_observable_schedule",
-    schedule="*/2 * * * *",
+    schedule=CronDataIntervalTimetable("*/2 * * * *", timezone="UTC"),
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     catchup=False,
     tags=["adudeck", "observable"],
