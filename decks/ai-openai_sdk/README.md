@@ -84,8 +84,8 @@ application integration boundary
 
 이 순서는 API feature 목록을 나열한 것이 아니다. 먼저 평범한 request/response와 state ownership을 이해하고, 그 다음 모든
 후속 실습에 적용되는 failure/retry boundary를 확립한다. 이후 schema를 통해 machine-readable output contract를 배우고,
-function calling에서 schema와 application-owned execution을 결합한다. 마지막으로 같은 의미를 event stream과 async control
-flow에서 추적한다.
+function calling에서 schema와 application-owned execution을 결합한다. 마지막으로 같은 의미를 event stream과 async
+control flow에서 추적한다.
 
 “이전 대화를 이어간다”는 한 문장으로 state를 뭉개지 않고, response ID를 이용한 lineage와 durable conversation object의
 ownership을 분리해서 배운다.
