@@ -30,10 +30,12 @@ class GenerateEcommerceTest(unittest.TestCase):
             order_ids = {row["order_id"] for row in orders}
 
             totals = {order_id: Decimal("0") for order_id in order_ids}
+            item_counts = {order_id: 0 for order_id in order_ids}
             for item in items:
                 self.assertIn(item["order_id"], order_ids)
                 self.assertIn(item["product_id"], product_ids)
                 totals[item["order_id"]] += Decimal(item["unit_price"]) * int(item["quantity"])
+                item_counts[item["order_id"]] += 1
 
             for order in orders:
                 user = users_by_id[order["user_id"]]
@@ -41,6 +43,7 @@ class GenerateEcommerceTest(unittest.TestCase):
                     datetime.fromisoformat(user["created_at"]),
                     datetime.fromisoformat(order["created_at"]),
                 )
+                self.assertGreaterEqual(item_counts[order["order_id"]], 1)
                 self.assertEqual(Decimal(order["total_amount"]), totals[order["order_id"]])
 
     def test_same_seed_generates_identical_files(self) -> None:
