@@ -170,7 +170,8 @@ function_call_output
 → next model turn
 ```
 
-Function Calling은 독립 기능 하나가 아니라 **state ownership + structured arguments + application execution**을 결합한다.
+Function Calling은 독립 기능 하나가 아니라 **state ownership + structured arguments + application execution**을
+결합한다.
 
 ## 5.6 Worked trace: order A-102 조회
 

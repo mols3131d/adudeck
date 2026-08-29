@@ -1,7 +1,7 @@
 # 3. Failure boundaries: Python call 하나와 HTTP attempt 수는 다를 수 있다
 
-`client.responses.create(...)`는 application에서는 한 번의 method call이다. 그러나 SDK의 timeout/retry policy 때문에 transport
-관점에서는 여러 HTTP attempt가 일어날 수 있다.
+`client.responses.create(...)`는 application에서는 한 번의 method call이다. 그러나 SDK의 timeout/retry policy 때문에
+transport 관점에서는 여러 HTTP attempt가 일어날 수 있다.
 
 ```text
 application call
@@ -15,8 +15,8 @@ HTTP attempt
 typed Response or SDK exception
 ```
 
-이번 chapter의 목표는 exception 이름을 외우는 것이 아니라 **실패가 어느 boundary에서 발생했고, 몇 번의 attempt가 있었는지**
-설명하는 것이다.
+이번 chapter의 목표는 exception 이름을 외우는 것이 아니라
+**실패가 어느 boundary에서 발생했고, 몇 번의 attempt가 있었는지** 설명하는 것이다.
 
 ## 3.1 실패를 네 층으로 나눈다
 

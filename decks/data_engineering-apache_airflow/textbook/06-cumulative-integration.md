@@ -5,7 +5,8 @@ cumulative assessment다.
 
 성공 기준은 Dag가 초록색이 되는 것이 아니다.
 
-> **의도 → prediction → runtime evidence → failure classification → change → re-validation**을 자신의 workflow로 설명한다.
+> **의도 → prediction → runtime evidence → failure classification → change → re-validation**을 자신의 workflow로
+> 설명한다.
 
 ## 1. 모든 evidence를 모으지 말고 cheapest discriminating evidence를 고른다
 
@@ -55,8 +56,8 @@ requirements
 - repeated execution에도 publish output이 duplicate로 누적되지 않음
 ```
 
-Production storage나 distributed deployment는 범위 밖이다. Local Airflow 3.3.1에서 **runtime mechanism을 설명할 수 있는가**를
-평가한다.
+Production storage나 distributed deployment는 범위 밖이다. Local Airflow 3.3.1에서
+**runtime mechanism을 설명할 수 있는가**를 평가한다.
 
 ## 3. 구현 전에 execution contract를 쓴다
 

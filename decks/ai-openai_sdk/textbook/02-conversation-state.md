@@ -29,8 +29,8 @@ second = client.responses.create(
 )
 ```
 
-두 번째 call에 prior context를 연결하는 정보가 없다. 따라서 "client object가 알아서 이전 turn을 기억한다"는 mental model은
-버린다.
+두 번째 call에 prior context를 연결하는 정보가 없다. 따라서 "client object가 알아서 이전 turn을 기억한다"는 mental
+model은 버린다.
 
 ```text
 current request context

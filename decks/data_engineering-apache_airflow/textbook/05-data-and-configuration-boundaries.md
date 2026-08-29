@@ -165,7 +165,8 @@ environment / metadata DB / secrets backend / ...
 
 따라서 "UI 목록에 row가 없으니 Connection이 아니다"라는 결론은 틀릴 수 있다.
 
-이번 lab의 teaching Variable/Connection은 environment-backed다. **어디에 저장되었는지와 어떤 책임의 값인지는 별도 질문**이다.
+이번 lab의 teaching Variable/Connection은 environment-backed다.
+**어디에 저장되었는지와 어떤 책임의 값인지는 별도 질문**이다.
 
 ## 8. Worked mapping
 
@@ -189,7 +190,8 @@ environment / metadata DB / secrets backend / ...
 | API token | Connection/secrets-backed config | credential |
 | min row count | Dag code | workflow policy로 version review |
 
-마지막 항목이 중요하다. Airflow에 Variable 기능이 있다는 이유만으로 모든 constant를 metadata/config surface로 옮기지 않는다.
+마지막 항목이 중요하다. Airflow에 Variable 기능이 있다는 이유만으로 모든 constant를 metadata/config surface로 옮기지
+않는다.
 
 ## 9. Playground: 같은 run에서 owner를 직접 연결한다
 
@@ -277,8 +279,8 @@ stage task가 dataset 전체를 return하도록 바꾸자는 제안이 있다.
 | output file | business data side effect |
 | Variable/Connection resolution | runtime config/access config가 resolve됨 |
 
-특히 environment-backed Variable/Connection이 resolve된다는 evidence와 metadata DB row가 존재한다는 evidence를 같은 것으로
-취급하지 않는다.
+특히 environment-backed Variable/Connection이 resolve된다는 evidence와 metadata DB row가 존재한다는 evidence를 같은
+것으로 취급하지 않는다.
 
 ## 12. 흔한 오해
 

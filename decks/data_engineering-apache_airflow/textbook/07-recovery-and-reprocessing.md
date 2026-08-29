@@ -303,8 +303,8 @@ bug fix 후 그 run의 transform/publish만 재계산
 
 ## 9. Version-sensitive note
 
-이 chapter는 Apache Airflow 3.3.1을 기준으로 한다. `tasks clear` selector/option과 clear·rerun 시 Dag bundle version behavior는
-minor version에서 달라질 수 있으므로 실제 운영 전 current CLI/release note를 확인한다.
+이 chapter는 Apache Airflow 3.3.1을 기준으로 한다. `tasks clear` selector/option과 clear·rerun 시 Dag bundle version
+behavior는 minor version에서 달라질 수 있으므로 실제 운영 전 current CLI/release note를 확인한다.
 
 학습 목표는 option 암기가 아니라 `existing task state reset`과 `historical run creation`을 구분하는 것이다.
 

@@ -122,8 +122,8 @@ API call에는 비용과 quota가 적용될 수 있다.
 - primary model interaction surface: Responses API
 - playground model은 configuration으로 override 가능
 
-Version-sensitive public API, generated type, model identifier는 바뀔 수 있다. Major SDK upgrade에서는 syntax만 수정하지 말고
-각 chapter의 state/control-flow model과 playground evidence가 여전히 유효한지 다시 검토한다.
+Version-sensitive public API, generated type, model identifier는 바뀔 수 있다. Major SDK upgrade에서는 syntax만 수정하지
+말고 각 chapter의 state/control-flow model과 playground evidence가 여전히 유효한지 다시 검토한다.
 
 ## Scope boundary
 

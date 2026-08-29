@@ -95,12 +95,13 @@ source/import
 → external side effect
 ```
 
-Airflow 3.3.1의 `tasks test`는 dependency check나 DB state recording 없이 task를 test하는 local surface다. Local test 성공을
-scheduler-backed execution 증거로 승격하지 않는다.
+Airflow 3.3.1의 `tasks test`는 dependency check나 DB state recording 없이 task를 test하는 local surface다. Local test
+성공을 scheduler-backed execution 증거로 승격하지 않는다.
 
 ## Lab
 
-Lab은 production topology를 재현하지 않는다. 한 machine에서 control flow와 state를 관찰하기 위한 disposable environment다.
+Lab은 production topology를 재현하지 않는다. 한 machine에서 control flow와 state를 관찰하기 위한 disposable
+environment다.
 
 ```text
 lab/
@@ -121,8 +122,8 @@ bash lab/scripts/snapshot.sh <DAG_ID> [RUN_ID]
 bash lab/scripts/reset.sh
 ```
 
-`inspect_metadata.py`는 학습용 read-only probe다. Airflow internal metadata schema를 application integration API로 취급하지
-않는다.
+`inspect_metadata.py`는 학습용 read-only probe다. Airflow internal metadata schema를 application integration API로
+취급하지 않는다.
 
 ## Validation boundary
 
@@ -146,8 +147,8 @@ Repository CI가 통과해도 learner-visible Airflow runtime을 자동으로 �
 - local runtime: `standalone`
 - metadata inspection: read-only
 
-Airflow 3.3.1은 `airflow.sdk`를 stable Dag-authoring public interface로 제공한다. CLI, UI, scheduling default, internal schema처럼
-version-sensitive한 surface는 current primary documentation과 실제 lab evidence를 구분해 검증한다.
+Airflow 3.3.1은 `airflow.sdk`를 stable Dag-authoring public interface로 제공한다. CLI, UI, scheduling default, internal
+schema처럼 version-sensitive한 surface는 current primary documentation과 실제 lab evidence를 구분해 검증한다.
 
 ## Scope boundary
 

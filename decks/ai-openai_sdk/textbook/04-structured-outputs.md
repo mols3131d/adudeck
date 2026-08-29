@@ -133,7 +133,8 @@ class TicketClassification(BaseModel):
 | content 확인 | output state | parsed value가 있는가? |
 | `output_parsed` 확인 | Pydantic instance | business rule도 맞는가? |
 
-이 trace의 목적은 check를 많이 추가하는 것이 아니다. **root cause가 다른 실패를 같은 exception처럼 취급하지 않는 것**이다.
+이 trace의 목적은 check를 많이 추가하는 것이 아니다.
+**root cause가 다른 실패를 같은 exception처럼 취급하지 않는 것**이다.
 
 ## 4.5 Schema는 "허용 표현"과 "field 의미"를 함께 드러낸다
 
