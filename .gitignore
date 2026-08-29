@@ -8,6 +8,7 @@ Thumbs.db
 mise.local.toml
 lefthook-local.yml
 .venv/
+tools/dataset_generator/data/
 
 # Python
 __pycache__/

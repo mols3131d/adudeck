@@ -79,6 +79,10 @@ run = "tombi lint --error-on-warnings ."
 description = "Run the minimal local runtime smoke test"
 run = "uv run python -c 'import sys; assert sys.version_info[:2] == (3, 14)'"
 
+[tasks."test:dataset-generator"]
+description = "Run dataset generator unit tests"
+run = "PYTHONPATH=tools/dataset_generator/src uv run --no-project --with Faker==40.37.0 python -m unittest discover -s tools/dataset_generator/tests -v"
+
 [tasks."git:setup"]
 description = "Configure repository-local Git defaults"
 run = "git config --local commit.template .gitmessage"
@@ -106,4 +110,5 @@ mise run rulesync:generate
 mise run rulesync:check
 mise run chatbot:check
 mise run test:smoke
+mise run test:dataset-generator
 """
