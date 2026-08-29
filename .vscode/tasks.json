@@ -16,15 +16,11 @@
       }
     },
     {
-      "label": "adudeck: check",
+      "label": "adudeck: fix & check",
       "type": "shell",
       "command": "mise run ci:fast",
       "options": {
         "cwd": "${workspaceFolder}"
-      },
-      "group": {
-        "kind": "test",
-        "isDefault": true
       },
       "problemMatcher": [],
       "presentation": {
