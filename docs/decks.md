@@ -58,16 +58,18 @@ Filesystem deck의 root는 작은 semantic surface만 공유한다.
 └── playground/
 ```
 
-- `README.md`는 deck의 entrypoint다.
-- `textbook/`은 primary textbook material이 있을 때 사용한다.
-- `playground/`는 hands-on investigation material이 있을 때 사용한다.
+- `README.md`는 deck의 entrypoint다. 작은 deck은 `README.md`만으로 충분할 수 있다.
+- `textbook/`은 `README.md`에서 분리된 primary textbook material과 그에 필요한 supporting resource의 기본 위치다.
+- `playground/`는 hands-on investigation artifact와 그에 필요한 supporting resource의 기본 위치다.
 - `textbook/`과 `playground/`는 optional이다. 현재 material이 요구할 때만 생성한다.
 - 각 surface의 내부 구조는 해당 deck이 소유한다. Flat file과 nested directory를 모두 허용하며, 하나의 응집된 학습
   단위가 여러 file이나 resource를 함께 가져야 하면 directory로 bundle할 수 있다.
 - 내부 directory 이름이나 단계, chapter, bundle taxonomy를 repository-wide 규칙으로 표준화하지 않는다. 이미 선택한
   내부 구조가 있다면 구체적인 학습 필요가 생기기 전까지 그 deck 안의 일관성을 우선한다.
-- Textbook이나 playground material이 존재하면 대응하는 semantic surface 안에 두고, 같은 책임의 parallel top-level
-  namespace를 추가로 만들지 않는다.
+- 다른 top-level directory도 구체적인 deck-local 책임이 있을 때 사용할 수 있다. `textbook/`이나 `playground/`와 같은
+  책임을 나누는 competing namespace는 새로 만들지 않는다.
+- 이 layout은 기존 deck을 자동 migration하지 않는다. 기존 구조를 재정리하거나 해당 책임의 새 material을 분리할 때
+  이 semantic surface로 수렴하며, migration 자체는 별도 작업으로 다룬다.
 
 ## Content
 
