@@ -94,4 +94,4 @@ if (( FAILURES > 0 )); then
 fi
 
 echo "Preflight complete. No metadata schema or scheduler-backed runtime has been claimed yet."
-echo "Next: run `bash lab/airflow.sh db migrate`, then verify expected Dags as described in lab/README.md."
+printf '%s\n' 'Next: run `bash lab/airflow.sh db migrate`, then verify expected Dags as described in lab/README.md.'
