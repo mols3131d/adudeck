@@ -63,10 +63,8 @@ streaming event generation은 실제 deck에서 필요해질 때 추가한다.
 
 ## Test
 
-repository root에서 다음을 실행한다.
+repository root에서 package 설치 경로와 CLI까지 함께 검증한다.
 
 ```bash
-PYTHONPATH=tools/dataset_generator/src \
-  uv run --no-project --with Faker==40.37.0 \
-  python -m unittest discover -s tools/dataset_generator/tests -v
+mise run test:dataset-generator
 ```
