@@ -29,8 +29,9 @@ lab/
 기존 `observable_*` DAG는 textbook에서 mechanism을 관찰하기 위한 reference experiment다. `dags/exercises/`의 starter
 DAG는 learner가 직접 prediction, modification, failure, comparison을 수행하기 위한 시작점이다.
 
-현재 scaffold는 curriculum의 **U2 Dag authoring/loading**과 **U5 data/configuration boundaries**까지만 준비한다. U7
-cumulative integration은 앞 unit의 실제 learning slice를 review한 뒤 추가한다.
+영구 starter는 **U2 Dag authoring/loading**과 **U5 data/configuration boundaries**에만 둔다. U6 recovery는 기존
+`observable_runtime`/`observable_schedule`을 재사용한다. U7 cumulative integration은 scaffolding을 더 줄여, learner가
+기존 starter/reference DAG를 읽고 local assessment work file을 직접 구성한다. 별도 U7 framework를 미리 만들지 않는다.
 
 ## Learning preparation
 
@@ -61,24 +62,22 @@ preflight는 다음을 확인한다.
 host / filesystem readiness
 → uv 사용 가능 여부
 → constrained Airflow 3.3.1 wrapper resolution
-→ local source import-error surface
 ```
 
 첫 실행에서는 `uv`가 Python, Airflow release constraints와 package를 resolve해야 하므로 network access와 package cache
 준비가 필요할 수 있다.
 
-preflight 성공은 **metadata DB가 준비되었거나 expected Dag가 DB-aware CLI surface에 나타나거나 scheduler-backed
-runtime이 정상이라는 증거가 아니다.** 준비 단계의 목적은 runtime 문제를 보기 전에 host/package/source import 문제를
-최대한 먼저 분리하는 것이다.
+preflight 성공은 **metadata DB가 준비되었거나 Dag source가 parse/discover되었거나 scheduler-backed runtime이 정상이라는
+증거가 아니다.** 준비 단계의 목적은 Airflow state를 만들기 전에 host와 toolchain 문제를 먼저 분리하는 것이다.
 
 ## Verification ladder
 
 Airflow 학습에서는 서로 다른 검증 수준을 섞지 않는다. 다음 순서로 한 단계씩 올라간다.
 
 ```text
-L0. environment + local import surface
+L0. environment + toolchain
         ↓
-L1. metadata schema + Dag discovery
+L1. metadata schema + local import/Dag discovery
         ↓
 L2. isolated task / Dag execution test
         ↓
@@ -89,29 +88,32 @@ L4. cross-view runtime observation
 L5. controlled failure / modification / re-observation
 ```
 
-### L0 — toolchain과 local source import가 준비됐는가
+### L0 — host와 constrained toolchain이 준비됐는가
 
 ```bash
 bash lab/scripts/preflight.sh
 ```
 
-이 단계에서는 `dags list-import-errors --local`을 사용해 serialized DB content 대신 현재 local source의 import-error
-surface를 본다. 오류가 없다는 것은 source import 단계의 evidence이지 metadata schema, DagModel, DagRun, TaskInstance가
-존재한다는 뜻이 아니다.
+이 단계는 Airflow 3.3.1을 실행할 수 있는 host/toolchain boundary까지만 확인한다. Fresh state의 Airflow 3.3.1 CLI는 local
+Dag/import discovery에도 metadata migration을 요구할 수 있으므로, preflight에서 Dag parse 성공까지 주장하지 않는다.
 
-### L1 — control-plane storage를 만들고 Dag discovery를 확인한다
+### L1 — control-plane storage를 만들고 local source를 확인한다
 
-Airflow 공식 tutorial처럼 local metadata schema를 먼저 초기화한다.
+먼저 local metadata schema를 초기화한다.
 
 ```bash
 bash lab/airflow.sh db migrate
 ```
 
-그 다음 local Dag discovery를 확인한다.
+그 다음 현재 source의 import-error surface와 Dag discovery를 확인한다.
 
 ```bash
+bash lab/airflow.sh dags list-import-errors --local -o table
 bash lab/airflow.sh dags list --local
 ```
+
+`--local`은 serialized DB content가 아니라 현재 Dag source를 대상으로 보는 mode지만, **CLI 자체가 metadata schema 없이
+동작한다는 뜻은 아니다.** Source evidence와 CLI/runtime prerequisite를 구분한다.
 
 다음 네 Dag를 찾는다.
 
@@ -128,11 +130,13 @@ U2 starter의 task definition도 확인한다.
 bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
 ```
 
-이 단계에서 metadata DB와 Airflow schema가 존재하고 Dag/task definition을 찾을 수 있지만 scheduler는 아직 실행하지
+이 단계에서 metadata schema가 존재하고 current source의 import/discovery surface를 확인했지만 scheduler는 아직 실행하지
 않았다. 다음을 구분한다.
 
 ```text
 metadata schema exists
+!=
+local source has no reported import error
 !=
 Dag definition is discoverable
 !=
@@ -218,7 +222,7 @@ surface가 **같은 logical execution**을 가리키는지 설명한다.
 
 ### L5 — 한 조건을 바꾸고 다시 본다
 
-마지막에 failure mode, dependency, Param, task boundary, side effect 중 하나를 바꾼다.
+마지막에 failure mode, dependency, Param, task boundary, clear selector, downstream 범위, side effect 중 하나를 바꾼다.
 
 ```text
 prediction
@@ -234,10 +238,11 @@ baseline과 variation을 구분하지 않으면 단순 실행 tutorial에 머무
 
 처음부터 모든 lab을 돌리지 않는다. 첫 session의 권장 path는 다음과 같다.
 
-1. `bash lab/scripts/preflight.sh`로 environment/toolchain/local import boundary를 확인한다.
+1. `bash lab/scripts/preflight.sh`로 environment/toolchain boundary를 확인한다.
 2. `textbook/01-mental-model.md`의 definition/runtime separation을 읽는다.
 3. `db migrate`를 실행하고 **schema가 존재하는 것과 scheduler가 실행되는 것의 차이**를 적는다.
-4. `dags list --local`에서 expected Dag를 찾고 U2 starter의 `tasks list` 결과를 예측·확인한다.
+4. `dags list-import-errors --local`과 `dags list --local`에서 current source를 확인하고 U2 starter의 `tasks list`
+   결과를 예측·확인한다.
 5. `tasks test`와 `dags test`로 local execution evidence를 본다.
 6. `standalone`을 시작하고 같은 Dag를 실제로 trigger한다.
 7. `snapshot.sh`로 scheduler-backed DagRun/TaskInstance를 관찰한다.
@@ -247,7 +252,7 @@ baseline과 variation을 구분하지 않으면 단순 실행 tutorial에 머무
 
 ## Practice loop
 
-각 starter를 다음 순서로 사용한다.
+각 starter/reference experiment를 다음 순서로 사용한다.
 
 ```text
 Target
@@ -261,10 +266,10 @@ Target
 
 실행 전에 최소한 다음을 적는다.
 
-- 어떤 DagRun과 TaskInstance가 생길 것으로 예상하는가?
+- 어떤 DagRun과 TaskInstance가 생기거나 다시 scheduling될 것으로 예상하는가?
 - 어떤 state transition을 볼 것인가?
 - 어떤 값이 Param, XCom, file/output, Variable, Connection 중 어디에 존재할 것인가?
-- 실패시키거나 dependency를 바꾸면 무엇이 달라지고 무엇은 유지될 것인가?
+- 실패·dependency·clear selector를 바꾸면 무엇이 달라지고 무엇은 유지될 것인가?
 
 ## U2 — Dag authoring and loading starter
 
@@ -284,9 +289,9 @@ starter는 parser-safe한 두 task와 하나의 dependency만 제공한다. 다�
 ```text
 Python file exists
 !=
-local import surface has no error
-!=
 metadata schema exists
+!=
+local import surface has no error
 !=
 Dag definition is discoverable
 !=
@@ -354,6 +359,67 @@ bash lab/airflow.sh dags trigger \
 `region`은 JSON Schema 기반 Param validation을 사용한다. 허용되지 않은 값을 넣었을 때 DagRun이 만들어지는지 먼저
 예측하고 UI/CLI evidence로 확인한다. Validation failure와 task runtime failure를 같은 failure로 취급하지 않는다.
 
+## U6 — Recovery and reprocessing
+
+별도 U6 Dag를 만들지 않는다. 다음 두 reference Dag를 재사용한다.
+
+```text
+adudeck_observable_runtime
+adudeck_observable_schedule
+```
+
+`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Airflow 3.3.1 manual
+trigger는 `--logical-date`를 생략하면 logical date가 `None`일 수 있으므로, clear 실험은 재현 가능한 identity를 먼저
+명시한다.
+
+```bash
+RUN_ID='adudeck_recovery_2026_08_27'
+LOGICAL_DATE='2026-08-27T00:00:00+00:00'
+
+bash lab/airflow.sh dags trigger \
+  -r "$RUN_ID" \
+  -l "$LOGICAL_DATE" \
+  -c '{"failure_mode":"none"}' \
+  adudeck_observable_runtime
+```
+
+Run이 성공한 뒤 run 목록과 snapshot에서 지정한 `RUN_ID`와 `LOGICAL_DATE`가 실제 evidence와 일치하는지 확인한다. 그 다음
+broad operation을 바로 승인하지 않고 logical date와 task selector로 target을 좁힌다. 이 lab에서는 `-t 'transform'`을
+사용하고 confirmation에서 실제 target을 확인한다.
+
+```bash
+bash lab/airflow.sh tasks clear \
+  adudeck_observable_runtime \
+  -s "$LOGICAL_DATE" \
+  -e "$LOGICAL_DATE" \
+  -t 'transform'
+```
+
+같은 logical date에 다른 run이 있거나 confirmation target이 예상보다 넓으면 승인하지 않는다. 대상이 맞을 때만 disposable
+local lab에서 `-y`를 사용할 수 있다. `-d` variation은 downstream side effect도 다시 수행해야 하는지를 business
+invariant로 판단하기 위한 실험이다.
+
+`observable_schedule`에서는 scheduling chapter의 catchup/backfill evidence를 재사용한다. U6의 핵심은 command가 아니라
+**retry / clear-re-run / backfill / catchup이 어떤 logical work를 왜 다시 실행하는지 구분하는 것**이다.
+
+## U7 — Cumulative integration
+
+U7에는 permanent starter를 두지 않는다.
+[`../textbook/06-cumulative-integration.md`](../textbook/06-cumulative-integration.md)의 assessment contract에 따라
+learner가 `dags/exercises/` 아래 local work file을 직접 만들거나 별도 disposable copy에서 작업한다.
+
+이 단계에서는 helper가 답을 대신 만들지 않는다. learner가 다음을 스스로 연결해야 한다.
+
+```text
+source / parse-load
+→ DagRun / TaskInstance
+→ schedule / logical input
+→ data/config ownership
+→ failure / recovery
+→ external side-effect invariant
+→ 최소 evidence diagnosis
+```
+
 ## Observe one run
 
 Dag 전체 run 목록:
@@ -400,5 +466,6 @@ Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. `preflight`, `
 `dags test`, `standalone`, cross-view observation도 각각 서로 다른 validation level이다.
 
 실제 `standalone` runtime에서 Dag loading, scheduler-backed task execution, UI/CLI/metadata observation,
-Connection/Variable resolution, controlled failure/recovery가 learner-visible evidence와 일치하는지는 별도의 runtime
-validation이 필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로 통과한 것으로 간주하지 않는다.
+Connection/Variable resolution, selected TaskInstance clear/re-run, controlled failure/recovery가 learner-visible
+evidence와 일치하는지는 별도의 runtime validation이 필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로
+통과한 것으로 간주하지 않는다.
