@@ -162,9 +162,9 @@ U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 �
 | [`07-recovery-and-reprocessing.md`](../textbook/07-recovery-and-reprocessing.md) | U6 strong | retry, selected TaskInstance clear/re-run, backfill, catchup을 repeated-logical-work model로 비교하고 downstream re-run과 side-effect invariant를 평가한다. |
 | [`06-cumulative-integration.md`](../textbook/06-cumulative-integration.md) | U7 cumulative, U1~U6 integration | learner가 작은 workflow를 직접 설계·실행·실패·수정·재검증하고 최소 evidence로 diagnosis하는 cumulative assessment다. |
 
-현재 content surface는 U1~U7 각각에 substantial explanation/practice/assessment path를 가진다. 그러나 **실제 Airflow
-runtime에서 learner-visible evidence가 material expectation과 일치하는지 확인하지 않은 상태를 completion으로 승격하지
-않는다.**
+현재 content surface는 U1~U7 각각에 substantial explanation/practice/assessment path를 가진다. Fresh runtime review에서
+local toolchain/discovery/test path와 U6 same-run clear/re-run path 일부를 calibration했지만, **learner-visible evidence 전체를
+검증하지 않은 상태를 curriculum completion으로 승격하지 않는다.**
 
 ## Learning Readiness Status
 
@@ -174,21 +174,22 @@ setup, Dag discovery, local test, scheduler-backed runtime 문제를 서로 분�
 현재 lab은 다음 verification ladder를 제공한다.
 
 ```text
-L0 environment + local import surface
-→ L1 metadata schema + Dag discovery
+L0 environment + toolchain
+→ L1 metadata schema + local import/Dag discovery
 → L2 tasks test / dags test
 → L3 standalone scheduler-backed execution
 → L4 cross-view runtime observation
 → L5 controlled failure / modification / re-observation
 ```
 
-- `lab/scripts/preflight.sh`는 host/filesystem, `uv`, constrained Airflow wrapper resolution, local source import-error
-  surface를 확인한다. Metadata schema나 DagModel-backed discovery는 이 단계에서 주장하지 않는다.
+- `lab/scripts/preflight.sh`는 host/filesystem, `uv`, constrained Airflow wrapper resolution까지만 확인한다. Metadata
+  schema, local Dag/import discovery, scheduler-backed runtime은 이 단계에서 주장하지 않는다.
 - `lab/airflow.sh`는 Apache Airflow 3.3.1, Python 3.12 기본값, 해당 release의 official constraints를 함께 사용해 fresh
   machine의 dependency drift를 줄인다. Python baseline은 필요할 때 `ADUDECK_AIRFLOW_PYTHON`으로 override할 수 있지만
   Airflow 3.3.1이 지원하는 Python 범위 안에서 사용한다.
 - `db migrate`는 learner가 직접 실행해 **metadata schema가 존재함과 scheduler가 실행 중임을 분리**해서 관찰한다.
-- schema 초기화 뒤 `dags list --local`에서 expected Dag를 확인하고, 그 다음 `tasks list`로 task definition을 확인한다.
+- schema 초기화 뒤 `dags list-import-errors --local`과 `dags list --local`에서 current source와 expected Dag를 확인하고,
+  그 다음 `tasks list`로 task definition을 확인한다.
 - `tasks test` / `dags test`는 scheduler-backed runtime 전에 task/Dag code를 local execution으로 확인하는 단계로
   사용한다.
 - 같은 Dag를 이후 `standalone`에서 trigger해 local test와 실제 DagRun/TaskInstance state 존재 여부를 비교한다.
@@ -208,7 +209,7 @@ L0 environment + local import surface
   reference Dag
 - `lab/dags/observable_schedule.py` — U3/U6의 timetable/backfill observation에 재사용하는 reference Dag
 - `lab/fixtures/orders.jsonl` — deterministic business-data fixture
-- `lab/scripts/preflight.sh` — environment/toolchain/local import readiness check
+- `lab/scripts/preflight.sh` — environment/toolchain readiness check
 - `lab/scripts/snapshot.sh` — CLI + read-only metadata + external output observation helper
 - `lab/scripts/reset.sh` — lab-owned output 또는 disposable runtime state reset
 
@@ -222,16 +223,19 @@ Starter와 helper가 존재한다는 것은 학습 준비가 되어 있다는 �
 
 ## Build Handoff
 
-현재 build에서 U1~U7의 주요 textbook learning path는 구현되었다. 다음 우선순위는 새 chapter를 늘리는 것이 아니라
-**validation과 integration evidence를 닫는 것**이다.
+현재 build에서 U1~U7의 주요 textbook learning path는 구현되었다. Fresh Ubuntu calibration으로 L0→L2 local path와 U6의
+explicit logical-date DagRun → selective `transform` clear → same-run second completion까지는 material expectation과 실제
+runtime evidence가 일치함을 확인했다. 다음 우선순위는 새 chapter가 아니라 **아직 닫지 않은 learner-visible evidence**다.
 
-1. **Fresh-environment calibration** — disposable state에서 preflight → `db migrate` → local discovery/test → standalone
-   → cross-view observation을 실제로 실행해 documentation expectation과 runtime evidence가 일치하는지 확인한다.
-2. **U2/U5/U6 hands-on validation** — controlled parse failure, Variable/Connection resolution, selected TaskInstance
-   clear/re-run과 downstream variation이 Airflow 3.3.1 local runtime에서 chapter의 evidence model과 일치하는지 확인한다.
-3. **U7 learner-level integration review** — cumulative assessment를 실제로 수행해 너무 많은 hidden scaffolding이나
-   반대로 prerequisite gap이 없는지 검토한다.
-4. 발견되는 mismatch는 먼저 local material/playground gap으로 분류하고, learner prerequisite·scope·outcome·dependency를
+1. **U2 controlled-failure validation** — learner working copy에서 parse/import failure를 만들고 복구하는 path가 chapter의
+   diagnosis model과 일치하는지 확인한다.
+2. **U5 runtime boundary validation** — environment-backed Variable/Connection resolution과 Param/XCom/external output의
+   evidence가 intended ownership model과 일치하는지 확인한다.
+3. **U6 downstream variation** — `transform`만 clear하는 baseline과 downstream까지 포함하는 variation을 side-effect
+   invariant로 비교한다.
+4. **U7 learner-level integration review** — cumulative assessment를 실제로 수행해 hidden scaffolding이나 prerequisite gap이
+   없는지 검토한다.
+5. 발견되는 mismatch는 먼저 local material/playground gap으로 분류하고, learner prerequisite·scope·outcome·dependency를
    바꿔야 할 때만 curriculum delta로 승격한다.
 
 새 topic을 추가하는 것은 현재 completion 조건이 아니다.
