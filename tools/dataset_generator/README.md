@@ -10,7 +10,7 @@ invariant를 소유한다.
 
 ```bash
 cd tools/dataset_generator
-uv run adudeck-data generate ecommerce \
+uv run --locked adudeck-data generate ecommerce \
   --output ./data \
   --users 100 \
   --products 50 \
@@ -53,8 +53,8 @@ users 1 ── N orders 1 ── N order_items N ── 1 products
 
 ## Reproducibility
 
-`--seed`가 같고 실행 환경의 Python 및 `Faker` version이 같으면 같은 파일을 생성하도록 설계했다. Faker의 provider
-데이터 변경이 seeded output을 바꿀 수 있으므로 package dependency는 patch version까지 고정한다.
+`--seed`가 같고 실행 환경의 Python 및 dependency version이 같으면 같은 파일을 생성하도록 설계했다. Faker의 provider
+데이터 변경이 seeded output을 바꿀 수 있으므로 package dependency와 `uv.lock`을 함께 고정한다.
 
 ## Scope
 
