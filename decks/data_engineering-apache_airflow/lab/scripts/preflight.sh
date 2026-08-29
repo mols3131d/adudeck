@@ -73,25 +73,10 @@ else
 fi
 
 echo
-echo "== Local source import-error surface =="
-echo "This check parses local source without treating serialized DB content as the source of truth."
-if IMPORT_ERRORS_JSON="$(bash "${LAB_DIR}/airflow.sh" dags list-import-errors --local -o json)"; then
-  printf '%s\n' "${IMPORT_ERRORS_JSON}"
-  NORMALIZED_IMPORT_ERRORS="$(tr -d '[:space:]' <<<"${IMPORT_ERRORS_JSON}")"
-  if [[ "${NORMALIZED_IMPORT_ERRORS}" == "[]" ]]; then
-    pass "local source has no reported import errors"
-  else
-    fail "local source has import errors; inspect the JSON above before creating runtime state"
-  fi
-else
-  fail "could not evaluate local source import errors"
-fi
-
-echo
 if (( FAILURES > 0 )); then
   echo "Preflight found ${FAILURES} blocking problem(s). Fix them before starting the learning loop." >&2
   exit 1
 fi
 
-echo "Preflight complete. No metadata schema or scheduler-backed runtime has been claimed yet."
-printf '%s\n' 'Next: run `bash lab/airflow.sh db migrate`, then verify expected Dags as described in lab/README.md.'
+echo "Preflight complete. No metadata schema, Dag discovery, or scheduler-backed runtime has been claimed yet."
+printf '%s\n' 'Next: run `bash lab/airflow.sh db migrate`, then inspect local Dag/import discovery as described in lab/README.md.'
