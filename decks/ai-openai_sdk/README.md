@@ -176,6 +176,21 @@ OPENAI_MODEL='your-model-id' uv run lab/request_response.py
 
 API 호출에는 비용과 quota가 적용될 수 있다. `--preview`는 API를 호출하지 않는다.
 
+## Access and Validation Boundary
+
+Unit 1에는 offline path와 live path가 있다. 둘은 같은 수준의 evidence를 만들지 않는다.
+
+**Offline path**에서는 chapter의 worked trace와 assessment를 풀고 `--preview`를 실행할 수 있다. 이 경로는
+`build_call_args()`의 local data flow와 learner의 mental model을 검증하지만, OpenAI SDK import·client construction·HTTP
+transport·API response는 실행하지 않는다.
+
+**Live path**에서는 valid credential과 사용할 수 있는 model access가 필요하다. 실제 call을 통해 Python `Response` type,
+`response.id`, `_request_id`, `response.output`, `usage`를 관찰한다. 따라서 **Unit 1의 hands-on outcome을 완료했다고
+판정하려면 적어도 한 번의 live response observation이 필요하다.**
+
+repository/CI에서 live call을 실행하지 않았다고 해서 Unit 1 material 자체가 미구현이라는 뜻은 아니다. 대신 live runtime
+behavior는 learner 또는 별도 authorized environment에서 확인해야 하는 validation caveat로 남긴다.
+
 ## Version Baseline
 
 작성 기준일은 **2026-08-29**다.
@@ -193,7 +208,8 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 ## Outcome Coverage
 
 - Unit 1은 application call arguments, network boundary, typed response와 identifiers를 worked trace와 playground에서
-  관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다.
+  관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다. live response observation이 없는
+  경우 hands-on outcome은 아직 검증되지 않은 것으로 남긴다.
 - context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현
   completion gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
