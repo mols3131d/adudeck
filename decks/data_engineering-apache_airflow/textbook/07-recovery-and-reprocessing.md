@@ -230,9 +230,9 @@ external output target은 같은 run identity를 유지하는가?
 
 ### Narrow selector + confirmation
 
-Airflow 3.3.1의 `tasks clear`는 task selector와 start/end date로 범위를 좁힐 수 있지만 single `run_id` selector는 제공하지
-않는다. 이 lab에서는 `-t 'transform'`을 사용하고, selector matching detail을 추정하는 대신 confirmation에서 실제 target을
-확인한다. 또한 `LOGICAL_DATE`가 의도한 run을 가리키는지 run 목록에서 먼저 확인한다.
+Airflow 3.3.1의 `tasks clear`는 task selector와 start/end date로 범위를 좁힐 수 있지만 single `run_id` selector는
+제공하지 않는다. 이 lab에서는 `-t 'transform'`을 사용하고, selector matching detail을 추정하는 대신 confirmation에서
+실제 target을 확인한다. 또한 `LOGICAL_DATE`가 의도한 run을 가리키는지 run 목록에서 먼저 확인한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
