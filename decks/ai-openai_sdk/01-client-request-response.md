@@ -54,9 +54,9 @@ request body와 request behavior를 구성하고, SDK는 그것을 API가 이해
 - `response` — server가 보낸 data를 SDK가 typed Python object로 표현한 결과
 
 “`OpenAI()`를 만들었으니 이미 연결되었다”라고 생각하면 error boundary를 잘못 잡기 쉽다. client construction이 성공해도
-실제 request에서 authentication, network, quota, API validation 문제가 발생할 수 있다. 반대로 API key 자체가 설정되지 않은
-경우처럼 필수 local configuration이 빠져 있으면 client construction 단계에서 더 일찍 실패할 수도 있다. **local
-configuration failure와 remote API rejection은 같은 실패가 아니다.**
+실제 request에서 authentication, network, quota, API validation 문제가 발생할 수 있다. 반대로 API key 자체가 설정되지
+않은 경우처럼 필수 local configuration이 빠져 있으면 client construction 단계에서 더 일찍 실패할 수도 있다.
+**local configuration failure와 remote API rejection은 같은 실패가 아니다.**
 
 ## 1.2 API key는 code가 아니라 process configuration이다
 
@@ -114,8 +114,8 @@ response가 따라야 할 상위 수준의 행동 지침을 전달한다. 예제
 multi-turn state가 추가되어도 data flow를 잃지 않는다.
 
 다만 이 dictionary 자체를 곧바로 “실제 HTTP request body”라고 부르면 안 된다. 이 값은 application이 SDK public method에
-넘길 arguments다. 그 뒤 SDK가 defaults, serialization, transport behavior를 적용한다. **application arguments를 관찰한 것과
-wire-level HTTP payload를 관찰한 것은 다른 validation level**이다.
+넘길 arguments다. 그 뒤 SDK가 defaults, serialization, transport behavior를 적용한다.
+**application arguments를 관찰한 것과 wire-level HTTP payload를 관찰한 것은 다른 validation level**이다.
 
 ## 1.4 먼저 network 없이 application arguments를 본다
 
@@ -134,11 +134,12 @@ python lab/request_response.py --preview
 3. `openai` package가 설치되어 있지 않아도 preview가 가능한 이유는 무엇일까?
 4. 이 output만 보고 실제 HTTP body가 정확히 같다고 결론 내릴 수 없는 이유는 무엇일까?
 
-lab은 live-call code의 `openai` import를 preview boundary 뒤에 둔다. 따라서 preview에서는 endpoint arguments를 만드는 local
-Python logic만 실행한다.
+lab은 live-call code의 `openai` import를 preview boundary 뒤에 둔다. 따라서 preview에서는 endpoint arguments를 만드는
+local Python logic만 실행한다.
 
 이 구조는 작은 testing boundary도 보여준다. API를 실제 호출하지 않고도 **application-owned request-building logic**은
-deterministic하게 검증할 수 있다. 반면 SDK serialization, authentication, transport, server behavior는 아직 검증하지 않았다.
+deterministic하게 검증할 수 있다. 반면 SDK serialization, authentication, transport, server behavior는 아직 검증하지
+않았다.
 
 ## 1.5 `responses.create()`가 경계를 넘는다
 
@@ -168,8 +169,8 @@ serialize해 API로 전송한다. synchronous client이므로 call이 완료되�
 > 정상적인 live 실행에서 `response` 변수가 생겼다면 `responses.create()`는 local argument construction을 넘어 실제 API
 > request/response boundary를 통과했다.
 
-나중에 retry나 timeout을 다룰 때도 이 boundary가 기준이 된다. client construction 전에 실패한 것, transport에서 실패한 것,
-API가 status code로 거절한 것, response를 받은 뒤 application code가 잘못 처리한 것은 서로 다른 문제다.
+나중에 retry나 timeout을 다룰 때도 이 boundary가 기준이 된다. client construction 전에 실패한 것, transport에서 실패한
+것, API가 status code로 거절한 것, response를 받은 뒤 application code가 잘못 처리한 것은 서로 다른 문제다.
 
 ## 1.6 response는 문자열 하나가 아니다
 
@@ -193,9 +194,9 @@ print(response.usage.to_dict())
 - `output_text` — text output을 편하게 읽기 위한 SDK convenience property
 - `usage` — input/output token usage 같은 metering metadata
 
-여기서 `response.id`와 `response._request_id`를 같은 것으로 보면 안 된다. 전자는 API resource인 Response 자체의 identifier고,
-후자는 API request를 추적·debugging하기 위한 identifier다. `_request_id`는 underscore prefix지만 OpenAI Python SDK가 public
-property로 문서화한 예외다.
+여기서 `response.id`와 `response._request_id`를 같은 것으로 보면 안 된다. 전자는 API resource인 Response 자체의
+identifier고, 후자는 API request를 추적·debugging하기 위한 identifier다. `_request_id`는 underscore prefix지만 OpenAI
+Python SDK가 public property로 문서화한 예외다.
 
 초보 코드에서는 `output_text`만 보고 끝내기 쉽다. text application이라면 편리하지만, SDK mental model은 여기서 멈추면 안
 된다. function call이나 다른 output type을 다루기 시작하면
@@ -208,8 +209,8 @@ property로 문서화한 예외다.
 uv run lab/request_response.py --full-response
 ```
 
-이 option도 raw HTTP body를 보여주는 것이 아니다. `response.to_dict()`로 SDK의 typed response model을 Python dictionary로
-바꾼 값을 보여준다. 실제 wire-level HTTP payload와 SDK object representation을 같은 것으로 취급하지 않는다.
+이 option도 raw HTTP body를 보여주는 것이 아니다. `response.to_dict()`로 SDK의 typed response model을 Python
+dictionary로 바꾼 값을 보여준다. 실제 wire-level HTTP payload와 SDK object representation을 같은 것으로 취급하지 않는다.
 
 ## 1.7 request와 response를 같은 축에서 비교한다
 
@@ -228,8 +229,8 @@ uv run lab/request_response.py --full-response
 이 비교는 모든 field가 그대로 echo된다는 뜻이 아니다. **endpoint call 전에 application이 소유한 state와 외부 시스템과
 상호작용한 뒤 새로 관찰 가능한 state를 구분하는 연습**이다.
 
-특히 `response.id`, `_request_id`, `usage`는 application arguments를 만들 때 존재하지 않았다. live API boundary를 통과한 뒤
-처음 관찰할 수 있다.
+특히 `response.id`, `_request_id`, `usage`는 application arguments를 만들 때 존재하지 않았다. live API boundary를 통과한
+뒤 처음 관찰할 수 있다.
 
 ## 1.8 한 조건만 바꿔 비교한다
 
@@ -275,8 +276,8 @@ wire-level body를 관찰하려면 별도의 transport-level instrumentation이 
 
 ### “client가 만들어졌으니 authentication도 검증됐다”
 
-client construction과 successful API request는 다른 단계다. missing local configuration은 client construction에서 실패할 수
-있고, 설정된 credential이 API에서 거절되는 문제는 request execution에서 드러날 수 있다.
+client construction과 successful API request는 다른 단계다. missing local configuration은 client construction에서 실패할
+수 있고, 설정된 credential이 API에서 거절되는 문제는 request execution에서 드러날 수 있다.
 
 ### “예제에 나온 model ID는 영구적인 상수다”
 
@@ -309,10 +310,10 @@ configuration failure가 가능한 지점도 별도로 표시한다.
 
 ### C. Inspect
 
-live call이 가능한 경우 먼저 기본 실행의 `response_id`, `request_id`, `output_types`를 기록한 뒤 `--full-response`로 다시
-실행한다. `output_text`가 full response의 어느 정보만 편리하게 보여주는지 찾아 설명하고, `response.id`와 `_request_id`의
-역할을 구분한다. response 전체를 그대로 외우는 것이 아니라, **현재 application이 왜 특정 field를 읽는지**를 기준으로
-분류한다.
+live call이 가능한 경우 먼저 기본 실행의 `response_id`, `request_id`, `output_types`를 기록한 뒤 `--full-response`로
+다시 실행한다. `output_text`가 full response의 어느 정보만 편리하게 보여주는지 찾아 설명하고, `response.id`와
+`_request_id`의 역할을 구분한다. response 전체를 그대로 외우는 것이 아니라,
+**현재 application이 왜 특정 field를 읽는지**를 기준으로 분류한다.
 
 ### D. Debug
 
