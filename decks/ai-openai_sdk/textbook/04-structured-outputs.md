@@ -169,8 +169,11 @@ Model output을 destructive action에 바로 연결하지 않는 이유다.
 먼저 local preview:
 
 ```bash
-python playground/structured_output.py --preview
+uv run playground/structured_output.py --preview
 ```
+
+이 preview는 Pydantic schema를 실제로 구성하므로 `uv run`이 PEP 723의 Pydantic dependency를 준비한다. API key나 live API
+access는 필요하지 않는다.
 
 확인할 것:
 
