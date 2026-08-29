@@ -98,9 +98,12 @@ API key 없이 local state를 볼 수 있는 unit은 `--preview`를 먼저 사�
 python playground/request_response.py --preview
 python playground/conversation_state.py --mode manual --preview
 python playground/failure_boundaries.py --preview
-python playground/structured_output.py --preview
+uv run playground/structured_output.py --preview
 python playground/function_calling.py --preview
 ```
+
+Unit 4 preview는 Pydantic schema 자체를 관찰하므로 `uv run`이 PEP 723 dependency를 먼저 준비한다. 이 경로도 API call은
+수행하지 않는다.
 
 Live API가 필요한 experiment는 credential을 source에 기록하지 않고 environment로 제공한다.
 
