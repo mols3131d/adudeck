@@ -107,8 +107,9 @@ persistence와 ownership이 다르다.
 | 6. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
 | 7. Integration | SDK 호출을 작은 application boundary로 감싼다. | testability·observability·upgrade 판단 | planned |
 
-현재 구현된 calibration slice는 [Client → Arguments → Request → Response](01-client-request-response.md)다. 이후 unit은 이
-slice의 explanation depth, worked state trace, playground observability, practice와 assessment 강도를 기준으로 증분 구현한다.
+현재 구현된 calibration slice는 [Client → Arguments → Request → Response](01-client-request-response.md)다. 이후 unit은
+이 slice의 explanation depth, worked state trace, playground observability, practice와 assessment 강도를 기준으로 증분
+구현한다.
 
 ## Textbook + Lab Contract
 
@@ -153,8 +154,8 @@ python lab/request_response.py --preview
 이 preview는 SDK를 import하지 않으므로 SDK serialization이나 실제 HTTP request body를 보여주는 기능이 아니다. 첫 단계의
 목적은 application-owned state와 network boundary를 분리해서 관찰하는 것이다.
 
-lab의 `build_call_args()`와 dictionary는 같은 값을 preview와 live call에서 비교하기 위한 **teaching instrumentation**이다.
-OpenAI SDK를 사용할 때 반드시 따라야 하는 application architecture가 아니다.
+lab의 `build_call_args()`와 dictionary는 같은 값을 preview와 live call에서 비교하기 위한
+**teaching instrumentation**이다. OpenAI SDK를 사용할 때 반드시 따라야 하는 application architecture가 아니다.
 
 실제 API를 호출하려면 key를 source file에 기록하지 말고 environment variable로 제공한다.
 
@@ -193,8 +194,8 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 - Unit 1은 application call arguments, network boundary, typed response와 identifiers를 worked trace와 playground에서
   관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다.
-- context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현 completion
-  gap이다.
+- context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현
+  completion gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
   evidence, assessment path가 갖춰졌을 때만 선언한다.
 
