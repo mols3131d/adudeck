@@ -382,6 +382,7 @@ logical input 기반 final invariant를 다시 설계한다.
 다음을 독립적으로 할 수 있으면 통과한다.
 
 1. retry / clear-re-run / backfill / catchup을 logical-work identity로 구분한다.
-2. Reproducible run/logical-date identity를 만들고 intended TaskInstance set을 좁게 선택한 뒤 same-run evidence를 연결한다.
+2. Reproducible run/logical-date identity를 만들고 intended TaskInstance set을 좁게 선택한 뒤 same-run evidence를
+   연결한다.
 3. Downstream을 함께 clear할지 side-effect contract로 판단한다.
 4. Repeated execution에서 wall-clock과 logical input을 구분해 idempotent target을 설계한다.
