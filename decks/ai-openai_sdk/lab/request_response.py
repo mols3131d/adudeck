@@ -21,7 +21,7 @@ DEFAULT_PROMPT = "What is the difference between a Python list and tuple?"
 
 
 def build_request(model: str, instructions: str, prompt: str) -> dict[str, Any]:
-    """Build the public request fields used by the calibration experiment."""
+    """Build the public call arguments used by the calibration experiment."""
     return {
         "model": model,
         "instructions": instructions,
@@ -31,7 +31,7 @@ def build_request(model: str, instructions: str, prompt: str) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Observe one OpenAI Responses API request and its typed response."
+        description="Observe one OpenAI Responses API call and its typed response."
     )
     parser.add_argument(
         "--model",
@@ -43,7 +43,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--preview",
         action="store_true",
-        help="Print the request payload and exit without importing the SDK or calling the API.",
+        help=(
+            "Print local responses.create() arguments and exit without importing "
+            "the SDK or calling the API."
+        ),
     )
     parser.add_argument(
         "--raw",
@@ -57,11 +60,11 @@ def main() -> None:
     args = parse_args()
     request = build_request(args.model, args.instructions, args.prompt)
 
-    print("== request ==")
+    print("== application call arguments ==")
     print(json.dumps(request, ensure_ascii=False, indent=2))
 
     if args.preview:
-        print("\npreview only: no network request was sent")
+        print("\npreview only: the SDK did not serialize or send an HTTP request")
         return
 
     if not os.getenv("OPENAI_API_KEY"):
@@ -69,16 +72,18 @@ def main() -> None:
             "OPENAI_API_KEY is not set. Export it in the shell or rerun with --preview."
         )
 
-    # Keep the import behind the preview boundary so the request model can be
-    # inspected with plain Python before installing the SDK.
+    # Keep the import behind the preview boundary so application-owned call
+    # arguments can be inspected with plain Python before installing the SDK.
     from openai import OpenAI
 
     client = OpenAI()
     response = client.responses.create(**request)
 
     print("\n== selected response fields ==")
-    print(f"id: {response.id}")
+    print(f"response_id: {response.id}")
+    print(f"request_id: {response._request_id}")
     print(f"model: {response.model}")
+    print(f"output_types: {[item.type for item in response.output]}")
     print(f"output_text: {response.output_text}")
 
     usage = response.usage.to_dict() if response.usage is not None else None
