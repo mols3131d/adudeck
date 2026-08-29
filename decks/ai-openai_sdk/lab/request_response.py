@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from typing import Any
 
 DEFAULT_MODEL = "gpt-5.6-luna"
 DEFAULT_INSTRUCTIONS = (
@@ -20,8 +19,8 @@ DEFAULT_INSTRUCTIONS = (
 DEFAULT_PROMPT = "What is the difference between a Python list and tuple?"
 
 
-def build_call_args(model: str, instructions: str, prompt: str) -> dict[str, Any]:
-    """Build the public endpoint arguments used by the calibration experiment."""
+def build_call_args(model: str, instructions: str, prompt: str) -> dict[str, str]:
+    """Build the three observable endpoint arguments used by this lab."""
     return {
         "model": model,
         "instructions": instructions,
