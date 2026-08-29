@@ -4,8 +4,8 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 **Python application과 OpenAI API 사이의 request/response 경계를 다루는 typed client library**로 이해하기 위한 deck이다.
 
 이 deck은 LLM 이론이나 prompt 모음집을 만들지 않는다. 대신 SDK를 사용하는 application에서 어떤 입력이 request가 되고,
-어떤 output item과 metadata가 response로 돌아오며, structured output·tool calling·streaming·error handling이 이 경계를 어떻게
-확장하는지를 단계적으로 학습한다.
+어떤 output item과 metadata가 response로 돌아오며, structured output·tool calling·streaming·error handling이 이 경계를
+어떻게 확장하는지를 단계적으로 학습한다.
 
 ## Goal
 
@@ -14,10 +14,13 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 - `OpenAI` client가 configuration과 transport를 소유하고 endpoint method가 실제 API request를 만든다는 경계를 설명한다.
 - Responses API request를 구성하고 `Response` 객체의 text, output items, usage를 구분해 해석한다.
 - Pydantic schema를 사용해 structured output을 받고, 자연어 생성 성공과 schema validation 성공을 구분한다.
-- function calling에서 **model이 tool call을 제안하는 단계**와 **application이 함수를 실행하고 결과를 돌려주는 단계**를 분리해 구현한다.
+- function calling에서 **model이 tool call을 제안하는 단계**와 **application이 함수를 실행하고 결과를 돌려주는 단계**를
+  분리해 구현한다.
 - streaming event와 async client를 사용하면서 최종 response와 중간 event의 차이를 설명한다.
-- timeout, connection failure, rate limit, API status error를 서로 다른 failure boundary로 진단하고 retry 동작을 합리적으로 제어한다.
-- API key를 source code에 넣지 않고, model/version drift를 격리하며, SDK 호출부를 testable한 application boundary로 설계한다.
+- timeout, connection failure, rate limit, API status error를 서로 다른 failure boundary로 진단하고 retry 동작을
+  합리적으로 제어한다.
+- API key를 source code에 넣지 않고, model/version drift를 격리하며, SDK 호출부를 testable한 application boundary로
+  설계한다.
 
 ## Scope
 
@@ -49,7 +52,8 @@ core path에서 다룬다.
 - environment variable과 package installation의 기본 사용법
 - HTTP가 request를 보내고 response를 받는다는 정도의 기본 mental model
 
-asyncio, Pydantic, retry 전략은 prerequisite로 요구하지 않는다. 필요한 시점에 이 deck 안에서 SDK 사용에 필요한 만큼 도입한다.
+asyncio, Pydantic, retry 전략은 prerequisite로 요구하지 않는다. 필요한 시점에 이 deck 안에서 SDK 사용에 필요한 만큼
+도입한다.
 
 ## Concept Dependencies
 
@@ -70,8 +74,8 @@ output structure + usage observation
           application integration boundary
 ```
 
-structured output, function calling, streaming을 먼저 외우지 않는다. 먼저 평범한 request가 어떻게 만들어지고 response가 어떤
-객체로 돌아오는지 이해해야 이후 기능의 추가 state와 control flow를 제대로 추적할 수 있다.
+structured output, function calling, streaming을 먼저 외우지 않는다. 먼저 평범한 request가 어떻게 만들어지고 response가
+어떤 객체로 돌아오는지 이해해야 이후 기능의 추가 state와 control flow를 제대로 추적할 수 있다.
 
 ## Learning Path
 
@@ -108,13 +112,14 @@ typed response / metadata / failure를 관찰한다
 한 조건을 바꾸고 다시 비교한다
 ```
 
-lab의 성공 기준은 “문장이 출력됐다”가 아니다. learner가 **어떤 Python 값이 request field가 되었고, network boundary 뒤에서
-돌아온 어떤 response field를 지금 읽고 있는지** 설명할 수 있어야 한다.
+lab의 성공 기준은 “문장이 출력됐다”가 아니다. learner가
+**어떤 Python 값이 request field가 되었고, network boundary 뒤에서 돌아온 어떤 response field를 지금 읽고 있는지**
+설명할 수 있어야 한다.
 
 ## Lab Runtime
 
-첫 lab은 [lab/request_response.py](lab/request_response.py) 하나로 구성한다. PEP 723 inline dependency metadata를 사용하므로
-별도 lab package를 만들지 않는다.
+첫 lab은 [lab/request_response.py](lab/request_response.py) 하나로 구성한다. PEP 723 inline dependency metadata를
+사용하므로 별도 lab package를 만들지 않는다.
 
 network call 없이 request shape만 먼저 본다.
 
@@ -147,16 +152,16 @@ API 호출에는 비용과 quota가 적용될 수 있다. `--preview`는 API를 
 - primary model interaction API: Responses API
 - current repository runtime: Python 3.14.x
 
-SDK의 generated types, transport, model identifiers는 변할 수 있다. 그래서 이 deck은 private implementation보다 public client,
-endpoint, typed response contract를 우선한다. major SDK upgrade가 발생하면 syntax만 고치지 말고 request/response mental model과
-lab observation이 여전히 유효한지 함께 검토한다.
+SDK의 generated types, transport, model identifiers는 변할 수 있다. 그래서 이 deck은 private implementation보다 public
+client, endpoint, typed response contract를 우선한다. major SDK upgrade가 발생하면 syntax만 고치지 말고 request/response
+mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 ## Outcome Coverage
 
 - Unit 1은 request 구성과 typed response 해석을 직접 개발하고 checkpoint에서 평가한다.
 - structured output, function calling, streaming/async, failure handling outcome은 아직 미구현 completion gap이다.
-- 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable evidence,
-  assessment path가 갖춰졌을 때만 선언한다.
+- 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
+  evidence, assessment path가 갖춰졌을 때만 선언한다.
 
 ## References
 
