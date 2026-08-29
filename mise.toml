@@ -82,10 +82,10 @@ run = "uv run python -c 'import sys; assert sys.version_info[:2] == (3, 14)'"
 [tasks."test:dataset-generator"]
 description = "Run dataset generator unit tests and CLI smoke test"
 run = '''
-uv run --project tools/dataset_generator python -m unittest discover -s tools/dataset_generator/tests -v
+uv run --project tools/dataset_generator --locked python -m unittest discover -s tools/dataset_generator/tests -v
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
-uv run --project tools/dataset_generator adudeck-data generate ecommerce --output "$tmp_dir" --users 2 --products 2 --orders 2 --seed 1
+uv run --project tools/dataset_generator --locked adudeck-data generate ecommerce --output "$tmp_dir" --users 2 --products 2 --orders 2 --seed 1
 '''
 
 [tasks."git:setup"]
