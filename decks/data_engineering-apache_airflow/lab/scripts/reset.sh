@@ -12,7 +12,7 @@ case "${1:-output}" in
     ;;
   --all)
     echo "Resetting only disposable state owned by this lab."
-    echo "Stop `bash lab/airflow.sh standalone` before using --all."
+    printf '%s\n' 'Stop `bash lab/airflow.sh standalone` before using --all.'
     rm -rf "${LAB_DIR}/.airflow" "${LAB_DIR}/output"
     mkdir -p "${LAB_DIR}/output"
     echo "reset Airflow home: ${LAB_DIR}/.airflow"
