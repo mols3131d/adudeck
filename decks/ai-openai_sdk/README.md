@@ -3,16 +3,16 @@
 OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아니라,
 **Python application과 OpenAI API 사이의 request/response 경계를 다루는 typed client library**로 이해하기 위한 deck이다.
 
-이 deck은 LLM 이론이나 prompt 모음집을 만들지 않는다. 대신 SDK를 사용하는 application에서 어떤 입력이 request가 되고,
-어떤 output item과 metadata가 response로 돌아오며, state·failure·structured output·tool calling·streaming이 이 경계를
-어떻게 확장하는지를 단계적으로 학습한다.
+이 deck은 LLM 이론이나 prompt 모음집을 만들지 않는다. 대신 SDK를 사용하는 application에서 어떤 입력이 call argument가
+되고, 어떤 output item과 metadata가 response로 돌아오며, state·failure·structured output·tool calling·streaming이 이
+경계를 어떻게 확장하는지를 단계적으로 학습한다.
 
 ## Goal
 
 학습이 끝나면 다음을 할 수 있어야 한다.
 
 - `OpenAI` client가 configuration과 transport를 소유하고 endpoint method가 실제 API request를 만든다는 경계를 설명한다.
-- Responses API request를 구성하고 `Response` 객체의 text, output items, usage를 구분해 해석한다.
+- Responses API call arguments를 구성하고 `Response` 객체의 type, identifiers, output items, usage를 구분해 해석한다.
 - application이 history/output items를 직접 운반하는 방식, `previous_response_id` 기반 response lineage, durable
   Conversations API의 state ownership 차이를 설명하고 상황에 맞는 연결 방식을 선택한다.
 - timeout, connection failure, rate limit, API status error를 서로 다른 failure boundary로 진단하고 SDK의 retry 동작을
@@ -29,7 +29,7 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 
 core path에서 다룬다.
 
-1. client → request arguments → HTTP boundary → typed response mental model
+1. client → application call arguments → HTTP boundary → typed response mental model
 2. `response.output` item 구조와 세 가지 context ownership: manual history (`store=False`), `previous_response_id`,
    Conversations API
 3. errors, automatic retries, timeouts, request ID 기반 observability
@@ -56,8 +56,8 @@ core path에서 다룬다.
 - environment variable과 package installation의 기본 사용법
 - HTTP가 request를 보내고 response를 받는다는 정도의 기본 mental model
 
-asyncio, Pydantic, retry 전략은 prerequisite로 요구하지 않는다. 필요한 시점에 이 deck 안에서 SDK 사용에 필요한 만큼
-도입한다.
+`**mapping` keyword unpacking처럼 첫 unit에서 바로 필요한 작은 Python 문법은 사용 지점에서 설명한다. asyncio, Pydantic,
+retry 전략은 prerequisite로 요구하지 않고 필요한 시점에 SDK 사용에 필요한 만큼 도입한다.
 
 ## Concept Dependencies
 
@@ -99,7 +99,7 @@ persistence와 ownership이 다르다.
 
 | Unit | Responsibility | Outcome development | State |
 | --- | --- | --- | --- |
-| 1. Client, request, response | SDK call 한 번의 data flow와 observation surface를 확립한다. | request 구성, typed response 해석 | implemented |
+| 1. Client, arguments, request, response | SDK call 한 번의 data flow와 observation surface를 확립한다. | state ownership 추적, typed response 해석 | implemented |
 | 2. Response and conversation state | output item과 세 가지 context ownership 방식을 구분해 추적한다. | manual history·response lineage·durable conversation 선택 | planned |
 | 3. Failure boundaries | transport/API failure, automatic retry, timeout을 관찰하고 분류한다. | retry/timeout/error diagnosis | planned |
 | 4. Structured outputs | schema와 response status가 parsing contract에 추가되는 지점을 이해한다. | Pydantic parsing, refusal/incomplete 처리 | planned |
@@ -107,8 +107,8 @@ persistence와 ownership이 다르다.
 | 6. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
 | 7. Integration | SDK 호출을 작은 application boundary로 감싼다. | testability·observability·upgrade 판단 | planned |
 
-현재 구현된 calibration slice는 [Client → Request → Response](01-client-request-response.md)다. 이후 unit은 이 slice의
-설명 깊이, 실습 observability, exercise 난이도를 기준으로 증분 구현한다.
+현재 구현된 calibration slice는 [Client → Arguments → Request → Response](01-client-request-response.md)다. 이후 unit은 이
+slice의 explanation depth, worked state trace, playground observability, practice와 assessment 강도를 기준으로 증분 구현한다.
 
 ## Textbook + Lab Contract
 
@@ -116,6 +116,8 @@ persistence와 ownership이 다르다.
 
 ```text
 mental model
+   ↓
+worked state/control-flow trace
    ↓
 실행 전 prediction
    ↓
@@ -128,6 +130,8 @@ typed response / metadata / failure를 관찰한다
 관찰을 model과 연결해 설명한다
    ↓
 한 조건을 바꾸고 다시 비교한다
+   ↓
+transfer / assessment
 ```
 
 lab의 성공 기준은 “문장이 출력됐다”가 아니다. learner가
@@ -149,12 +153,18 @@ python lab/request_response.py --preview
 이 preview는 SDK를 import하지 않으므로 SDK serialization이나 실제 HTTP request body를 보여주는 기능이 아니다. 첫 단계의
 목적은 application-owned state와 network boundary를 분리해서 관찰하는 것이다.
 
+lab의 `build_call_args()`와 dictionary는 같은 값을 preview와 live call에서 비교하기 위한 **teaching instrumentation**이다.
+OpenAI SDK를 사용할 때 반드시 따라야 하는 application architecture가 아니다.
+
 실제 API를 호출하려면 key를 source file에 기록하지 말고 environment variable로 제공한다.
 
 ```bash
 export OPENAI_API_KEY='...'
 uv run lab/request_response.py
 ```
+
+credential configuration은 `OpenAI()` client construction의 책임으로 남겨 둔다. lab이 별도 credential validator를 두지
+않으므로 missing configuration과 remote API rejection을 application wrapper가 가리지 않는다.
 
 현재 lab의 default model은 작성 시점의 cost-sensitive model인 `gpt-5.6-luna`다. account에서 사용할 model이 다르거나
 model alias가 바뀌면 source를 수정하지 말고 다음처럼 override한다.
@@ -172,6 +182,7 @@ API 호출에는 비용과 quota가 적용될 수 있다. `--preview`는 API를 
 - OpenAI Python SDK: v3.x (`v3.0.0`을 기준으로 calibration)
 - Python SDK minimum: Python 3.10+
 - primary model interaction API: Responses API
+- calibration model: `gpt-5.6-luna`
 - current repository runtime: Python 3.14.x
 
 SDK의 generated types, transport, model identifiers는 변할 수 있다. 그래서 이 deck은 private implementation보다 public
@@ -180,10 +191,10 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 ## Outcome Coverage
 
-- Unit 1은 application call arguments, network boundary, typed response와 identifiers 해석을 직접 개발하고
-  checkpoint에서 평가한다.
-- context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현
-  completion gap이다.
+- Unit 1은 application call arguments, network boundary, typed response와 identifiers를 worked trace와 playground에서
+  관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다.
+- context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현 completion
+  gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
   evidence, assessment path가 갖춰졌을 때만 선언한다.
 
