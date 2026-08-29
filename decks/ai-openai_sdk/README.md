@@ -99,17 +99,17 @@ persistence와 ownership이 다르다.
 
 | Unit | Responsibility | Outcome development | State |
 | --- | --- | --- | --- |
-| 1. Client, arguments, request, response | SDK call 한 번의 data flow와 observation surface를 확립한다. | state ownership 추적, typed response 해석 | implemented |
-| 2. Response and conversation state | output item과 세 가지 context ownership 방식을 구분해 추적한다. | manual history·response lineage·durable conversation 선택 | planned |
-| 3. Failure boundaries | transport/API failure, automatic retry, timeout을 관찰하고 분류한다. | retry/timeout/error diagnosis | planned |
+| [1. Client, arguments, request, response](textbook/01-client-request-response.md) | SDK call 한 번의 data flow와 observation surface를 확립한다. | state ownership 추적, typed response 해석 | implemented |
+| [2. Response and conversation state](textbook/02-conversation-state.md) | output item과 세 가지 context ownership 방식을 구분해 추적한다. | manual history·response lineage·durable conversation 선택 | implemented |
+| [3. Failure boundaries](textbook/03-failure-boundaries.md) | transport/API failure, automatic retry, timeout을 관찰하고 분류한다. | retry/timeout/error diagnosis | implemented |
 | 4. Structured outputs | schema와 response status가 parsing contract에 추가되는 지점을 이해한다. | Pydantic parsing, refusal/incomplete 처리 | planned |
 | 5. Function calling | model decision, `call_id`, application execution의 control flow를 분리한다. | tool call/output correlation·debugging | planned |
 | 6. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
 | 7. Integration | SDK 호출을 작은 application boundary로 감싼다. | testability·observability·upgrade 판단 | planned |
 
-현재 구현된 calibration slice는 [Client → Arguments → Request → Response](textbook/01-client-request-response.md)다.
-이후 unit은 이 slice의 explanation depth, worked state trace, playground observability, practice와 assessment 강도를
-기준으로 증분 구현한다.
+Unit 1은 request/response boundary의 calibration slice다. Unit 2와 Unit 3은 같은 품질 기준을 유지하면서 각각
+**state ownership**과 **failure/retry control flow**라는 다음 dependency를 구현한다. 이후 unit도 file 존재가 아니라
+explanation depth, worked state trace, playground observability, practice, assessment를 함께 충족할 때 implemented로 본다.
 
 ## Textbook + Lab Contract
 
@@ -124,7 +124,7 @@ worked state/control-flow trace
    ↓
 application-owned arguments 또는 event를 observable하게 만든다
    ↓
-실제 SDK/API 실행
+실제 SDK/API 실행 또는 명시적으로 bounded된 local experiment
    ↓
 typed response / metadata / failure를 관찰한다
    ↓
@@ -136,14 +136,24 @@ transfer / assessment
 ```
 
 lab의 성공 기준은 “문장이 출력됐다”가 아니다. learner가
-**어떤 Python 값이 endpoint call argument가 되었고, network boundary 뒤에서 돌아온 어떤 response field를 지금 읽고
-있는지** 설명할 수 있어야 한다. local preview는 SDK serialization이나 실제 HTTP wire payload를 검증하지 않는다는
-validation boundary도 함께 설명할 수 있어야 한다.
+**어떤 Python 값이 endpoint call argument가 되었고, 어떤 state가 application/API 쪽에 남으며, failure가 어느
+boundary에서 어떤 control flow를 만들었는지** 설명할 수 있어야 한다. local preview나 synthetic endpoint가 실제 OpenAI
+API behavior 전체를 검증하지 않는다는 validation boundary도 함께 설명할 수 있어야 한다.
 
 ## Lab Runtime
 
-첫 lab은 [playground/request_response.py](playground/request_response.py) 하나로 구성한다. PEP 723 inline dependency
-metadata를 사용하므로 별도 lab package를 만들지 않는다.
+playground는 unit별로 필요한 observation surface만 작게 제공한다.
+
+```text
+playground/
+├── request_response.py
+├── conversation_state.py
+└── failure_boundaries.py
+```
+
+세 script 모두 PEP 723 inline dependency metadata를 사용하므로 별도 playground package를 만들지 않는다.
+
+### Unit 1 — request / response boundary
 
 network call 없이 application이 `responses.create()`에 넘길 arguments만 먼저 본다.
 
@@ -151,11 +161,8 @@ network call 없이 application이 `responses.create()`에 넘길 arguments만 �
 python playground/request_response.py --preview
 ```
 
-이 preview는 SDK를 import하지 않으므로 SDK serialization이나 실제 HTTP request body를 보여주는 기능이 아니다. 첫 단계의
-목적은 application-owned state와 network boundary를 분리해서 관찰하는 것이다.
-
-lab의 `build_call_args()`와 dictionary는 같은 값을 preview와 live call에서 비교하기 위한
-**teaching instrumentation**이다. OpenAI SDK를 사용할 때 반드시 따라야 하는 application architecture가 아니다.
+이 preview는 SDK를 import하지 않으므로 SDK serialization이나 실제 HTTP request body를 보여주는 기능이 아니다. 목적은
+application-owned state와 network boundary를 분리해서 관찰하는 것이다.
 
 실제 API를 호출하려면 key를 source file에 기록하지 말고 environment variable로 제공한다.
 
@@ -164,32 +171,68 @@ export OPENAI_API_KEY='...'
 uv run playground/request_response.py
 ```
 
-credential configuration은 `OpenAI()` client construction의 책임으로 남겨 둔다. lab이 별도 credential validator를 두지
-않으므로 missing configuration과 remote API rejection을 application wrapper가 가리지 않는다.
+### Unit 2 — conversation state ownership
 
-현재 lab의 default model은 작성 시점의 cost-sensitive model인 `gpt-5.6-luna`다. account에서 사용할 model이 다르거나
-model alias가 바뀌면 source를 수정하지 말고 다음처럼 override한다.
+세 mode의 application-side call plan은 API call 없이 비교할 수 있다.
+
+```bash
+python playground/conversation_state.py --mode manual --preview
+python playground/conversation_state.py --mode lineage --preview
+python playground/conversation_state.py --mode conversation --preview
+```
+
+live path에서는 같은 follow-up을 manual history, `previous_response_id`, durable Conversation으로 각각 이어 보며 **두 call
+사이에 application이 어떤 state를 직접 들고 있는지** 비교한다.
+
+```bash
+uv run playground/conversation_state.py --mode manual
+uv run playground/conversation_state.py --mode lineage
+uv run playground/conversation_state.py --mode conversation
+```
+
+live mode는 valid credential과 사용할 수 있는 model access가 필요하며 API 비용/quota가 적용될 수 있다.
+
+### Unit 3 — failure / retry boundary
+
+실제 rate limit이나 server error를 만들기 위해 OpenAI API를 오용하지 않는다. `failure_boundaries.py`는 localhost에
+synthetic HTTP endpoint를 만들고 SDK client의 `base_url`을 그 endpoint로 바꿔 **SDK 자체의 status-error classification과
+retry attempt behavior**만 관찰한다.
+
+```bash
+uv run playground/failure_boundaries.py --status 429 --max-retries 2
+uv run playground/failure_boundaries.py --status 400 --max-retries 2
+uv run playground/failure_boundaries.py --status 429 --max-retries 0
+uv run playground/failure_boundaries.py --status 500 --max-retries 2
+```
+
+이 실험은 real OpenAI API availability, server-side rate-limit algorithm, production network behavior를 검증하지 않는다.
+`uv`가 dependency를 처음 resolve할 때는 network access 또는 준비된 cache가 필요할 수 있지만, experiment 자체는 OpenAI
+credential이나 OpenAI API call을 요구하지 않는다.
+
+현재 playground의 default model은 작성 시점의 cost-sensitive model인 `gpt-5.6-luna`다. account에서 사용할 model이
+다르거나 model alias가 바뀌면 source를 수정하지 말고 `OPENAI_MODEL`로 override한다.
 
 ```bash
 OPENAI_MODEL='your-model-id' uv run playground/request_response.py
 ```
 
-API 호출에는 비용과 quota가 적용될 수 있다. `--preview`는 API를 호출하지 않는다.
+`request_response.py`와 `conversation_state.py`의 live API 호출에는 비용과 quota가 적용될 수 있다. `--preview`는 API를
+호출하지 않는다.
 
 ## Access and Validation Boundary
 
-Unit 1에는 offline path와 live path가 있다. 둘은 같은 수준의 evidence를 만들지 않는다.
+Unit마다 요구하는 evidence level이 다르다.
 
-**Offline path**에서는 chapter의 worked trace와 assessment를 풀고 `--preview`를 실행할 수 있다. 이 경로는
-`build_call_args()`의 local data flow와 learner의 mental model을 검증하지만, OpenAI SDK import·client construction·HTTP
-transport·API response는 실행하지 않는다.
+- **Unit 1**: offline preview는 local argument construction만 검증한다. hands-on outcome을 완료하려면 적어도 한 번의 live
+  `Response` observation이 필요하다.
+- **Unit 2**: preview는 ownership/call plan만 검증한다. manual history, response lineage, durable Conversation의 actual API
+  state behavior를 hands-on으로 완료하려면 authorized live environment에서 각 relevant path를 관찰해야 한다.
+- **Unit 3**: local synthetic experiment는 SDK status-error classification과 configured retry attempt behavior를 관찰하기
+  위한 의도된 evidence다. real OpenAI API의 장애·rate-limit condition을 재현했다는 증거로 사용하지 않는다.
 
-**Live path**에서는 valid credential과 사용할 수 있는 model access가 필요하다. 실제 call을 통해 Python `Response` type,
-`response.id`, `_request_id`, `response.output`, `usage`를 관찰한다. 따라서 **Unit 1의 hands-on outcome을 완료했다고
-판정하려면 적어도 한 번의 live response observation이 필요하다.**
-
-repository/CI에서 live call을 실행하지 않았다고 해서 Unit 1 material 자체가 미구현이라는 뜻은 아니다. 대신 live runtime
-behavior는 learner 또는 별도 authorized environment에서 확인해야 하는 validation caveat로 남긴다.
+repository/CI의 syntax·format 검증만으로 live API behavior를 검증했다고 주장하지 않는다. 반대로 live credential이 없다는
+이유만으로 textbook explanation/practice/assessment가 미구현인 것도 아니다. **material implementation state와 learner-visible
+runtime validation state를 분리한다.**
 
 ## Version Baseline
 
@@ -203,17 +246,22 @@ behavior는 learner 또는 별도 authorized environment에서 확인해야 하�
 
 SDK의 generated types, transport, model identifiers는 변할 수 있다. 그래서 이 deck은 private implementation보다 public
 client, endpoint, typed response contract를 우선한다. major SDK upgrade가 발생하면 syntax만 고치지 말고 request/response
-mental model과 lab observation이 여전히 유효한지 함께 검토한다.
+mental model과 playground observation이 여전히 유효한지 함께 검토한다.
 
 ## Outcome Coverage
 
-- Unit 1은 application call arguments, network boundary, typed response와 identifiers를 worked trace와 playground에서
-  관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다. live response observation이
-  없는 경우 hands-on outcome은 아직 검증되지 않은 것으로 남긴다.
-- context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현
-  completion gap이다.
-- 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
-  evidence, assessment path가 갖춰졌을 때만 선언한다.
+- **Unit 1 implemented** — application call arguments, network boundary, typed response와 identifiers를 worked trace와
+  playground에서 관찰하고 transfer/assessment로 독립 설명하게 한다. live response observation이 없으면 hands-on outcome은
+  아직 미검증으로 남긴다.
+- **Unit 2 implemented** — manual history, response lineage, durable Conversation의 state ownership을 worked trace와 세 mode
+  playground에서 비교하고 requirement에 맞는 state model을 선택하도록 평가한다. actual API persistence/lineage behavior의
+  hands-on completion은 authorized live observation이 필요하다.
+- **Unit 3 implemented** — transport/API/application failure를 분리하고 retry/timeout control flow를 설명하며, local
+  synthetic endpoint에서 status class와 retry attempt count를 비교한다. 이 evidence를 real API outage evidence로 확대하지
+  않는다.
+- structured output, function calling, streaming/async, integration outcome은 아직 **completion gap**이다.
+- 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable evidence,
+  assessment path가 갖춰지고 필요한 validation caveat가 해결되었을 때만 선언한다.
 
 ## References
 
