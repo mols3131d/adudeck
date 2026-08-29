@@ -4,7 +4,7 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 **Python application과 OpenAI API 사이의 request/response 경계를 다루는 typed client library**로 이해하기 위한 deck이다.
 
 이 deck은 LLM 이론이나 prompt 모음집을 만들지 않는다. 대신 SDK를 사용하는 application에서 어떤 입력이 request가 되고,
-어떤 output item과 metadata가 response로 돌아오며, structured output·tool calling·streaming·error handling이 이 경계를
+어떤 output item과 metadata가 response로 돌아오며, state·failure·structured output·tool calling·streaming이 이 경계를
 어떻게 확장하는지를 단계적으로 학습한다.
 
 ## Goal
@@ -15,12 +15,13 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 - Responses API request를 구성하고 `Response` 객체의 text, output items, usage를 구분해 해석한다.
 - stateless input, `previous_response_id` 기반 response lineage, durable Conversations API의 state ownership 차이를
   설명하고 상황에 맞는 연결 방식을 선택한다.
-- Pydantic schema를 사용해 structured output을 받고, 자연어 생성 성공과 schema validation 성공을 구분한다.
+- timeout, connection failure, rate limit, API status error를 서로 다른 failure boundary로 진단하고 SDK의 retry 동작을
+  합리적으로 제어한다.
+- Pydantic schema를 사용해 structured output을 받고, completed response·refusal/incomplete state·parsed schema result를
+  구분해 처리한다.
 - function calling에서 **model이 tool call을 제안하는 단계**와 **application이 함수를 실행하고 결과를 돌려주는 단계**를
   분리해 구현한다.
 - streaming event와 async client를 사용하면서 최종 response와 중간 event의 차이를 설명한다.
-- timeout, connection failure, rate limit, API status error를 서로 다른 failure boundary로 진단하고 retry 동작을
-  합리적으로 제어한다.
 - API key를 source code에 넣지 않고, model/version drift를 격리하며, SDK 호출부를 testable한 application boundary로
   설계한다.
 
@@ -30,10 +31,10 @@ core path에서 다룬다.
 
 1. client → request arguments → HTTP boundary → typed response mental model
 2. `response.output` item 구조, `previous_response_id` response lineage, durable Conversations API
-3. structured outputs와 Pydantic validation
-4. function calling loop와 application-owned tool execution
-5. streaming event와 `AsyncOpenAI`
-6. errors, retries, timeouts, request ID 기반 observability
+3. errors, automatic retries, timeouts, request ID 기반 observability
+4. structured outputs, Pydantic parsing, refusal/incomplete handling
+5. function calling loop와 application-owned tool execution
+6. streaming event와 `AsyncOpenAI`
 7. 작은 application adapter로 통합하고 fake/stub로 test하는 방법
 
 초기 scope에서는 다음을 다루지 않는다.
@@ -69,19 +70,25 @@ Responses API request / typed Response
 output items + usage + request/response identifiers
         ↓
 response lineage (`previous_response_id`) / durable conversation state
-        ├─→ structured outputs
-        ├─→ function calling
-        └─→ streaming / async
-                    ↓
-        failures + retries + observability
-                    ↓
-          application integration boundary
+        ↓
+client failure boundaries + retry / timeout semantics
+        ↓
+structured outputs + schema parsing
+        ↓
+function calling + application-owned execution
+        ↓
+streaming events + async control flow
+        ↓
+application integration boundary
 ```
 
-structured output, function calling, streaming을 먼저 외우지 않는다. 먼저 평범한 request가 어떻게 만들어지고 response가
-어떤 객체로 돌아오는지 이해해야 이후 기능의 추가 state와 control flow를 제대로 추적할 수 있다. 또한 “이전 대화를
-이어간다”는 한 문장으로 state를 뭉개지 않고, response ID를 이용한 lineage와 durable conversation object의 ownership을
-분리해서 배운다.
+이 순서는 API feature 목록을 나열한 것이 아니다. 먼저 평범한 request/response와 state ownership을 이해하고, 그 다음 모든
+후속 실습에 적용되는 failure/retry boundary를 확립한다. 이후 schema를 통해 machine-readable output contract를 배우고,
+function calling에서 schema와 application-owned execution을 결합한다. 마지막으로 같은 의미를 event stream과 async control
+flow에서 추적한다.
+
+“이전 대화를 이어간다”는 한 문장으로 state를 뭉개지 않고, response ID를 이용한 lineage와 durable conversation object의
+ownership을 분리해서 배운다.
 
 ## Learning Path
 
@@ -89,10 +96,10 @@ structured output, function calling, streaming을 먼저 외우지 않는다. �
 | --- | --- | --- | --- |
 | 1. Client, request, response | SDK call 한 번의 data flow와 observation surface를 확립한다. | request 구성, typed response 해석 | implemented |
 | 2. Response and conversation state | output item, response lineage, durable conversation state를 구분해 추적한다. | response 구조 추적, state 연결 방식 선택 | planned |
-| 3. Structured outputs | schema가 generation contract에 추가되는 지점을 이해한다. | Pydantic schema 설계·검증 | planned |
-| 4. Function calling | model decision과 application execution의 control flow를 분리한다. | tool loop 구현·debugging | planned |
-| 5. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
-| 6. Failure boundaries | transport/API/application failure를 분류하고 복구한다. | timeout/retry/error diagnosis | planned |
+| 3. Failure boundaries | transport/API failure, automatic retry, timeout을 관찰하고 분류한다. | retry/timeout/error diagnosis | planned |
+| 4. Structured outputs | schema와 response status가 parsing contract에 추가되는 지점을 이해한다. | Pydantic parsing, refusal/incomplete 처리 | planned |
+| 5. Function calling | model decision과 application execution의 control flow를 분리한다. | tool loop 구현·debugging | planned |
+| 6. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
 | 7. Integration | SDK 호출을 작은 application boundary로 감싼다. | testability·observability·upgrade 판단 | planned |
 
 현재 구현된 calibration slice는 [Client → Request → Response](01-client-request-response.md)다. 이후 unit은 이 slice의
@@ -170,7 +177,7 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 - Unit 1은 application call arguments, network boundary, typed response와 identifiers 해석을 직접 개발하고
   checkpoint에서 평가한다.
-- response lineage/conversation state, structured output, function calling, streaming/async, failure handling outcome은
+- response lineage/conversation state, failure handling, structured output, function calling, streaming/async outcome은
   아직 미구현 completion gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
   evidence, assessment path가 갖춰졌을 때만 선언한다.
