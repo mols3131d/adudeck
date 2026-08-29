@@ -40,11 +40,12 @@ Curriculum unit은 chapter/file 경계와 동일하지 않다. 현재 textbook�
 3. [Scheduling: data interval과 Airflow 3 timetable semantics를 검증하기](textbook/02-scheduling-and-data-intervals.md)
 4. [Task design: failure, retry, side effect를 직접 관찰하기](textbook/03-task-design-and-state.md)
 5. [Data와 configuration boundary: Params, XCom, storage, Variable, Connection](textbook/05-data-and-configuration-boundaries.md)
-6. [Cumulative integration: 작은 batch workflow를 evidence로 설명하기](textbook/06-cumulative-integration.md)
+6. [Recovery와 reprocessing: 같은 logical work를 왜 다시 실행하는가](textbook/07-recovery-and-reprocessing.md)
+7. [Cumulative integration: 작은 batch workflow를 evidence로 설명하기](textbook/06-cumulative-integration.md)
 
 번호는 file 생성 순서이고, 위 learning path는 **개념 dependency에 따른 권장 학습 순서**다. 특히 authoring/loading을
-명시적으로 통과한 뒤 scheduling·task lifecycle·data/config boundary를 다루고, 마지막 cumulative integration에서 앞
-개념을 하나의 workflow에 합친다.
+명시적으로 통과한 뒤 scheduling·task lifecycle·data/config boundary를 다루고, retry/clear/backfill/catchup을 같은
+repeated-logical-work model로 통합한 다음 cumulative assessment에서 앞 개념을 하나의 workflow에 합친다.
 
 각 chapter는 설명과 실습을 별개 자료로 취급하지 않는다. 실습 결과 자체가 다음 설명의 evidence가 된다.
 
@@ -91,8 +92,9 @@ lab은 Apache Airflow 3.3.1의 `standalone` mode를 사용한다. production top
 **한 컴퓨터에서 Dag Processor, scheduler, API/UI, executor/task execution과 metadata state를 관찰하기 위한 학습 환경**이다.
 
 실습 폴더 구조, preflight, verification ladder, U2/U5 starter DAG, fixture, snapshot/reset helper의 사용법은
-[Lab Guide](lab/README.md)에 정리한다. U7 cumulative integration은 새로운 전용 framework나 영구 starter를 추가하지 않고
-기존 U2/U5 starter와 reference DAG를 조합해 learner가 local work file을 직접 만드는 방식으로 수행한다.
+[Lab Guide](lab/README.md)에 정리한다. U6 recovery는 기존 runtime/scheduling reference Dag를 재사용하고, U7 cumulative
+integration은 새로운 전용 framework나 영구 starter를 추가하지 않고 기존 starter/reference Dag를 조합해 learner가 local
+work file을 직접 만드는 방식으로 수행한다.
 
 ### Runtime Requirements
 
@@ -155,11 +157,12 @@ UI는 기본 API Server port인 `http://localhost:8080`에서 확인한다.
 
 ## Completion Boundary
 
-현재 textbook은 U1~U7 Basic curriculum의 핵심 explanation/practice/assessment path를 연결한다. 하지만
+현재 textbook은 U1~U7 Basic curriculum의 substantial explanation/practice/assessment path를 연결한다. 하지만
 **파일이 존재한다는 사실만으로 learner competence나 runtime validation까지 완료되었다고 선언하지 않는다.**
 
 - U2/U5는 기존 starter와 새 textbook slice를 연결해 authoring/loading 및 data/configuration judgment를 학습·평가한다.
-- U6의 retry/idempotence는 scheduling/task-design chapter와 cumulative integration에서 함께 판단한다.
+- U6는 retry·selected TaskInstance clear/re-run·backfill·catchup을 같은 logical-work identity로 비교하고 repeated execution의
+  side-effect invariant를 평가한다.
 - U7은 learner가 작은 workflow를 직접 설계·실행·실패·수정·재검증하는 cumulative assessment다.
 - fresh/disposable Airflow runtime에서 learner-visible evidence가 실제로 documentation의 expectation과 일치하는지는 별도
   runtime validation boundary로 남는다.
@@ -176,6 +179,9 @@ Airflow가 public interface로 문서화한 `airflow.timetables`를 사용한다
 Airflow 3에서는 bare cron string이 기본적으로 `CronTriggerTimetable` semantics를 사용한다. 이 deck의 scheduling
 chapter는 연속 data interval을 학습하기 위해 explicit `CronDataIntervalTimetable`을 사용하며, 이 선택을 Airflow 전체의
 default로 일반화하지 않는다.
+
+Clear/rerun/backfill에서는 logical-work identity와 실제 Dag bundle/code version이 별도 축일 수 있다. Airflow 3.3.1의
+`rerun_with_latest_version` 같은 version-sensitive policy를 다룰 때는 현재 configuration과 runtime evidence를 확인한다.
 
 ## References
 
