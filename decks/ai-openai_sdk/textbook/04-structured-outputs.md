@@ -19,7 +19,8 @@ class TicketClassification(BaseModel):
 
 이번 chapter의 목표는 Structured Outputs를 "JSON을 잘 만들어 주는 기능"으로 외우는 것이 아니다.
 
-> **application이 기대하는 output shape를 schema로 선언하고, response lifecycle과 refusal을 포함해 언제 그 값을 typed application data로 받아들여도 되는지 판단하는 것**이다.
+> **application이 기대하는 output shape를 schema로 선언하고, response lifecycle과 refusal을 포함해 언제 그 값을 typed
+> application data로 받아들여도 되는지 판단하는 것**이다.
 
 ## 4.1 free text와 typed contract는 다른 책임이다
 
@@ -29,8 +30,8 @@ class TicketClassification(BaseModel):
 This looks like a high-priority bug. The checkout button freezes after card submission.
 ```
 
-사람은 쉽게 읽을 수 있다. 하지만 application이 `category`, `priority`, `summary` field를 안정적으로 사용하려면 다시 parsing
-logic을 만들어야 한다.
+사람은 쉽게 읽을 수 있다. 하지만 application이 `category`, `priority`, `summary` field를 안정적으로 사용하려면 다시
+parsing logic을 만들어야 한다.
 
 ```text
 free text
@@ -129,8 +130,9 @@ TicketClassification instance
 | API generation | supplied schema를 따르는 output 생성 |
 | parsed object | application이 사용하는 typed result |
 
-이번 playground의 `TicketClassification.model_json_schema()`를 출력하는 것은 **application-side Pydantic schema를 관찰**하는
-것이다. SDK가 API request에 사용하는 최종 serialization 전체를 wire-level로 본 것은 아니다.
+이번 playground의 `TicketClassification.model_json_schema()`를 출력하는 것은
+**application-side Pydantic schema를 관찰**하는 것이다. SDK가 API request에 사용하는 최종 serialization 전체를
+wire-level로 본 것은 아니다.
 
 Unit 1의 boundary를 그대로 적용한다.
 
@@ -178,8 +180,8 @@ application rule 확인
 
 ## 4.5 Response status는 schema parsing보다 바깥쪽 state다
 
-Responses API의 response status에는 `completed` 외에도 `failed`, `in_progress`, `cancelled`, `queued`, `incomplete` 같은 state가
-존재할 수 있다.
+Responses API의 response status에는 `completed` 외에도 `failed`, `in_progress`, `cancelled`, `queued`, `incomplete` 같은
+state가 존재할 수 있다.
 
 따라서 다음 코드는 너무 강한 가정을 한다.
 
@@ -526,5 +528,5 @@ learner는:
 - local Pydantic schema와 wire/API evidence를 혼동하지 않았는가?
 - downstream application responsibility를 명시했는가?
 
-이 기준을 만족하면 Unit 4의 핵심 outcome인 **model output을 typed application contract로 받되 response lifecycle과 business
-validation boundary를 함께 지키는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 Unit 4의 핵심 outcome인 **model output을 typed application contract로 받되 response lifecycle과
+business validation boundary를 함께 지키는 능력**을 갖춘 것으로 본다.
