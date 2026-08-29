@@ -187,7 +187,7 @@ backfill
 
 Append-only side effect라면 중복이 생길 수 있고, deterministic replace/upsert target이라면 수렴하기 쉽다.
 
-## 7. Playground: exact TaskInstance를 clear하고 같은 run을 추적한다
+## 7. Playground: task와 logical date로 대상을 좁히고 같은 run을 추적한다
 
 먼저 `adudeck_observable_runtime`을 정상 실행한다.
 
@@ -218,9 +218,11 @@ transform execution evidence는 어떻게 달라지는가?
 external output target은 같은 logical run을 유지하는가?
 ```
 
-### Exact selector
+### Narrow selector + confirmation
 
-먼저 confirmation target을 확인한다.
+Airflow 3.3.1의 `tasks clear`는 task regex와 start/end date로 범위를 좁힐 수 있지만 single `run_id` selector는 제공하지
+않는다. 따라서 먼저 run 목록에서 해당 `LOGICAL_DATE`가 의도한 run을 유일하게 가리키는지 확인하고, confirmation target도
+검토한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
@@ -230,7 +232,8 @@ bash lab/airflow.sh tasks clear \
   -t '^transform$'
 ```
 
-대상이 맞을 때만 disposable local lab에서 `-y`로 실행한다.
+같은 logical date에 다른 run이 있거나 confirmation target이 예상보다 넓다면 승인하지 않는다. 이 disposable lab에서는
+새로운 unique run을 만든 뒤 다시 시도하는 편이 가장 단순하다. 대상이 정확히 기대한 범위일 때만 `-y`를 사용한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
@@ -252,7 +255,7 @@ new execution log
 external output
 ```
 
-Command가 성공했다는 사실보다 **같은 logical work가 다시 실행되었다는 evidence**를 찾는다.
+Command가 성공했다는 사실보다 **의도한 logical work가 다시 실행되었다는 evidence**를 찾는다.
 
 ### Variation: downstream 포함
 
@@ -363,6 +366,6 @@ logical input 기반 final invariant를 다시 설계한다.
 다음을 독립적으로 할 수 있으면 통과한다.
 
 1. retry / clear-re-run / backfill / catchup을 logical-work identity로 구분한다.
-2. Exact TaskInstance를 대상으로 clear/re-run하고 same-run evidence를 연결한다.
+2. Intended TaskInstance set을 좁게 선택하고 confirmation으로 범위를 검증한 뒤 same-run evidence를 연결한다.
 3. Downstream을 함께 clear할지 side-effect contract로 판단한다.
 4. Repeated execution에서 wall-clock과 logical input을 구분해 idempotent target을 설계한다.
