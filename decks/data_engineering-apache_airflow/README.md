@@ -36,8 +36,15 @@ Curriculum unit은 chapter/file 경계와 동일하지 않다. 현재 textbook�
 ## Learning Path
 
 1. [Mental model: 정의와 실행을 분리해서 관찰하기](textbook/01-mental-model.md)
-2. [Scheduling: data interval과 Airflow 3 timetable semantics를 검증하기](textbook/02-scheduling-and-data-intervals.md)
-3. [Task design: failure, retry, side effect를 직접 관찰하기](textbook/03-task-design-and-state.md)
+2. [Dag authoring과 loading: source에서 runtime definition까지](textbook/04-authoring-and-loading.md)
+3. [Scheduling: data interval과 Airflow 3 timetable semantics를 검증하기](textbook/02-scheduling-and-data-intervals.md)
+4. [Task design: failure, retry, side effect를 직접 관찰하기](textbook/03-task-design-and-state.md)
+5. [Data와 configuration boundary: Params, XCom, storage, Variable, Connection](textbook/05-data-and-configuration-boundaries.md)
+6. [Cumulative integration: 작은 batch workflow를 evidence로 설명하기](textbook/06-cumulative-integration.md)
+
+번호는 file 생성 순서이고, 위 learning path는 **개념 dependency에 따른 권장 학습 순서**다. 특히 authoring/loading을
+명시적으로 통과한 뒤 scheduling·task lifecycle·data/config boundary를 다루고, 마지막 cumulative integration에서 앞
+개념을 하나의 workflow에 합친다.
 
 각 chapter는 설명과 실습을 별개 자료로 취급하지 않는다. 실습 결과 자체가 다음 설명의 evidence가 된다.
 
@@ -84,7 +91,8 @@ lab은 Apache Airflow 3.3.1의 `standalone` mode를 사용한다. production top
 **한 컴퓨터에서 Dag Processor, scheduler, API/UI, executor/task execution과 metadata state를 관찰하기 위한 학습 환경**이다.
 
 실습 폴더 구조, preflight, verification ladder, U2/U5 starter DAG, fixture, snapshot/reset helper의 사용법은
-[Lab Guide](lab/README.md)에 정리한다.
+[Lab Guide](lab/README.md)에 정리한다. U7 cumulative integration은 새로운 전용 framework나 영구 starter를 추가하지 않고
+기존 U2/U5 starter와 reference DAG를 조합해 learner가 local work file을 직접 만드는 방식으로 수행한다.
 
 ### Runtime Requirements
 
@@ -144,6 +152,19 @@ python lab/inspect_metadata.py --dag-id adudeck_observable_runtime
 ```
 
 UI는 기본 API Server port인 `http://localhost:8080`에서 확인한다.
+
+## Completion Boundary
+
+현재 textbook은 U1~U7 Basic curriculum의 핵심 explanation/practice/assessment path를 연결한다. 하지만 **파일이 존재한다는
+사실만으로 learner competence나 runtime validation까지 완료되었다고 선언하지 않는다.**
+
+- U2/U5는 기존 starter와 새 textbook slice를 연결해 authoring/loading 및 data/configuration judgment를 학습·평가한다.
+- U6의 retry/idempotence는 scheduling/task-design chapter와 cumulative integration에서 함께 판단한다.
+- U7은 learner가 작은 workflow를 직접 설계·실행·실패·수정·재검증하는 cumulative assessment다.
+- fresh/disposable Airflow runtime에서 learner-visible evidence가 실제로 documentation의 expectation과 일치하는지는 별도
+  runtime validation boundary로 남는다.
+
+따라서 이 deck의 구조적 curriculum coverage와 실제 hands-on completion을 구분한다.
 
 ## Version Baseline
 
