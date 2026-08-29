@@ -57,8 +57,8 @@ transport가 이 client를 통해 사용된다. 이 시점에는 아직 model에
 - `create(...)` — 새 response를 요청하는 network operation
 - `response` — server data를 SDK가 typed Python object로 표현한 결과
 
-여기서 두 실패를 구분해야 한다. `OPENAI_API_KEY` 같은 필수 local configuration이 없으면 client construction에서 실패할
-수 있다. 반면 설정된 credential이 유효하지 않거나 API가 request를 거절하는 문제는 network call 단계에서 드러난다.
+여기서 두 실패를 구분해야 한다. `OPENAI_API_KEY` 같은 필수 local configuration이 없으면 client construction에서 실패할 수
+있다. 반면 설정된 credential이 유효하지 않거나 API가 request를 거절하는 문제는 network call 단계에서 드러난다.
 **local configuration failure와 remote API rejection은 같은 실패가 아니다.**
 
 ## 1.2 API key는 code가 아니라 process configuration이다
@@ -112,8 +112,8 @@ response가 따라야 할 상위 수준의 행동 지침이다. lab에서는 답
 이번 response에서 처리할 user-side input이다. 지금은 문자열이지만 이후 unit에서는 구조화된 input item과 이전 output
 item까지 다룬다.
 
-`call_args`는 **application이 SDK public method에 넘길 값**이다. 실제 HTTP body는 SDK가 defaults와 serialization을
-적용한 뒤 만들어진다. 따라서 `call_args`를 출력했다고 해서 wire-level payload를 관찰한 것은 아니다.
+`call_args`는 **application이 SDK public method에 넘길 값**이다. 실제 HTTP body는 SDK가 defaults와 serialization을 적용한
+뒤 만들어진다. 따라서 `call_args`를 출력했다고 해서 wire-level payload를 관찰한 것은 아니다.
 
 이 구분이 중요한 이유는 이후 debugging에서 “내 code가 잘못된 argument를 만들었다”와 “SDK/network/API boundary에서
 문제가 생겼다”를 분리해야 하기 때문이다.
@@ -145,8 +145,8 @@ text = response.output_text
 | 5 | `response` 반환 | application이 SDK typed object를 보유 | type, IDs, output items, usage |
 | 6 | `response.output_text` 읽기 | application | text output의 convenience view |
 
-여기서 Step 1의 dictionary와 Step 5의 `Response`는 서로 다른 종류의 state다. Step 1은 내가 호출 전에 만든 값이고, Step
-5는 외부 API와 상호작용한 뒤 새로 얻은 값이다.
+여기서 Step 1의 dictionary와 Step 5의 `Response`는 서로 다른 종류의 state다. Step 1은 내가 호출 전에 만든 값이고, Step 5는
+외부 API와 상호작용한 뒤 새로 얻은 값이다.
 
 또한 Step 3의 network boundary를 통과했다고 해서 API 내부 processing 과정 전체를 관찰한 것은 아니다. 학습에서
 **관찰한 것과 추론한 것을 분리하는 습관**을 유지해야 한다.
@@ -275,15 +275,15 @@ uv run lab/request_response.py \
 - output text의 형식은 어떻게 달라질 가능성이 있는가?
 
 이 실험은 “instructions가 정확한 format을 항상 보장한다”는 causal proof가 아니다. model generation에는 변동성이 있다.
-확실히 통제한 것은 **application argument 한 dimension을 바꿨다는 사실**이다. live output 차이는 그 변경과 model
-generation을 함께 거친 결과이므로 지나치게 강한 인과 결론을 내리지 않는다.
+확실히 통제한 것은 **application argument 한 dimension을 바꿨다는 사실**이다. live output 차이는 그 변경과 model generation을
+함께 거친 결과이므로 지나치게 강한 인과 결론을 내리지 않는다.
 
 ## 1.10 흔한 잘못된 mental model
 
 ### “SDK가 답을 생성한다”
 
-SDK는 client library다. Python 값을 API request로 전달하고 response를 typed object로 다루기 쉽게 한다. model
-processing은 remote API boundary 뒤에서 일어난다.
+SDK는 client library다. Python 값을 API request로 전달하고 response를 typed object로 다루기 쉽게 한다. model processing은
+remote API boundary 뒤에서 일어난다.
 
 ### “`call_args`가 실제 HTTP payload다”
 
@@ -311,8 +311,8 @@ boundary를 두고 현재 공식 model catalog를 확인해야 한다.
 
 ### A. Trace
 
-다음 code에서 각 줄을 **local construction**, **client construction**, **network operation**,
-**server/API-derived state read** 중 하나로 분류한다.
+다음 code에서 각 줄을 **local construction**, **client construction**, **network operation**, **server/API-derived state read** 중
+하나로 분류한다.
 
 ```python
 client = OpenAI()
@@ -373,14 +373,38 @@ def ask(client, prompt):
 
 ### 1. Execution map
 
-처음 보는 `responses.create()` 기반 5~8줄짜리 program을 보고 각 줄을 다음 범주에 배치한다.
+아래 program은 chapter의 lab과 다른 작은 application code다.
 
-- application-owned state construction
-- local client configuration
-- network/API operation
-- API/SDK-derived state observation
+```python
+from openai import OpenAI
 
-각 경계에서 가능한 실패를 최소 하나씩 설명한다. 단, 아직 배우지 않은 구체적인 retry policy를 외울 필요는 없다.
+call_args = {
+    "model": "gpt-5.6-luna",
+    "input": "Give two properties of a Python tuple.",
+}
+
+client = OpenAI()
+result = client.responses.create(**call_args)
+summary = {
+    "python_type": type(result).__name__,
+    "response_id": result.id,
+    "request_id": result._request_id,
+    "text": result.output_text,
+}
+print(summary)
+```
+
+code를 실행하지 않고 다음을 수행한다.
+
+1. 각 statement를 `application-owned state construction`, `local client construction`, `network/API operation`,
+   `API/SDK-derived state observation` 중 하나로 분류한다.
+2. network call 전에 확실히 알 수 있는 값과 live call이 성공한 뒤에만 알 수 있는 값을 나눈다.
+3. `print(summary)`까지 실행되었다면 무엇을 evidence로 주장할 수 있고, 무엇은 여전히 주장할 수 없는지 설명한다.
+4. client construction 이전/중과 network/API operation에서 가능한 실패를 각각 하나씩 든다. 구체적인 retry 횟수는 아직
+   요구하지 않는다.
+
+좋은 답은 모든 줄에 전문 용어를 붙이는 답이 아니라, **state의 owner가 바뀌는 지점과 관찰 가능한 evidence가 늘어나는
+지점**을 일관되게 설명한다.
 
 ### 2. Evidence boundary
 
@@ -389,13 +413,12 @@ def ask(client, prompt):
 
 - 실제로 검증된 것
 - 아직 검증되지 않은 것
-- live call 뒤 추가로 관찰할 evidence 두 가지
+- live call 뒤 추가로 관찰할 evidence 두 가지와 각각의 의미
 
 평가 기준은 용어 암기가 아니라 **state owner와 observation boundary를 일관되게 추적하는가**다.
 
-다음 unit에서는 이 mental model을 유지한 채 `response.output` item 구조를 더 깊게 보고, application이 history/output
-items를 직접 운반하는 방식, `previous_response_id` response lineage, durable Conversations API의 state ownership을
-비교한다.
+다음 unit에서는 이 mental model을 유지한 채 `response.output` item 구조를 더 깊게 보고, application이 history/output items를
+직접 운반하는 방식, `previous_response_id` response lineage, durable Conversations API의 state ownership을 비교한다.
 
 ## References
 
