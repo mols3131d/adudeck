@@ -100,10 +100,15 @@ jobs:
           set -euo pipefail
 
           bash lab/scripts/reset.sh --all
-          bash lab/scripts/preflight.sh
-          bash lab/airflow.sh db migrate
 
-          dags_json="$(bash lab/airflow.sh dags list --local -o json)"
+          echo "== preflight =="
+          timeout 240 bash -x lab/scripts/preflight.sh
+
+          echo "== db migrate =="
+          timeout 180 bash lab/airflow.sh db migrate
+
+          echo "== local Dag discovery =="
+          dags_json="$(timeout 180 bash lab/airflow.sh dags list --local -o json)"
           printf '%s\n' "$dags_json"
           for dag_id in \
             adudeck_observable_runtime \
@@ -113,16 +118,22 @@ jobs:
             grep -Fq "$dag_id" <<<"$dags_json"
           done
 
-          bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
-          bash lab/airflow.sh tasks test \
+          echo "== U2 tasks list =="
+          timeout 180 bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
+
+          echo "== U2 task test =="
+          timeout 180 bash lab/airflow.sh tasks test \
             adudeck_u2_authoring_starter \
             inspect_source \
             2026-01-01
-          bash lab/airflow.sh dags test \
+
+          echo "== U2 Dag test =="
+          timeout 180 bash lab/airflow.sh dags test \
             adudeck_u2_authoring_starter \
             2026-01-01
 
-          bash lab/airflow.sh dags test \
+          echo "== U5 Dag test =="
+          timeout 180 bash lab/airflow.sh dags test \
             adudeck_u5_boundaries_starter \
             2026-01-01
 
@@ -148,33 +159,57 @@ jobs:
           }
           trap cleanup EXIT
 
-          ready=false
-          for _ in $(seq 1 90); do
-            if bash lab/airflow.sh dags list -o json 2>/dev/null | grep -Fq "adudeck_observable_runtime"; then
-              ready=true
+          dag_ready=false
+          for _ in $(seq 1 120); do
+            if python - <<'PY'
+          import sqlite3
+          try:
+              db = sqlite3.connect('lab/.airflow/airflow.db')
+              row = db.execute(
+                  'SELECT 1 FROM dag WHERE dag_id=? LIMIT 1',
+                  ('adudeck_observable_runtime',),
+              ).fetchone()
+          except sqlite3.Error:
+              raise SystemExit(1)
+          raise SystemExit(0 if row else 1)
+          PY
+            then
+              dag_ready=true
               break
             fi
             sleep 2
           done
-          if [[ "$ready" != true ]]; then
-            echo "standalone did not expose the expected Dag" >&2
+          if [[ "$dag_ready" != true ]]; then
+            echo "standalone did not serialize the expected Dag" >&2
             exit 1
           fi
 
-          bash lab/airflow.sh dags unpause adudeck_observable_runtime
+          timeout 120 bash lab/airflow.sh dags unpause adudeck_observable_runtime
 
           run_id="adudeck_calibration_${GITHUB_RUN_ID}"
           logical_date="2026-08-27T00:00:00+00:00"
-          bash lab/airflow.sh dags trigger \
+          timeout 120 bash lab/airflow.sh dags trigger \
             -r "$run_id" \
             -l "$logical_date" \
             -c '{"failure_mode":"none"}' \
             adudeck_observable_runtime
 
+          export RUN_ID_FOR_PROBE="$run_id"
+          export LOGICAL_DATE_FOR_PROBE="$logical_date"
+
           wait_for_run_success() {
             local final_state=""
             for _ in $(seq 1 120); do
-              state="$(bash lab/airflow.sh dags state adudeck_observable_runtime "$run_id" 2>/dev/null | grep -E '^(queued|running|success|failed)$' | tail -n 1 || true)"
+              state="$(python - <<'PY'
+          import os, sqlite3
+          db = sqlite3.connect('lab/.airflow/airflow.db')
+          row = db.execute(
+              'SELECT state FROM dag_run WHERE dag_id=? AND run_id=?',
+              ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
+          ).fetchone()
+          print(row[0] if row else '')
+          PY
+              )"
               if [[ "$state" == "success" || "$state" == "failed" ]]; then
                 final_state="$state"
                 break
@@ -189,10 +224,8 @@ jobs:
           }
 
           wait_for_run_success
-          bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
+          timeout 120 bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
 
-          export RUN_ID_FOR_PROBE="$run_id"
-          export LOGICAL_DATE_FOR_PROBE="$logical_date"
           before_end="$(python - <<'PY'
           import os, sqlite3
           db = sqlite3.connect('lab/.airflow/airflow.db')
@@ -217,7 +250,7 @@ jobs:
           print(f'validated run identity: {row}')
           PY
 
-          bash lab/airflow.sh tasks clear \
+          timeout 120 bash lab/airflow.sh tasks clear \
             adudeck_observable_runtime \
             -s "$logical_date" \
             -e "$logical_date" \
@@ -233,7 +266,7 @@ jobs:
               "SELECT state, end_date FROM task_instance WHERE dag_id=? AND run_id=? AND task_id='transform'",
               ('adudeck_observable_runtime', os.environ['RUN_ID_FOR_PROBE']),
           ).fetchone()
-          print('|' .join('' if value is None else str(value) for value in row) if row else '|')
+          print('|'.join('' if value is None else str(value) for value in row) if row else '|')
           PY
             )"
             state="${current%%|*}"
@@ -251,8 +284,8 @@ jobs:
             exit 1
           fi
 
-          bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
-          bash lab/airflow.sh tasks states-for-dag-run \
+          timeout 120 bash lab/scripts/snapshot.sh adudeck_observable_runtime "$run_id"
+          timeout 120 bash lab/airflow.sh tasks states-for-dag-run \
             adudeck_observable_runtime \
             "$run_id" \
             -o json | tee /tmp/runtime-task-states.json
