@@ -13,8 +13,8 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 
 - `OpenAI` client가 configuration과 transport를 소유하고 endpoint method가 실제 API request를 만든다는 경계를 설명한다.
 - Responses API request를 구성하고 `Response` 객체의 text, output items, usage를 구분해 해석한다.
-- stateless input, `previous_response_id` 기반 response lineage, durable Conversations API의 state ownership 차이를 설명하고
-  상황에 맞는 연결 방식을 선택한다.
+- stateless input, `previous_response_id` 기반 response lineage, durable Conversations API의 state ownership 차이를
+  설명하고 상황에 맞는 연결 방식을 선택한다.
 - Pydantic schema를 사용해 structured output을 받고, 자연어 생성 성공과 schema validation 성공을 구분한다.
 - function calling에서 **model이 tool call을 제안하는 단계**와 **application이 함수를 실행하고 결과를 돌려주는 단계**를
   분리해 구현한다.
@@ -168,10 +168,10 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 ## Outcome Coverage
 
-- Unit 1은 application call arguments, network boundary, typed response와 identifiers 해석을 직접 개발하고 checkpoint에서
-  평가한다.
-- response lineage/conversation state, structured output, function calling, streaming/async, failure handling outcome은 아직
-  미구현 completion gap이다.
+- Unit 1은 application call arguments, network boundary, typed response와 identifiers 해석을 직접 개발하고
+  checkpoint에서 평가한다.
+- response lineage/conversation state, structured output, function calling, streaming/async, failure handling outcome은
+  아직 미구현 completion gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
   evidence, assessment path가 갖춰졌을 때만 선언한다.
 
