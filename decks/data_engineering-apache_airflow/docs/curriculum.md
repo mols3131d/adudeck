@@ -201,18 +201,21 @@ L0 environment + local import surface
 
 현재 `lab/`에는 U2와 U5를 시작할 수 있는 작은 starter와 공용 learning-preparation helper가 있다.
 
-- `lab/dags/exercises/u2_authoring_starter.py` — parser-safe authoring/loading baseline과 controlled parse failure 시작점
+- `lab/dags/exercises/u2_authoring_starter.py` — parser-safe authoring/loading baseline과 controlled parse failure
+  시작점
 - `lab/dags/exercises/u5_boundaries_starter.py` — Param/XCom/file/Variable/Connection responsibility 비교 시작점
-- `lab/dags/observable_runtime.py` — U1/U4/U6의 runtime state, retry, clear/re-run, side-effect 관찰에 재사용하는 reference Dag
+- `lab/dags/observable_runtime.py` — U1/U4/U6의 runtime state, retry, clear/re-run, side-effect 관찰에 재사용하는
+  reference Dag
 - `lab/dags/observable_schedule.py` — U3/U6의 timetable/backfill observation에 재사용하는 reference Dag
 - `lab/fixtures/orders.jsonl` — deterministic business-data fixture
 - `lab/scripts/preflight.sh` — environment/toolchain/local import readiness check
 - `lab/scripts/snapshot.sh` — CLI + read-only metadata + external output observation helper
 - `lab/scripts/reset.sh` — lab-owned output 또는 disposable runtime state reset
 
-U7을 위해 별도 permanent starter를 추가하지 않는다. [`06-cumulative-integration.md`](../textbook/06-cumulative-integration.md)는
-learner가 existing starter/reference Dag를 읽고 **local assessment work file을 직접 만들도록 scaffolding을 줄인다.** 이는
-U7에서 독립적인 design/diagnosis 능력을 평가하기 위한 의도된 progression이다.
+U7을 위해 별도 permanent starter를 추가하지 않는다.
+[`06-cumulative-integration.md`](../textbook/06-cumulative-integration.md)는 learner가 existing starter/reference Dag를
+읽고 **local assessment work file을 직접 만들도록 scaffolding을 줄인다.** 이는 U7에서 독립적인 design/diagnosis 능력을
+평가하기 위한 의도된 progression이다.
 
 Starter와 helper가 존재한다는 것은 학습 준비가 되어 있다는 뜻이지 learner outcome이 자동으로 검증되었다는 뜻은 아니다.
 실제 runtime execution, observation, modification, explanation을 learner-visible evidence로 확인해야 한다.
@@ -222,12 +225,12 @@ Starter와 helper가 존재한다는 것은 학습 준비가 되어 있다는 �
 현재 build에서 U1~U7의 주요 textbook learning path는 구현되었다. 다음 우선순위는 새 chapter를 늘리는 것이 아니라
 **validation과 integration evidence를 닫는 것**이다.
 
-1. **Fresh-environment calibration** — disposable state에서 preflight → `db migrate` → local discovery/test → standalone →
-   cross-view observation을 실제로 실행해 documentation expectation과 runtime evidence가 일치하는지 확인한다.
+1. **Fresh-environment calibration** — disposable state에서 preflight → `db migrate` → local discovery/test → standalone
+   → cross-view observation을 실제로 실행해 documentation expectation과 runtime evidence가 일치하는지 확인한다.
 2. **U2/U5/U6 hands-on validation** — controlled parse failure, Variable/Connection resolution, selected TaskInstance
    clear/re-run과 downstream variation이 Airflow 3.3.1 local runtime에서 chapter의 evidence model과 일치하는지 확인한다.
-3. **U7 learner-level integration review** — cumulative assessment를 실제로 수행해 너무 많은 hidden scaffolding이나 반대로
-   prerequisite gap이 없는지 검토한다.
+3. **U7 learner-level integration review** — cumulative assessment를 실제로 수행해 너무 많은 hidden scaffolding이나
+   반대로 prerequisite gap이 없는지 검토한다.
 4. 발견되는 mismatch는 먼저 local material/playground gap으로 분류하고, learner prerequisite·scope·outcome·dependency를
    바꿔야 할 때만 curriculum delta로 승격한다.
 
@@ -253,10 +256,11 @@ Discovery
 현재 material version baseline은 Apache Airflow **3.3.1**이다. Dag/task authoring은 `airflow.sdk`를 중심으로 사용하고,
 scheduling semantics가 학습 목표일 때는 Airflow가 public interface로 문서화한 `airflow.timetables`를 명시적으로 사용할
 수 있다. Internal metadata DB 관측은 학습용 read-only probe로 제한한다. Version-sensitive API, CLI, UI, scheduling
-default, internal schema, clear/rerun behavior를 다룰 때는 현재 primary documentation과 실제 lab evidence를 구분해 검증한다.
+default, internal schema, clear/rerun behavior를 다룰 때는 현재 primary documentation과 실제 lab evidence를 구분해
+검증한다.
 
-Airflow 3.3.1의 clear/rerun/backfill은 Dag bundle version 선택에도 영향을 받을 수 있으므로 logical-work identity와 source
-version을 같은 개념으로 취급하지 않는다.
+Airflow 3.3.1의 clear/rerun/backfill은 Dag bundle version 선택에도 영향을 받을 수 있으므로 logical-work identity와
+source version을 같은 개념으로 취급하지 않는다.
 
 Local lab toolchain은 기본 Python 3.12와 Airflow 3.3.1 release constraints를 사용한다. 이 pin은 학습 환경 drift를 줄이는
 도구이지 production dependency policy가 아니다. 실제 runtime behavior는 여전히 learner-visible execution evidence로
