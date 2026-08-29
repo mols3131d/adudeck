@@ -57,8 +57,8 @@ transport가 이 client를 통해 사용된다. 이 시점에는 아직 model에
 - `create(...)` — 새 response를 요청하는 network operation
 - `response` — server data를 SDK가 typed Python object로 표현한 결과
 
-여기서 두 실패를 구분해야 한다. `OPENAI_API_KEY` 같은 필수 local configuration이 없으면 client construction에서 실패할
-수 있다. 반면 설정된 credential이 유효하지 않거나 API가 request를 거절하는 문제는 network call 단계에서 드러난다.
+여기서 두 실패를 구분해야 한다. `OPENAI_API_KEY` 같은 필수 local configuration이 없으면 client construction에서 실패할 수
+있다. 반면 설정된 credential이 유효하지 않거나 API가 request를 거절하는 문제는 network call 단계에서 드러난다.
 **local configuration failure와 remote API rejection은 같은 실패가 아니다.**
 
 ## 1.2 API key는 code가 아니라 process configuration이다
@@ -112,13 +112,27 @@ response가 따라야 할 상위 수준의 행동 지침이다. lab에서는 답
 이번 response에서 처리할 user-side input이다. 지금은 문자열이지만 이후 unit에서는 구조화된 input item과 이전 output
 item까지 다룬다.
 
-`call_args`는 **application이 SDK public method에 넘길 값**이다. 실제 HTTP body는 SDK가 defaults와 serialization을
-적용한 뒤 만들어진다. 따라서 `call_args`를 출력했다고 해서 wire-level payload를 관찰한 것은 아니다.
+`call_args`는 **application이 SDK public method에 넘길 값**이다. 실제 HTTP body는 SDK가 defaults와 serialization을 적용한
+뒤 만들어진다. 따라서 `call_args`를 출력했다고 해서 wire-level payload를 관찰한 것은 아니다.
 
 lab이 `call_args`를 dictionary로 materialize하는 이유는 **같은 세 값을 network 전에 출력하고 live call에도 그대로 넘겨
 비교하기 위해서**다. 이것은 teaching instrumentation이지 OpenAI SDK 사용에 필요한 wrapper pattern이 아니다. SDK 자체는
 request parameter type definitions와 typed method signatures를 제공하므로, 일반 application code에서는 직접 keyword
 arguments를 넘기는 방식도 자연스럽다. 이 chapter에서는 관찰 가능성을 위해 작은 dictionary를 선택한다.
+
+여기서 `client.responses.create(**call_args)`의 `**`는 OpenAI SDK 문법이 아니라 **Python mapping unpacking**이다. dictionary의
+key를 keyword argument 이름으로, value를 그 argument의 값으로 펼친다. 현재 세 field에 대해서는 다음 호출과 같은 의미다.
+
+```python
+response = client.responses.create(
+    model=call_args["model"],
+    instructions=call_args["instructions"],
+    input=call_args["input"],
+)
+```
+
+따라서 `**call_args`를 이해할 때도 “SDK가 특별한 request object를 받는다”가 아니라 **평범한 Python keyword arguments가
+SDK endpoint method로 넘어간다**고 생각하면 된다.
 
 이 구분이 중요한 이유는 이후 debugging에서 “내 code가 잘못된 argument를 만들었다”와 “SDK/network/API boundary에서
 문제가 생겼다”를 분리해야 하기 때문이다.
@@ -150,8 +164,8 @@ text = response.output_text
 | 5 | `response` 반환 | application이 SDK typed object를 보유 | type, IDs, output items, usage |
 | 6 | `response.output_text` 읽기 | application | text output의 convenience view |
 
-여기서 Step 1의 dictionary와 Step 5의 `Response`는 서로 다른 종류의 state다. Step 1은 내가 호출 전에 만든 값이고, Step
-5는 외부 API와 상호작용한 뒤 새로 얻은 값이다.
+여기서 Step 1의 dictionary와 Step 5의 `Response`는 서로 다른 종류의 state다. Step 1은 내가 호출 전에 만든 값이고, Step 5는
+외부 API와 상호작용한 뒤 새로 얻은 값이다.
 
 또한 Step 3의 network boundary를 통과했다고 해서 API 내부 processing 과정 전체를 관찰한 것은 아니다. 학습에서
 **관찰한 것과 추론한 것을 분리하는 습관**을 유지해야 한다.
@@ -280,15 +294,15 @@ uv run lab/request_response.py \
 - output text의 형식은 어떻게 달라질 가능성이 있는가?
 
 이 실험은 “instructions가 정확한 format을 항상 보장한다”는 causal proof가 아니다. model generation에는 변동성이 있다.
-확실히 통제한 것은 **application argument 한 dimension을 바꿨다는 사실**이다. live output 차이는 그 변경과 model
-generation을 함께 거친 결과이므로 지나치게 강한 인과 결론을 내리지 않는다.
+확실히 통제한 것은 **application argument 한 dimension을 바꿨다는 사실**이다. live output 차이는 그 변경과 model generation을
+함께 거친 결과이므로 지나치게 강한 인과 결론을 내리지 않는다.
 
 ## 1.10 흔한 잘못된 mental model
 
 ### “SDK가 답을 생성한다”
 
-SDK는 client library다. Python 값을 API request로 전달하고 response를 typed object로 다루기 쉽게 한다. model
-processing은 remote API boundary 뒤에서 일어난다.
+SDK는 client library다. Python 값을 API request로 전달하고 response를 typed object로 다루기 쉽게 한다. model processing은
+remote API boundary 뒤에서 일어난다.
 
 ### “`call_args`가 실제 HTTP payload다”
 
@@ -299,6 +313,10 @@ request와 구분한다.
 
 아니다. 이 helper는 같은 세 값을 preview와 live call에서 비교하기 위한 teaching instrumentation이다. application에 별도
 wrapper가 필요한지는 자신의 testability와 design requirement로 판단한다.
+
+### “`**call_args`는 OpenAI SDK 전용 문법이다”
+
+아니다. `**`는 Python의 keyword argument unpacking이다. OpenAI SDK는 펼쳐진 keyword arguments를 받는다.
 
 ### “`output_text`가 response 전체다”
 
@@ -321,8 +339,8 @@ boundary를 두고 현재 공식 model catalog를 확인해야 한다.
 
 ### A. Trace
 
-다음 code에서 각 줄을 **local construction**, **client construction**, **network operation**,
-**server/API-derived state read** 중 하나로 분류한다.
+다음 code에서 각 줄을 **local construction**, **client construction**, **network operation**, **server/API-derived state read** 중
+하나로 분류한다.
 
 ```python
 client = OpenAI()
@@ -332,8 +350,8 @@ request_id = response._request_id
 text = response.output_text
 ```
 
-각 분류에 한 문장 근거를 쓴다. 실패 가능성도 표시한다. 예를 들어 `OpenAI()`와 `responses.create()`가 실패한다면 같은
-종류의 실패인지 설명한다.
+각 분류에 한 문장 근거를 쓴다. `**call_args`가 실제로 endpoint method에 어떤 keyword arguments를 전달하는지도 적는다.
+실패 가능성도 표시한다. 예를 들어 `OpenAI()`와 `responses.create()`가 실패한다면 같은 종류의 실패인지 설명한다.
 
 ### B. Predict → Observe
 
@@ -408,9 +426,10 @@ code를 실행하지 않고 다음을 수행한다.
 
 1. 각 statement를 `application-owned state construction`, `local client construction`, `network/API operation`,
    `API/SDK-derived state observation` 중 하나로 분류한다.
-2. network call 전에 확실히 알 수 있는 값과 live call이 성공한 뒤에만 알 수 있는 값을 나눈다.
-3. `print(summary)`까지 실행되었다면 무엇을 evidence로 주장할 수 있고, 무엇은 여전히 주장할 수 없는지 설명한다.
-4. client construction 이전/중과 network/API operation에서 가능한 실패를 각각 하나씩 든다. 구체적인 retry 횟수는 아직
+2. `**call_args`가 실제로 전달하는 keyword arguments를 직접 풀어 쓴다.
+3. network call 전에 확실히 알 수 있는 값과 live call이 성공한 뒤에만 알 수 있는 값을 나눈다.
+4. `print(summary)`까지 실행되었다면 무엇을 evidence로 주장할 수 있고, 무엇은 여전히 주장할 수 없는지 설명한다.
+5. client construction 이전/중과 network/API operation에서 가능한 실패를 각각 하나씩 든다. 구체적인 retry 횟수는 아직
    요구하지 않는다.
 
 좋은 답은 모든 줄에 전문 용어를 붙이는 답이 아니라, **state의 owner가 바뀌는 지점과 관찰 가능한 evidence가 늘어나는
@@ -427,9 +446,8 @@ code를 실행하지 않고 다음을 수행한다.
 
 평가 기준은 용어 암기가 아니라 **state owner와 observation boundary를 일관되게 추적하는가**다.
 
-다음 unit에서는 이 mental model을 유지한 채 `response.output` item 구조를 더 깊게 보고, application이 history/output
-items를 직접 운반하는 방식, `previous_response_id` response lineage, durable Conversations API의 state ownership을
-비교한다.
+다음 unit에서는 이 mental model을 유지한 채 `response.output` item 구조를 더 깊게 보고, application이 history/output items를
+직접 운반하는 방식, `previous_response_id` response lineage, durable Conversations API의 state ownership을 비교한다.
 
 ## References
 
