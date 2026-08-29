@@ -163,8 +163,8 @@ U7의 cumulative work는 앞 unit의 API나 용어를 다시 말하는 quiz가 �
 | [`06-cumulative-integration.md`](../textbook/06-cumulative-integration.md) | U7 cumulative, U1~U6 integration | learner가 작은 workflow를 직접 설계·실행·실패·수정·재검증하고 최소 evidence로 diagnosis하는 cumulative assessment다. |
 
 현재 content surface는 U1~U7 각각에 substantial explanation/practice/assessment path를 가진다. Fresh runtime review에서
-local toolchain/discovery/test path와 U6 same-run clear/re-run path 일부를 calibration했지만, **learner-visible evidence 전체를
-검증하지 않은 상태를 curriculum completion으로 승격하지 않는다.**
+local toolchain/discovery/test path와 U6 same-run clear/re-run path 일부를 calibration했지만,
+**learner-visible evidence 전체를 검증하지 않은 상태를 curriculum completion으로 승격하지 않는다.**
 
 ## Learning Readiness Status
 
@@ -224,17 +224,18 @@ Starter와 helper가 존재한다는 것은 학습 준비가 되어 있다는 �
 ## Build Handoff
 
 현재 build에서 U1~U7의 주요 textbook learning path는 구현되었다. Fresh Ubuntu calibration으로 L0→L2 local path와 U6의
-explicit logical-date DagRun → selective `transform` clear → same-run second completion까지는 material expectation과 실제
-runtime evidence가 일치함을 확인했다. 다음 우선순위는 새 chapter가 아니라 **아직 닫지 않은 learner-visible evidence**다.
+explicit logical-date DagRun → selective `transform` clear → same-run second completion까지는 material expectation과
+실제 runtime evidence가 일치함을 확인했다. 다음 우선순위는 새 chapter가 아니라
+**아직 닫지 않은 learner-visible evidence**다.
 
-1. **U2 controlled-failure validation** — learner working copy에서 parse/import failure를 만들고 복구하는 path가 chapter의
-   diagnosis model과 일치하는지 확인한다.
+1. **U2 controlled-failure validation** — learner working copy에서 parse/import failure를 만들고 복구하는 path가
+   chapter의 diagnosis model과 일치하는지 확인한다.
 2. **U5 runtime boundary validation** — environment-backed Variable/Connection resolution과 Param/XCom/external output의
    evidence가 intended ownership model과 일치하는지 확인한다.
 3. **U6 downstream variation** — `transform`만 clear하는 baseline과 downstream까지 포함하는 variation을 side-effect
    invariant로 비교한다.
-4. **U7 learner-level integration review** — cumulative assessment를 실제로 수행해 hidden scaffolding이나 prerequisite gap이
-   없는지 검토한다.
+4. **U7 learner-level integration review** — cumulative assessment를 실제로 수행해 hidden scaffolding이나 prerequisite
+   gap이 없는지 검토한다.
 5. 발견되는 mismatch는 먼저 local material/playground gap으로 분류하고, learner prerequisite·scope·outcome·dependency를
    바꿔야 할 때만 curriculum delta로 승격한다.
 
