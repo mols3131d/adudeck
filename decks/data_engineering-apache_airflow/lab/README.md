@@ -364,8 +364,9 @@ adudeck_observable_runtime
 adudeck_observable_schedule
 ```
 
-`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Airflow 3.3.1 manual trigger는
-`--logical-date`를 생략하면 logical date가 `None`일 수 있으므로, clear 실험은 재현 가능한 identity를 먼저 명시한다.
+`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Airflow 3.3.1 manual
+trigger는 `--logical-date`를 생략하면 logical date가 `None`일 수 있으므로, clear 실험은 재현 가능한 identity를 먼저
+명시한다.
 
 ```bash
 RUN_ID='adudeck_recovery_2026_08_27'
