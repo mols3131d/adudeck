@@ -30,8 +30,8 @@ lab/
 DAG는 learner가 직접 prediction, modification, failure, comparison을 수행하기 위한 시작점이다.
 
 영구 starter는 **U2 Dag authoring/loading**과 **U5 data/configuration boundaries**에만 둔다. U6 recovery는 기존
-`observable_runtime`/`observable_schedule`을 재사용한다. U7 cumulative integration은 scaffolding을 더 줄여, learner가 기존
-starter/reference DAG를 읽고 local assessment work file을 직접 구성한다. 별도 U7 framework를 미리 만들지 않는다.
+`observable_runtime`/`observable_schedule`을 재사용한다. U7 cumulative integration은 scaffolding을 더 줄여, learner가
+기존 starter/reference DAG를 읽고 local assessment work file을 직접 구성한다. 별도 U7 framework를 미리 만들지 않는다.
 
 ## Learning preparation
 
@@ -364,8 +364,8 @@ adudeck_observable_runtime
 adudeck_observable_schedule
 ```
 
-`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Clear할 때 broad operation을
-바로 승인하지 않고 logical date와 task selector로 정확한 target을 먼저 확인한다.
+`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Clear할 때 broad
+operation을 바로 승인하지 않고 logical date와 task selector로 정확한 target을 먼저 확인한다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
@@ -383,8 +383,9 @@ bash lab/airflow.sh tasks clear \
 
 ## U7 — Cumulative integration
 
-U7에는 permanent starter를 두지 않는다. [`../textbook/06-cumulative-integration.md`](../textbook/06-cumulative-integration.md)의
-assessment contract에 따라 learner가 `dags/exercises/` 아래 local work file을 직접 만들거나 별도 disposable copy에서 작업한다.
+U7에는 permanent starter를 두지 않는다.
+[`../textbook/06-cumulative-integration.md`](../textbook/06-cumulative-integration.md)의 assessment contract에 따라
+learner가 `dags/exercises/` 아래 local work file을 직접 만들거나 별도 disposable copy에서 작업한다.
 
 이 단계에서는 helper가 답을 대신 만들지 않는다. learner가 다음을 스스로 연결해야 한다.
 
@@ -444,6 +445,6 @@ Airflow가 Dag를 실제로 parse/load했다는 뜻은 아니다. `preflight`, `
 `dags test`, `standalone`, cross-view observation도 각각 서로 다른 validation level이다.
 
 실제 `standalone` runtime에서 Dag loading, scheduler-backed task execution, UI/CLI/metadata observation,
-Connection/Variable resolution, selected TaskInstance clear/re-run, controlled failure/recovery가 learner-visible evidence와
-일치하는지는 별도의 runtime validation이 필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로 통과한 것으로
-간주하지 않는다.
+Connection/Variable resolution, selected TaskInstance clear/re-run, controlled failure/recovery가 learner-visible
+evidence와 일치하는지는 별도의 runtime validation이 필요하다. 한 단계가 성공했다고 더 높은 validation level을 자동으로
+통과한 것으로 간주하지 않는다.
