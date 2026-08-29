@@ -155,6 +155,9 @@ def run_conversation(client: Any, args: argparse.Namespace) -> None:
     )
     print_response("second response", second)
 
+    client.conversations.delete(conversation.id)
+    print(f"\nconversation_deleted: {conversation.id}")
+
 
 def main() -> None:
     args = parse_args()
