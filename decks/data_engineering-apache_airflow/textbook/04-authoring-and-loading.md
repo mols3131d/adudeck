@@ -2,7 +2,10 @@
 
 Airflow에서 Dag를 작성한다는 것은 단순히 Python 함수를 묶는 일이 아니다.
 
-이번 chapter의 목표는 **내가 작성한 Python source가 언제 Dag definition으로 해석되고, 언제 TaskInstance execution으로 넘어가는지**를 구분하는 것이다. 이 구분이 없으면 import error, Dag discovery 문제, local test failure, scheduler-backed runtime failure를 모두 "Airflow가 안 돈다"로 뭉개게 된다.
+이번 chapter의 목표는
+**내가 작성한 Python source가 언제 Dag definition으로 해석되고, 언제 TaskInstance execution으로 넘어가는지**를 구분하는
+것이다. 이 구분이 없으면 import error, Dag discovery 문제, local test failure, scheduler-backed runtime failure를 모두
+"Airflow가 안 돈다"로 뭉개게 된다.
 
 이번 chapter에서는 다음 경계를 하나의 흐름으로 연결한다.
 
@@ -30,7 +33,8 @@ Airflow 3에서 Dag author가 사용하는 핵심 authoring surface는 `airflow.
 from airflow.sdk import dag, task
 ```
 
-이 import는 단순한 style choice가 아니다. Airflow 내부 scheduler/database implementation에 직접 의존하지 않고 **Dag authoring에 필요한 stable public interface**를 사용하겠다는 boundary다.
+이 import는 단순한 style choice가 아니다. Airflow 내부 scheduler/database implementation에 직접 의존하지 않고
+**Dag authoring에 필요한 stable public interface**를 사용하겠다는 boundary다.
 
 다음 Dag를 보자.
 
@@ -88,7 +92,8 @@ def load_orders():
 - `module imported`는 Dag file을 import/parse하는 과정에서 실행될 수 있다.
 - `task executed`는 특정 TaskInstance가 실제로 실행될 때 task body 안에서 실행된다.
 
-이 차이는 단순한 성능 팁이 아니다. top-level에서 database query, remote API call, 대용량 file read를 수행하면 Dag Processor의 반복 parsing과 결합된다.
+이 차이는 단순한 성능 팁이 아니다. top-level에서 database query, remote API call, 대용량 file read를 수행하면 Dag
+Processor의 반복 parsing과 결합된다.
 
 따라서 다음 mental model을 유지한다.
 
@@ -206,7 +211,8 @@ inspect_source
 build_summary
 ```
 
-scheduler는 source file의 줄 순서를 따라 business 함수를 순차 호출하는 것이 아니다. DagRun 안에서 TaskInstance state와 dependency를 보고 어떤 task가 실행 가능한지 판단한다.
+scheduler는 source file의 줄 순서를 따라 business 함수를 순차 호출하는 것이 아니다. DagRun 안에서 TaskInstance state와
+dependency를 보고 어떤 task가 실행 가능한지 판단한다.
 
 따라서 Task boundary를 추가할 때는 "함수를 나누면 코드가 예뻐진다"보다 다음을 묻는다.
 
@@ -241,7 +247,8 @@ bash lab/airflow.sh dags list --local
 bash lab/airflow.sh tasks list adudeck_u2_authoring_starter
 ```
 
-여기까지 성공했을 때 증명한 것은 **source가 현재 local Airflow environment에서 Dag definition으로 발견될 수 있다는 것**이다.
+여기까지 성공했을 때 증명한 것은
+**source가 현재 local Airflow environment에서 Dag definition으로 발견될 수 있다는 것**이다.
 
 아직 scheduler-backed DagRun은 만들지 않았다.
 
@@ -321,7 +328,8 @@ bash lab/airflow.sh dags list-import-errors --local -o table
 - TaskInstance `failed` state가 생겼는가?
 - scheduler retry 설정으로 이 문제를 해결할 수 있는가?
 
-답은 모두 같은 방향을 가리킨다. **이 문제는 runtime task failure가 아니라 Dag definition을 만들기 전의 import/load boundary 문제**다.
+답은 모두 같은 방향을 가리킨다.
+**이 문제는 runtime task failure가 아니라 Dag definition을 만들기 전의 import/load boundary 문제**다.
 
 문제를 확인한 뒤 해당 import를 제거하고 다시 확인한다.
 
@@ -360,7 +368,8 @@ inspect_source -> validate_source -> build_summary
 
 그 다음 `tasks list`와 scheduler-backed run에서 실제 graph/state를 확인한다.
 
-단순히 task count가 2에서 3으로 늘어난 것을 성공 기준으로 삼지 않는다. **새 boundary가 독립 state/log/retry 책임을 가진다는 설명**이 핵심이다.
+단순히 task count가 2에서 3으로 늘어난 것을 성공 기준으로 삼지 않는다.
+**새 boundary가 독립 state/log/retry 책임을 가진다는 설명**이 핵심이다.
 
 ## 10. 흔한 잘못된 mental model
 
@@ -370,7 +379,8 @@ filesystem에 Python file이 있는 것과 Airflow가 parse 가능한 Dag defini
 
 ### "`@task` 함수 호출은 parse할 때 business code를 실행한다"
 
-Dag authoring 중에는 Task graph와 output/dependency relationship을 구성한다. task body의 runtime execution은 특정 TaskInstance에서 일어난다.
+Dag authoring 중에는 Task graph와 output/dependency relationship을 구성한다. task body의 runtime execution은 특정
+TaskInstance에서 일어난다.
 
 ### "`dags test`가 성공했으니 scheduler도 정상이다"
 
@@ -462,4 +472,5 @@ starter에 다음 두 변경을 수행한다.
 - local test와 scheduler-backed evidence를 혼동하지 않았는가?
 - 수정 뒤 Dag discovery와 runtime state를 다시 검증했는가?
 
-이 기준을 만족하면 U2의 핵심 outcome인 **작은 Dag를 authoring하고 loading/runtime failure를 서로 다른 layer로 진단하는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 U2의 핵심 outcome인
+**작은 Dag를 authoring하고 loading/runtime failure를 서로 다른 layer로 진단하는 능력**을 갖춘 것으로 본다.
