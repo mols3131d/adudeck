@@ -20,8 +20,8 @@ DEFAULT_INSTRUCTIONS = (
 DEFAULT_PROMPT = "What is the difference between a Python list and tuple?"
 
 
-def build_request(model: str, instructions: str, prompt: str) -> dict[str, Any]:
-    """Build the public call arguments used by the calibration experiment."""
+def build_call_args(model: str, instructions: str, prompt: str) -> dict[str, Any]:
+    """Build the public endpoint arguments used by the calibration experiment."""
     return {
         "model": model,
         "instructions": instructions,
@@ -58,10 +58,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    request = build_request(args.model, args.instructions, args.prompt)
+    call_args = build_call_args(args.model, args.instructions, args.prompt)
 
     print("== application call arguments ==")
-    print(json.dumps(request, ensure_ascii=False, indent=2))
+    print(json.dumps(call_args, ensure_ascii=False, indent=2))
 
     if args.preview:
         print("\npreview only: the SDK did not serialize or send an HTTP request")
@@ -77,9 +77,10 @@ def main() -> None:
     from openai import OpenAI
 
     client = OpenAI()
-    response = client.responses.create(**request)
+    response = client.responses.create(**call_args)
 
     print("\n== selected response fields ==")
+    print(f"python_type: {type(response).__name__}")
     print(f"response_id: {response.id}")
     print(f"request_id: {response._request_id}")
     print(f"model: {response.model}")
