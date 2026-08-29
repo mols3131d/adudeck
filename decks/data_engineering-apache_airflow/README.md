@@ -161,8 +161,8 @@ UI는 기본 API Server port인 `http://localhost:8080`에서 확인한다.
 **파일이 존재한다는 사실만으로 learner competence나 runtime validation까지 완료되었다고 선언하지 않는다.**
 
 - U2/U5는 기존 starter와 새 textbook slice를 연결해 authoring/loading 및 data/configuration judgment를 학습·평가한다.
-- U6는 retry·selected TaskInstance clear/re-run·backfill·catchup을 같은 logical-work identity로 비교하고 repeated execution의
-  side-effect invariant를 평가한다.
+- U6는 retry·selected TaskInstance clear/re-run·backfill·catchup을 같은 logical-work identity로 비교하고 repeated
+  execution의 side-effect invariant를 평가한다.
 - U7은 learner가 작은 workflow를 직접 설계·실행·실패·수정·재검증하는 cumulative assessment다.
 - fresh/disposable Airflow runtime에서 learner-visible evidence가 실제로 documentation의 expectation과 일치하는지는 별도
   runtime validation boundary로 남는다.
