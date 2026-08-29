@@ -155,8 +155,8 @@ UI는 기본 API Server port인 `http://localhost:8080`에서 확인한다.
 
 ## Completion Boundary
 
-현재 textbook은 U1~U7 Basic curriculum의 핵심 explanation/practice/assessment path를 연결한다. 하지만 **파일이 존재한다는
-사실만으로 learner competence나 runtime validation까지 완료되었다고 선언하지 않는다.**
+현재 textbook은 U1~U7 Basic curriculum의 핵심 explanation/practice/assessment path를 연결한다. 하지만
+**파일이 존재한다는 사실만으로 learner competence나 runtime validation까지 완료되었다고 선언하지 않는다.**
 
 - U2/U5는 기존 starter와 새 textbook slice를 연결해 authoring/loading 및 data/configuration judgment를 학습·평가한다.
 - U6의 retry/idempotence는 scheduling/task-design chapter와 cumulative integration에서 함께 판단한다.

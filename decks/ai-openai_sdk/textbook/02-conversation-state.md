@@ -1,6 +1,7 @@
 # 2. Conversation state: "이전 대화"를 누가 소유하는가
 
-첫 chapter에서는 한 번의 SDK call에서 application-owned arguments가 network boundary를 지나 typed `Response`로 돌아오는 흐름을 봤다.
+첫 chapter에서는 한 번의 SDK call에서 application-owned arguments가 network boundary를 지나 typed `Response`로 돌아오는
+흐름을 봤다.
 
 multi-turn interaction에서는 새로운 질문이 생긴다.
 
@@ -21,7 +22,8 @@ multi-turn interaction에서는 새로운 질문이 생긴다.
    application이 conversation.id를 보관하고 별도 Conversation object에 state를 지속시킴
 ```
 
-세 방식 모두 multi-turn conversation을 만들 수 있지만 **application이 직접 들고 있는 state, API가 resolve하는 state, persistence boundary가 다르다.**
+세 방식 모두 multi-turn conversation을 만들 수 있지만
+**application이 직접 들고 있는 state, API가 resolve하는 state, persistence boundary가 다르다.**
 
 ## 2.1 request는 기본적으로 현재 call의 input을 받는다
 
@@ -80,7 +82,9 @@ second = client.responses.create(
 
 여기서 중요한 것은 application이 text만 복사하는 것이 아니다.
 
-공식 conversation-state guidance는 manual Responses API history를 구성할 때 **response output items 전체를 다음 input context에 포함**하는 방식을 보여준다. `response.output_text`는 편리한 text view지만 response 전체의 state representation이 아니다.
+공식 conversation-state guidance는 manual Responses API history를 구성할 때
+**response output items 전체를 다음 input context에 포함**하는 방식을 보여준다. `response.output_text`는 편리한 text
+view지만 response 전체의 state representation이 아니다.
 
 따라서 다음 두 코드는 의미가 다르다.
 
@@ -121,7 +125,8 @@ client.responses.create(
 )
 ```
 
-이 선택은 "application이 history를 직접 운반한다"는 실험을 더 명확하게 만든다. 공식 문서에서는 Response object가 기본적으로 저장되며 `store=false`로 해당 저장 동작을 끌 수 있다고 설명한다.
+이 선택은 "application이 history를 직접 운반한다"는 실험을 더 명확하게 만든다. 공식 문서에서는 Response object가
+기본적으로 저장되며 `store=false`로 해당 저장 동작을 끌 수 있다고 설명한다.
 
 하지만 다음 식으로 과도하게 일반화하면 안 된다.
 
@@ -133,7 +138,8 @@ store=False
 
 이번 chapter에서 필요한 결론은 더 좁다.
 
-> manual history experiment에서는 next-turn context ownership을 application 쪽에 두고, `previous_response_id`나 Conversation object를 state carrier로 사용하지 않는다.
+> manual history experiment에서는 next-turn context ownership을 application 쪽에 두고, `previous_response_id`나
+> Conversation object를 state carrier로 사용하지 않는다.
 
 privacy/compliance requirement를 판단하려면 별도의 current data-control documentation을 확인해야 한다.
 
@@ -203,7 +209,8 @@ response lineage
 application keeps: previous response ID
 ```
 
-공식 documentation은 `previous_response_id`를 이용해 generated responses를 chain하고 threaded conversation을 구성할 수 있다고 설명한다.
+공식 documentation은 `previous_response_id`를 이용해 generated responses를 chain하고 threaded conversation을 구성할 수
+있다고 설명한다.
 
 여기서 중요한 mental model은 다음이다.
 
@@ -272,7 +279,8 @@ second = client.responses.create(
 )
 ```
 
-공식 documentation은 Conversations API를 Responses API와 함께 사용해 **고유한 durable identifier를 가진 long-running conversation object**로 state를 persist할 수 있다고 설명한다.
+공식 documentation은 Conversations API를 Responses API와 함께 사용해
+**고유한 durable identifier를 가진 long-running conversation object**로 state를 persist할 수 있다고 설명한다.
 
 conversation에는 message뿐 아니라 tool call, tool output 등 item이 들어갈 수 있다.
 
@@ -344,7 +352,8 @@ second call에 전달되는 argument
 API-side identity가 필요한지
 ```
 
-이 preview는 SDK serialization이나 실제 API persistence를 검증하지 않는다. **application-side call plan과 ownership model만 확인한다.**
+이 preview는 SDK serialization이나 실제 API persistence를 검증하지 않는다.
+**application-side call plan과 ownership model만 확인한다.**
 
 다음 질문에 답한다.
 
@@ -422,7 +431,8 @@ Response resource와 Conversation resource를 하나의 "대화 ID"로 뭉개지
 
 ## 2.14 비용/retention을 state ownership과 혼동하지 않는다
 
-`previous_response_id`가 편하다고 해서 이전 context token이 무료가 되는 것은 아니다. 공식 conversation-state documentation은 response chain에서 prior input token도 input token으로 계산된다고 명시한다.
+`previous_response_id`가 편하다고 해서 이전 context token이 무료가 되는 것은 아니다. 공식 conversation-state
+documentation은 response chain에서 prior input token도 input token으로 계산된다고 명시한다.
 
 또한 Response object와 Conversation object는 persistence semantics가 다르다.
 
@@ -442,11 +452,13 @@ application architecture를 결정할 때 각각 확인한다.
 
 ### "OpenAI client가 이전 request를 자동으로 기억한다"
 
-`OpenAI()` client object를 재사용하는 것만으로 conversation context가 자동 연결된다고 생각하지 않는다. manual input, `previous_response_id`, Conversation 같은 명시적 state mechanism을 본다.
+`OpenAI()` client object를 재사용하는 것만으로 conversation context가 자동 연결된다고 생각하지 않는다. manual input,
+`previous_response_id`, Conversation 같은 명시적 state mechanism을 본다.
 
 ### "`output_text`만 저장하면 response history를 완전히 보존한다"
 
-text-only application에서는 충분할 수 있지만 Responses API output에는 다른 item type이 존재할 수 있다. context fidelity가 필요하면 output item model을 이해해야 한다.
+text-only application에서는 충분할 수 있지만 Responses API output에는 다른 item type이 존재할 수 있다. context
+fidelity가 필요하면 output item model을 이해해야 한다.
 
 ### "`previous_response_id`를 쓰면 application state가 없다"
 
@@ -454,7 +466,8 @@ application은 최소한 어떤 response ID를 어떤 user/session flow에 연�
 
 ### "Conversation이 있으면 response ID는 필요 없다"
 
-Conversation과 Response는 다른 resource다. debugging, observability, lineage에는 response/request identity가 여전히 의미가 있다.
+Conversation과 Response는 다른 resource다. debugging, observability, lineage에는 response/request identity가 여전히
+의미가 있다.
 
 ### "state persistence와 context ownership과 비용은 같은 문제다"
 
@@ -494,7 +507,8 @@ Conversation
 
 ### C. Debug
 
-개발자가 같은 `OpenAI()` object로 두 번 `responses.create()`를 호출했는데 두 번째 response가 첫 질문을 기억하지 못한다고 한다.
+개발자가 같은 `OpenAI()` object로 두 번 `responses.create()`를 호출했는데 두 번째 response가 첫 질문을 기억하지 못한다고
+한다.
 
 client reuse와 conversation state connection이 왜 다른지 설명하고, 세 가지 해결 방향을 제시한다.
 
@@ -510,7 +524,8 @@ def continue_chat(client, previous_text, prompt):
     )
 ```
 
-이 helper가 text-only transcript를 재구성한다는 점과 Responses API output item fidelity 사이의 tradeoff를 설명한다. application requirement가 tool calling까지 확장된다면 어떤 state model이 더 안전한지 판단한다.
+이 helper가 text-only transcript를 재구성한다는 점과 Responses API output item fidelity 사이의 tradeoff를 설명한다.
+application requirement가 tool calling까지 확장된다면 어떤 state model이 더 안전한지 판단한다.
 
 ## Assessment checkpoint
 
@@ -545,4 +560,5 @@ failure/debugging에 필요한 identifiers
 - `output_text`와 전체 `output`의 차이를 설명했는가?
 - persistence/billing을 state ownership과 별도 축으로 인식했는가?
 
-이 기준을 만족하면 Unit 2의 핵심 outcome인 **conversation context를 누가 소유하고 어떤 identifier/data가 turn 사이를 연결하는지 판단하는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 Unit 2의 핵심 outcome인
+**conversation context를 누가 소유하고 어떤 identifier/data가 turn 사이를 연결하는지 판단하는 능력**을 갖춘 것으로 본다.

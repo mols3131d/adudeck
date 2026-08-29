@@ -1,6 +1,7 @@
 # 3. Failure boundaries: 한 번의 Python call 안에서 몇 번의 HTTP attempt가 일어나는가
 
-첫 chapter에서는 `client.responses.create(...)`가 network boundary를 넘는다는 것을 배웠다. 두 번째 chapter에서는 call 사이의 conversation state ownership을 구분했다.
+첫 chapter에서는 `client.responses.create(...)`가 network boundary를 넘는다는 것을 배웠다. 두 번째 chapter에서는 call
+사이의 conversation state ownership을 구분했다.
 
 이제 application이 실패를 다뤄야 한다.
 
@@ -14,7 +15,8 @@ HTTP request 정확히 한 번
 실패하면 exception 하나
 ```
 
-OpenAI Python SDK에는 automatic retry가 있다. 따라서 application code에서는 endpoint method를 한 번 호출했어도 **transport layer에서는 여러 HTTP attempt가 일어날 수 있다.**
+OpenAI Python SDK에는 automatic retry가 있다. 따라서 application code에서는 endpoint method를 한 번 호출했어도
+**transport layer에서는 여러 HTTP attempt가 일어날 수 있다.**
 
 이번 chapter의 목표는 예외 class를 외우는 것이 아니라 다음 boundary를 추적하는 것이다.
 
@@ -133,7 +135,8 @@ RateLimitError
 → APIStatusError 계열 중 429를 더 구체적으로 표현
 ```
 
-status code마다 더 구체적인 subclass가 존재할 수 있지만 첫 mental model은 **response가 존재하는 status failure와 transport failure를 분리하는 것**이다.
+status code마다 더 구체적인 subclass가 존재할 수 있지만 첫 mental model은
+**response가 존재하는 status failure와 transport failure를 분리하는 것**이다.
 
 ## 3.3 timeout은 "느린 response"와 application control flow 사이의 계약이다
 
@@ -257,7 +260,8 @@ API resource creation / side effect count
 
 400 Bad Request를 생각하자.
 
-request argument 자체가 invalid해서 server가 400을 반환했다면 같은 request를 그대로 반복하는 것은 일반적으로 문제를 해결하지 않는다.
+request argument 자체가 invalid해서 server가 400을 반환했다면 같은 request를 그대로 반복하는 것은 일반적으로 문제를
+해결하지 않는다.
 
 현재 SDK default retry set에 400은 포함되지 않는다.
 
@@ -400,7 +404,8 @@ vs.
 400 experiment request_count
 ```
 
-중요한 것은 숫자를 외우는 것이 아니라 **retry decision이 client setting 하나만으로 결정되지 않고 failure class/status와 결합된다는 것**이다.
+중요한 것은 숫자를 외우는 것이 아니라
+**retry decision이 client setting 하나만으로 결정되지 않고 failure class/status와 결합된다는 것**이다.
 
 ## 3.12 Observable Lab C: retry policy를 제거한다
 
@@ -482,7 +487,8 @@ if not response.output_text:
 
 `output_text`가 비어 있는 것과 HTTP request failure는 같은 사건이 아니다.
 
-Responses API에는 text가 아닌 output item도 존재할 수 있고, 이후 structured output/function calling에서는 application success condition이 더 명시적으로 필요하다.
+Responses API에는 text가 아닌 output item도 존재할 수 있고, 이후 structured output/function calling에서는 application
+success condition이 더 명시적으로 필요하다.
 
 따라서 failure taxonomy를 다음처럼 유지한다.
 
@@ -639,4 +645,6 @@ learner는 다음을 판단한다.
 - request ID와 Response resource ID를 혼동하지 않았는가?
 - SDK retry 위에 application retry를 추가할 때 multiplicative effect를 계산했는가?
 
-이 기준을 만족하면 Unit 3의 핵심 outcome인 **SDK call의 failure boundary와 retry control flow를 evidence로 진단하고 합리적인 timeout/retry policy를 선택하는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 Unit 3의 핵심 outcome인
+**SDK call의 failure boundary와 retry control flow를 evidence로 진단하고 합리적인 timeout/retry policy를 선택하는 능력**을
+갖춘 것으로 본다.

@@ -109,7 +109,8 @@ persistence와 ownership이 다르다.
 
 Unit 1은 request/response boundary의 calibration slice다. Unit 2와 Unit 3은 같은 품질 기준을 유지하면서 각각
 **state ownership**과 **failure/retry control flow**라는 다음 dependency를 구현한다. 이후 unit도 file 존재가 아니라
-explanation depth, worked state trace, playground observability, practice, assessment를 함께 충족할 때 implemented로 본다.
+explanation depth, worked state trace, playground observability, practice, assessment를 함께 충족할 때 implemented로
+본다.
 
 ## Textbook + Lab Contract
 
@@ -181,8 +182,8 @@ python playground/conversation_state.py --mode lineage --preview
 python playground/conversation_state.py --mode conversation --preview
 ```
 
-live path에서는 같은 follow-up을 manual history, `previous_response_id`, durable Conversation으로 각각 이어 보며 **두 call
-사이에 application이 어떤 state를 직접 들고 있는지** 비교한다.
+live path에서는 같은 follow-up을 manual history, `previous_response_id`, durable Conversation으로 각각 이어 보며
+**두 call 사이에 application이 어떤 state를 직접 들고 있는지** 비교한다.
 
 ```bash
 uv run playground/conversation_state.py --mode manual
@@ -223,16 +224,16 @@ OPENAI_MODEL='your-model-id' uv run playground/request_response.py
 
 Unit마다 요구하는 evidence level이 다르다.
 
-- **Unit 1**: offline preview는 local argument construction만 검증한다. hands-on outcome을 완료하려면 적어도 한 번의 live
-  `Response` observation이 필요하다.
-- **Unit 2**: preview는 ownership/call plan만 검증한다. manual history, response lineage, durable Conversation의 actual API
-  state behavior를 hands-on으로 완료하려면 authorized live environment에서 각 relevant path를 관찰해야 한다.
-- **Unit 3**: local synthetic experiment는 SDK status-error classification과 configured retry attempt behavior를 관찰하기
-  위한 의도된 evidence다. real OpenAI API의 장애·rate-limit condition을 재현했다는 증거로 사용하지 않는다.
+- **Unit 1**: offline preview는 local argument construction만 검증한다. hands-on outcome을 완료하려면 적어도 한 번의
+  live `Response` observation이 필요하다.
+- **Unit 2**: preview는 ownership/call plan만 검증한다. manual history, response lineage, durable Conversation의 actual
+  API state behavior를 hands-on으로 완료하려면 authorized live environment에서 각 relevant path를 관찰해야 한다.
+- **Unit 3**: local synthetic experiment는 SDK status-error classification과 configured retry attempt behavior를
+  관찰하기 위한 의도된 evidence다. real OpenAI API의 장애·rate-limit condition을 재현했다는 증거로 사용하지 않는다.
 
 repository/CI의 syntax·format 검증만으로 live API behavior를 검증했다고 주장하지 않는다. 반대로 live credential이 없다는
-이유만으로 textbook explanation/practice/assessment가 미구현인 것도 아니다. **material implementation state와 learner-visible
-runtime validation state를 분리한다.**
+이유만으로 textbook explanation/practice/assessment가 미구현인 것도 아니다.
+**material implementation state와 learner-visible runtime validation state를 분리한다.**
 
 ## Version Baseline
 
@@ -251,17 +252,17 @@ mental model과 playground observation이 여전히 유효한지 함께 검토�
 ## Outcome Coverage
 
 - **Unit 1 implemented** — application call arguments, network boundary, typed response와 identifiers를 worked trace와
-  playground에서 관찰하고 transfer/assessment로 독립 설명하게 한다. live response observation이 없으면 hands-on outcome은
-  아직 미검증으로 남긴다.
-- **Unit 2 implemented** — manual history, response lineage, durable Conversation의 state ownership을 worked trace와 세 mode
-  playground에서 비교하고 requirement에 맞는 state model을 선택하도록 평가한다. actual API persistence/lineage behavior의
-  hands-on completion은 authorized live observation이 필요하다.
+  playground에서 관찰하고 transfer/assessment로 독립 설명하게 한다. live response observation이 없으면 hands-on
+  outcome은 아직 미검증으로 남긴다.
+- **Unit 2 implemented** — manual history, response lineage, durable Conversation의 state ownership을 worked trace와 세
+  mode playground에서 비교하고 requirement에 맞는 state model을 선택하도록 평가한다. actual API persistence/lineage
+  behavior의 hands-on completion은 authorized live observation이 필요하다.
 - **Unit 3 implemented** — transport/API/application failure를 분리하고 retry/timeout control flow를 설명하며, local
-  synthetic endpoint에서 status class와 retry attempt count를 비교한다. 이 evidence를 real API outage evidence로 확대하지
-  않는다.
+  synthetic endpoint에서 status class와 retry attempt count를 비교한다. 이 evidence를 real API outage evidence로
+  확대하지 않는다.
 - structured output, function calling, streaming/async, integration outcome은 아직 **completion gap**이다.
-- 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable evidence,
-  assessment path가 갖춰지고 필요한 validation caveat가 해결되었을 때만 선언한다.
+- 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
+  evidence, assessment path가 갖춰지고 필요한 validation caveat가 해결되었을 때만 선언한다.
 
 ## References
 
