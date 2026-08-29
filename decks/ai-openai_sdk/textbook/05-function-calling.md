@@ -15,10 +15,11 @@ function_call
 
 여기서 가장 중요한 문장은 이것이다.
 
-> **model은 Python 함수를 실행하지 않는다. application이 function call을 읽고, 허용 여부와 arguments를 검증하고, 실제 code를 실행한 뒤 결과를 다시 API input으로 보낸다.**
+> **model은 Python 함수를 실행하지 않는다. application이 function call을 읽고, 허용 여부와 arguments를 검증하고, 실제
+> code를 실행한 뒤 결과를 다시 API input으로 보낸다.**
 
-이번 chapter는 function calling을 "LLM에게 tool을 주면 알아서 실행한다"고 배우지 않는다. **proposal → validation → application
-execution → correlated tool output → next response**라는 control flow로 배운다.
+이번 chapter는 function calling을 "LLM에게 tool을 주면 알아서 실행한다"고 배우지 않는다.
+**proposal → validation → application execution → correlated tool output → next response**라는 control flow로 배운다.
 
 ## 5.1 tool schema는 executable function 자체가 아니다
 
@@ -143,8 +144,8 @@ function call output item에서 arguments는 model이 생성한 JSON-encoded str
 arguments = json.loads(call.arguments)
 ```
 
-`strict=True` schema는 argument shape contract를 강화하지만 application은 여전히 **어떤 function name을 실제 dispatcher가
-허용하는지** 확인해야 한다.
+`strict=True` schema는 argument shape contract를 강화하지만 application은 여전히
+**어떤 function name을 실제 dispatcher가 허용하는지** 확인해야 한다.
 
 ```python
 if call.name != "lookup_order":
@@ -501,7 +502,8 @@ tool output contract
 
 input schema가 strict하다고 output data가 자동으로 올바른 것은 아니다.
 
-application function이 stale/inconsistent data를 반환하면 model은 그 result를 바탕으로 잘못된 final answer를 만들 수 있다.
+application function이 stale/inconsistent data를 반환하면 model은 그 result를 바탕으로 잘못된 final answer를 만들 수
+있다.
 
 ## 5.15 흔한 잘못된 mental model
 
@@ -527,7 +529,8 @@ output array는 item type을 검사해야 한다.
 
 ### "tool calling helper를 쓰면 application function도 자동 실행된다"
 
-Responses API의 parsing helper는 argument parsing을 도울 수 있지만 application-owned execution loop 자체를 없애지 않는다.
+Responses API의 parsing helper는 argument parsing을 도울 수 있지만 application-owned execution loop 자체를 없애지
+않는다.
 
 ### "read-only lookup이 안전하니 write tool도 같은 pattern으로 바로 실행하면 된다"
 
@@ -630,5 +633,5 @@ learner는:
 - tool result를 명시적 next-request input으로 연결했는가?
 - side effect와 retry risk를 application responsibility로 남겼는가?
 
-이 기준을 만족하면 Unit 5의 핵심 outcome인 **model이 제안한 function call을 application-owned control flow에서 검증·실행하고
-`call_id`로 결과를 정확히 연결하는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 Unit 5의 핵심 outcome인 **model이 제안한 function call을 application-owned control flow에서
+검증·실행하고 `call_id`로 결과를 정확히 연결하는 능력**을 갖춘 것으로 본다.
