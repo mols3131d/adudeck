@@ -13,7 +13,8 @@ external system endpoint / credential
 version-controlled workflow policy
 ```
 
-이 값들을 같은 channel에 넣으면 workflow는 실행될 수 있어도 책임 경계가 흐려진다. 이번 chapter의 목표는 **값의 크기보다 ownership과 lifecycle을 기준으로 적절한 channel을 선택하는 것**이다.
+이 값들을 같은 channel에 넣으면 workflow는 실행될 수 있어도 책임 경계가 흐려진다. 이번 chapter의 목표는
+**값의 크기보다 ownership과 lifecycle을 기준으로 적절한 channel을 선택하는 것**이다.
 
 이번 chapter에서는 다음 다섯 surface를 구분한다.
 
@@ -93,7 +94,8 @@ def pipeline():
 
 manual trigger마다 `apac`, `emea`를 다르게 선택할 수 있다면 Param이 자연스럽다.
 
-반대로 모든 run에서 동일하고 code review와 함께 바뀌어야 하는 constant를 굳이 Param으로 만들면 caller에게 필요 없는 선택권을 노출하게 된다.
+반대로 모든 run에서 동일하고 code review와 함께 바뀌어야 하는 constant를 굳이 Param으로 만들면 caller에게 필요 없는
+선택권을 노출하게 된다.
 
 ### validation은 task runtime보다 앞선 boundary일 수 있다
 
@@ -146,13 +148,15 @@ external storage
 
 왜 이 분리가 중요한가?
 
-Airflow metadata plane은 orchestration state를 관리한다. business data plane까지 metadata channel에 밀어 넣으면 persistence, serialization, database load, observability 책임이 섞인다.
+Airflow metadata plane은 orchestration state를 관리한다. business data plane까지 metadata channel에 밀어 넣으면
+persistence, serialization, database load, observability 책임이 섞인다.
 
 따라서 XCom을 다음처럼 생각하면 유용하다.
 
 > "다음 Task가 logical output을 찾거나 판단하는 데 필요한 작은 orchestration metadata"
 
-이것이 모든 XCom value에 대한 절대적인 byte-size rule은 아니다. 핵심은 **business dataset storage 책임을 Airflow metadata에 떠넘기지 않는 것**이다.
+이것이 모든 XCom value에 대한 절대적인 byte-size rule은 아니다. 핵심은
+**business dataset storage 책임을 Airflow metadata에 떠넘기지 않는 것**이다.
 
 ## 4. external storage: actual business state
 
@@ -163,7 +167,8 @@ lab/fixtures/orders.jsonl
 lab/output/u5/...
 ```
 
-filesystem을 사용하는 이유는 production architecture를 흉내 내기 위해서가 아니다. 다음 책임 분리를 눈으로 확인하기 위해서다.
+filesystem을 사용하는 이유는 production architecture를 흉내 내기 위해서가 아니다. 다음 책임 분리를 눈으로 확인하기
+위해서다.
 
 ```text
 TaskInstance / XCom
@@ -173,7 +178,8 @@ file contents
 → actual business rows
 ```
 
-TaskInstance가 `success`라고 해서 business output을 읽지 않아도 되는 것은 아니다. 반대로 file이 존재한다고 해서 Airflow가 해당 TaskInstance를 `success`로 기록했다는 뜻도 아니다.
+TaskInstance가 `success`라고 해서 business output을 읽지 않아도 되는 것은 아니다. 반대로 file이 존재한다고 해서
+Airflow가 해당 TaskInstance를 `success`로 기록했다는 뜻도 아니다.
 
 control-plane state와 data-plane side effect는 연결되어 있지만 동일하지 않다.
 
@@ -233,7 +239,8 @@ XCom
 log output
 ```
 
-credential을 `params={"password": ...}`로 넣거나 task return으로 전달하거나 debugging 편의를 위해 출력하면 책임과 security boundary가 무너진다.
+credential을 `params={"password": ...}`로 넣거나 task return으로 전달하거나 debugging 편의를 위해 출력하면 책임과
+security boundary가 무너진다.
 
 lab에서도 password는 log, XCom, output file에 기록하지 않는다.
 
@@ -263,9 +270,11 @@ resolution backend
 = environment / metadata DB / secrets backend / ...
 ```
 
-이번 lab의 demo Variable과 Connection은 environment-backed teaching value다. 따라서 metadata DB row listing에 보이지 않을 수 있다.
+이번 lab의 demo Variable과 Connection은 environment-backed teaching value다. 따라서 metadata DB row listing에 보이지
+않을 수 있다.
 
-이것은 "Connection이 존재하지 않는다"는 뜻이 아니다. task runtime이 어떤 backend를 통해 값을 resolve하는지를 따로 보아야 한다.
+이것은 "Connection이 존재하지 않는다"는 뜻이 아니다. task runtime이 어떤 backend를 통해 값을 resolve하는지를 따로 보아야
+한다.
 
 ## 8. worked example: 여섯 값을 어디에 둘 것인가
 
@@ -359,7 +368,8 @@ bash lab/airflow.sh dags trigger \
 
 실제 UI/CLI 결과를 보고 예측을 수정한다.
 
-핵심은 error message를 외우는 것이 아니라 **invalid run configuration이 runtime task failure보다 앞선 validation boundary에 있을 수 있음을 구분하는 것**이다.
+핵심은 error message를 외우는 것이 아니라
+**invalid run configuration이 runtime task failure보다 앞선 validation boundary에 있을 수 있음을 구분하는 것**이다.
 
 ## 11. Observable Lab C: backend와 logical role을 분리한다
 
@@ -446,7 +456,8 @@ version-controlled workflow policy는 source가 더 좋은 owner일 수 있다.
 
 ### "Connection은 secret 문자열 저장소"
 
-Connection은 external-system access configuration이라는 logical object다. secret은 그 일부일 수 있고 backend는 별도 문제다.
+Connection은 external-system access configuration이라는 logical object다. secret은 그 일부일 수 있고 backend는 별도
+문제다.
 
 ### "environment-backed Connection은 진짜 Connection이 아니다"
 
@@ -454,7 +465,8 @@ logical role과 resolution backend를 혼동한 것이다.
 
 ### "Param과 Variable은 둘 다 runtime value라서 같다"
 
-Param은 특정 DagRun의 input이라는 성격이 강하고, Variable은 여러 runtime에서 공유되는 runtime-dependent configuration에 가깝다.
+Param은 특정 DagRun의 input이라는 성격이 강하고, Variable은 여러 runtime에서 공유되는 runtime-dependent configuration에
+가깝다.
 
 ### "credential도 task 사이에 전달하면 편하다"
 
@@ -545,4 +557,6 @@ learner는 다음을 제출한다.
 - credential exposure boundary를 지켰는가?
 - backend가 바뀌어도 logical role이 유지될 수 있음을 설명했는가?
 
-이 기준을 만족하면 U5의 핵심 outcome인 **run input, task metadata, business data, runtime config, external-system access config를 책임에 맞게 배치하는 능력**을 갖춘 것으로 본다.
+이 기준을 만족하면 U5의 핵심 outcome인
+**run input, task metadata, business data, runtime config, external-system access config를 책임에 맞게 배치하는 능력**을
+갖춘 것으로 본다.
