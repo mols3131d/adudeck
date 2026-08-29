@@ -13,6 +13,8 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 
 - `OpenAI` client가 configuration과 transport를 소유하고 endpoint method가 실제 API request를 만든다는 경계를 설명한다.
 - Responses API request를 구성하고 `Response` 객체의 text, output items, usage를 구분해 해석한다.
+- stateless input, `previous_response_id` 기반 response lineage, durable Conversations API의 state ownership 차이를 설명하고
+  상황에 맞는 연결 방식을 선택한다.
 - Pydantic schema를 사용해 structured output을 받고, 자연어 생성 성공과 schema validation 성공을 구분한다.
 - function calling에서 **model이 tool call을 제안하는 단계**와 **application이 함수를 실행하고 결과를 돌려주는 단계**를
   분리해 구현한다.
@@ -26,12 +28,12 @@ OpenAI Python SDK를 단순한 `client.responses.create(...)` 호출법이 아�
 
 core path에서 다룬다.
 
-1. client → request → HTTP boundary → typed response mental model
-2. Responses API의 input/output 구조와 multi-turn state 연결
+1. client → request arguments → HTTP boundary → typed response mental model
+2. `response.output` item 구조, `previous_response_id` response lineage, durable Conversations API
 3. structured outputs와 Pydantic validation
 4. function calling loop와 application-owned tool execution
 5. streaming event와 `AsyncOpenAI`
-6. errors, retries, timeouts, request observability
+6. errors, retries, timeouts, request ID 기반 observability
 7. 작은 application adapter로 통합하고 fake/stub로 test하는 방법
 
 초기 scope에서는 다음을 다루지 않는다.
@@ -60,11 +62,13 @@ asyncio, Pydantic, retry 전략은 prerequisite로 요구하지 않는다. 필�
 ```text
 Python call / object
         ↓
-client configuration + request serialization
+client configuration + application call arguments
         ↓
 Responses API request / typed Response
         ↓
-output structure + usage observation
+output items + usage + request/response identifiers
+        ↓
+response lineage (`previous_response_id`) / durable conversation state
         ├─→ structured outputs
         ├─→ function calling
         └─→ streaming / async
@@ -75,14 +79,16 @@ output structure + usage observation
 ```
 
 structured output, function calling, streaming을 먼저 외우지 않는다. 먼저 평범한 request가 어떻게 만들어지고 response가
-어떤 객체로 돌아오는지 이해해야 이후 기능의 추가 state와 control flow를 제대로 추적할 수 있다.
+어떤 객체로 돌아오는지 이해해야 이후 기능의 추가 state와 control flow를 제대로 추적할 수 있다. 또한 “이전 대화를
+이어간다”는 한 문장으로 state를 뭉개지 않고, response ID를 이용한 lineage와 durable conversation object의 ownership을
+분리해서 배운다.
 
 ## Learning Path
 
 | Unit | Responsibility | Outcome development | State |
 | --- | --- | --- | --- |
 | 1. Client, request, response | SDK call 한 번의 data flow와 observation surface를 확립한다. | request 구성, typed response 해석 | implemented |
-| 2. Response state | input/output item과 대화 상태 연결을 추적한다. | response 구조 추적, state 연결 판단 | planned |
+| 2. Response and conversation state | output item, response lineage, durable conversation state를 구분해 추적한다. | response 구조 추적, state 연결 방식 선택 | planned |
 | 3. Structured outputs | schema가 generation contract에 추가되는 지점을 이해한다. | Pydantic schema 설계·검증 | planned |
 | 4. Function calling | model decision과 application execution의 control flow를 분리한다. | tool loop 구현·debugging | planned |
 | 5. Streaming and async | event stream과 coroutine execution을 추적한다. | streaming/async 선택과 구현 | planned |
@@ -101,7 +107,7 @@ mental model
    ↓
 실행 전 prediction
    ↓
-request 또는 event를 observable하게 만든다
+application-owned arguments 또는 event를 observable하게 만든다
    ↓
 실제 SDK/API 실행
    ↓
@@ -113,19 +119,23 @@ typed response / metadata / failure를 관찰한다
 ```
 
 lab의 성공 기준은 “문장이 출력됐다”가 아니다. learner가
-**어떤 Python 값이 request field가 되었고, network boundary 뒤에서 돌아온 어떤 response field를 지금 읽고 있는지**
-설명할 수 있어야 한다.
+**어떤 Python 값이 endpoint call argument가 되었고, network boundary 뒤에서 돌아온 어떤 response field를 지금 읽고
+있는지** 설명할 수 있어야 한다. local preview는 SDK serialization이나 실제 HTTP wire payload를 검증하지 않는다는
+validation boundary도 함께 설명할 수 있어야 한다.
 
 ## Lab Runtime
 
 첫 lab은 [lab/request_response.py](lab/request_response.py) 하나로 구성한다. PEP 723 inline dependency metadata를
 사용하므로 별도 lab package를 만들지 않는다.
 
-network call 없이 request shape만 먼저 본다.
+network call 없이 application이 `responses.create()`에 넘길 arguments만 먼저 본다.
 
 ```bash
 python lab/request_response.py --preview
 ```
+
+이 preview는 SDK를 import하지 않으므로 SDK serialization이나 실제 HTTP request body를 보여주는 기능이 아니다. 첫 단계의
+목적은 application-owned state와 network boundary를 분리해서 관찰하는 것이다.
 
 실제 API를 호출하려면 key를 source file에 기록하지 말고 environment variable로 제공한다.
 
@@ -158,8 +168,10 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 ## Outcome Coverage
 
-- Unit 1은 request 구성과 typed response 해석을 직접 개발하고 checkpoint에서 평가한다.
-- structured output, function calling, streaming/async, failure handling outcome은 아직 미구현 completion gap이다.
+- Unit 1은 application call arguments, network boundary, typed response와 identifiers 해석을 직접 개발하고 checkpoint에서
+  평가한다.
+- response lineage/conversation state, structured output, function calling, streaming/async, failure handling outcome은 아직
+  미구현 completion gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
   evidence, assessment path가 갖춰졌을 때만 선언한다.
 
@@ -167,6 +179,7 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 
 - [OpenAI Python SDK](https://github.com/openai/openai-python)
 - [Responses API reference](https://platform.openai.com/docs/api-reference/responses)
+- [Conversation state](https://platform.openai.com/docs/guides/conversation-state)
 - [Models](https://platform.openai.com/docs/models)
 - [Function calling guide](https://platform.openai.com/docs/guides/function-calling)
 - [Structured outputs guide](https://platform.openai.com/docs/guides/structured-outputs)
