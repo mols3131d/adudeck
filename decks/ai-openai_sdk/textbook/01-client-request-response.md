@@ -176,7 +176,7 @@ text = response.output_text
 Deck directory에서 실행한다.
 
 ```bash
-python lab/request_response.py --preview
+python playground/request_response.py --preview
 ```
 
 실행 전에 다음을 prediction한다.
@@ -198,7 +198,7 @@ transport, server behavior는 아직 검증하지 않았다.
 
 ```bash
 export OPENAI_API_KEY='...'
-uv run lab/request_response.py
+uv run playground/request_response.py
 ```
 
 `uv`는 script 상단의 PEP 723 metadata를 읽어 `openai>=3,<4` dependency를 준비한다. 이 version range는 이 deck의 v3
@@ -255,7 +255,7 @@ print(response.usage.to_dict())
 전체 typed response를 dictionary로 펼쳐 보고 싶다면 다음을 실행한다.
 
 ```bash
-uv run lab/request_response.py --full-response
+uv run playground/request_response.py --full-response
 ```
 
 이것도 raw HTTP body가 아니다. `response.to_dict()`로 **이미 parsing된 SDK object**를 Python dictionary로 바꾼 값이다.
@@ -283,7 +283,7 @@ uv run lab/request_response.py --full-response
 첫 variation에서는 prompt와 model을 유지하고 `instructions`만 바꾼다.
 
 ```bash
-uv run lab/request_response.py \
+uv run playground/request_response.py \
   --instructions 'Answer with one short sentence.'
 ```
 
