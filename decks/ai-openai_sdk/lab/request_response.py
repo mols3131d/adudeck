@@ -66,11 +66,6 @@ def main() -> None:
         print("\npreview only: the SDK did not serialize or send an HTTP request")
         return
 
-    if not os.getenv("OPENAI_API_KEY"):
-        raise SystemExit(
-            "OPENAI_API_KEY is not set. Export it in the shell or rerun with --preview."
-        )
-
     # Keep the import behind the preview boundary so application-owned call
     # arguments can be inspected with plain Python before installing the SDK.
     from openai import OpenAI
