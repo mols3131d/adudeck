@@ -1,199 +1,172 @@
 # Apache Airflow
 
-Apache Airflow를 단순히 DAG 파일을 작성하는 도구가 아니라,
-**시간과 의존성에 따라 반복되는 작업의 실행 상태를 관리하는 workflow orchestrator**로 이해하기 위한 deck이다.
+Apache Airflow를 단순한 DAG-file runner가 아니라
+**시간과 의존성에 따라 반복되는 workflow의 runtime state를 관리하는 orchestrator**로 이해하기 위한 deck이다.
 
-이 deck은 읽기용 설명서와 따라 치는 tutorial을 분리하지 않는다. 개념을 설명한 직후 같은 개념을 실제 Airflow runtime에서
-관찰하고, 관찰 결과를 다시 개념 모델로 해석하는 **실습 결합형 textbook**을 지향한다.
+설명과 lab을 분리하지 않는다. Learner는 먼저 state를 예측하고, 실제 Airflow에서 같은 DagRun/TaskInstance를 여러
+observation surface로 확인한 뒤 다시 mental model로 설명한다.
+
+## Goal
+
+Basic path를 마치면 작은 batch workflow에서 다음 cycle을 수행할 수 있어야 한다.
+
+```text
+workflow / logical input 정의
+→ Dag / Task 작성
+→ schedule / state 예측
+→ 실행
+→ runtime evidence 관찰
+→ failure/reprocessing 판단
+→ side effect를 안전하게 수정
+→ 재검증
+```
+
+Production deployment 운영 자체는 범위가 아니다.
 
 ## Start here
 
-처음 시작한다면 전체 chapter를 먼저 읽지 않는다. 다음 순서로 environment와 mental model을 함께 준비한다.
-
-1. `bash lab/scripts/preflight.sh`로 host/package/source 준비 상태를 확인한다.
-2. [Mental model](textbook/01-mental-model.md)에서 Dag/Task definition과 DagRun/TaskInstance runtime state를 구분한다.
-3. `bash lab/airflow.sh db migrate`로 local metadata schema를 준비하고 **schema 존재와 scheduler 실행을 구분**한다.
-4. [Lab Guide](lab/README.md)의 verification ladder를 따라 `tasks test`/`dags test` local execution과 scheduler-backed
-   `standalone` 실행의 차이를 관찰한다.
-5. 같은 Dag를 UI, CLI, log, metadata, output에서 연결해 설명한 뒤 다음 chapter로 진행한다.
-
-첫 학습 session의 목표는 Airflow command를 많이 실행하는 것이 아니다.
-
-> **source가 parse되는 것, metadata schema가 존재하는 것, local test가 성공하는 것, scheduler-backed DagRun이 존재하는
-> 것, TaskInstance가 실제 실행되는 것은 서로 다른 evidence다.**
-
-이 구분이 잡혀야 이후 scheduling, retry, backfill, idempotence를 같은 runtime model 위에서 이해할 수 있다.
-
-## Curriculum
-
-목표 learner level은 **Basic**이다. 상세 goal, learner prerequisites, learning outcomes, concept dependencies, unit
-architecture, assessment coverage, 현재 textbook gap과 다음 build handoff는
-[Basic Curriculum Plan](docs/curriculum.md)에 정리한다.
-
-Curriculum unit은 chapter/file 경계와 동일하지 않다. 현재 textbook을 먼저 보존하고, review된 learning slice 단위로
-필요한 부분만 점진적으로 확장한다.
-
-## Learning Path
-
-1. [Mental model: 정의와 실행을 분리해서 관찰하기](textbook/01-mental-model.md)
-2. [Dag authoring과 loading: source에서 runtime definition까지](textbook/04-authoring-and-loading.md)
-3. [Scheduling: data interval과 Airflow 3 timetable semantics를 검증하기](textbook/02-scheduling-and-data-intervals.md)
-4. [Task design: failure, retry, side effect를 직접 관찰하기](textbook/03-task-design-and-state.md)
-5. [Data와 configuration boundary: Params, XCom, storage, Variable, Connection](textbook/05-data-and-configuration-boundaries.md)
-6. [Recovery와 reprocessing: 같은 logical work를 왜 다시 실행하는가](textbook/07-recovery-and-reprocessing.md)
-7. [Cumulative integration: 작은 batch workflow를 evidence로 설명하기](textbook/06-cumulative-integration.md)
-
-번호는 file 생성 순서이고, 위 learning path는 **개념 dependency에 따른 권장 학습 순서**다. 특히 authoring/loading을
-명시적으로 통과한 뒤 scheduling·task lifecycle·data/config boundary를 다루고, retry/clear/backfill/catchup을 같은
-repeated-logical-work model로 통합한 다음 cumulative assessment에서 앞 개념을 하나의 workflow에 합친다.
-
-각 chapter는 설명과 실습을 별개 자료로 취급하지 않는다. 실습 결과 자체가 다음 설명의 evidence가 된다.
-
-## Textbook + Lab Contract
-
-이 deck의 주요 개념은 다음 학습 loop를 따른다.
-
-```text
-개념 모델
-   ↓
-실행 전에 결과 예측
-   ↓
-실제 Airflow에서 실행
-   ↓
-여러 관측면에서 같은 runtime object 확인
-   ↓
-예측과 관측의 차이 설명
-   ↓
-코드/설정 변경 후 다시 관찰
-```
-
-실습의 목적은 command를 성공시키는 것이 아니다. **Airflow가 내부에서 어떤 runtime object와 state를 만들고 바꾸는지
-사람이 증거를 통해 설명할 수 있게 만드는 것**이다.
-
-### Observability Contract
-
-각 runtime 실습은 가능한 한 같은 실행을 네 관점에서 본다.
-
-1. **UI / Grid** — 사람이 workflow 전체와 TaskInstance state를 시각적으로 본다.
-2. **CLI snapshot** — `dags list-runs`, `tasks states-for-dag-run` 등으로 특정 시점의 state를 텍스트로 고정한다.
-3. **component/task log** — scheduler가 실행 가능성을 판단하고 task code가 실제로 수행되는 흔적을 본다.
-4. **metadata + side effect** — read-only metadata DB probe와 `lab/output/`을 통해 control-plane state와 실제 output을
-   구분한다.
-
-네 화면의 값이 항상 같은 형태로 보일 필요는 없다. 중요한 것은 **서로 다른 관측면이 같은 DagRun/TaskInstance를 어떻게
-표현하는지 연결하는 것**이다.
-
-metadata DB는 Airflow의 internal implementation surface다. 이 deck의 `inspect_metadata.py`는 학습용
-**read-only probe**로만 사용하며 application integration API로 취급하지 않는다.
-
-## Lab Runtime
-
-lab은 Apache Airflow 3.3.1의 `standalone` mode를 사용한다. production topology를 재현하려는 환경이 아니라,
-**한 컴퓨터에서 Dag Processor, scheduler, API/UI, executor/task execution과 metadata state를 관찰하기 위한 학습 환경**이다.
-
-실습 폴더 구조, preflight, verification ladder, U2/U5 starter DAG, fixture, snapshot/reset helper의 사용법은
-[Lab Guide](lab/README.md)에 정리한다. U6 recovery는 기존 runtime/scheduling reference Dag를 재사용하고, U7 cumulative
-integration은 새로운 전용 framework나 영구 starter를 추가하지 않고 기존 starter/reference Dag를 조합해 learner가 local
-work file을 직접 만드는 방식으로 수행한다.
-
-### Runtime Requirements
-
-Airflow 3.3.1 공식 prerequisite 기준으로 Python 3.10~3.14가 테스트 대상이며 local development에는 SQLite를 사용할 수
-있다. Airflow는 POSIX 환경을 전제로 하므로 Windows에서는 WSL2나 Linux environment를 사용한다.
-
-이 deck에서는 다음이 필요하다.
-
-- `uv`를 실행할 수 있는 local environment
-- 여러 terminal을 열어 runtime과 observation command를 함께 볼 수 있는 환경
-- `lab/` 아래에 disposable runtime state와 output을 만들 수 있는 filesystem 권한
-- 첫 package resolution에 필요한 network access 또는 이미 준비된 `uv` cache
-
-`lab/airflow.sh`는 기본적으로 Apache Airflow 3.3.1, Python 3.12, Airflow 3.3.1 release constraints를 함께 사용한다.
-Python baseline은 필요하면 `ADUDECK_AIRFLOW_PYTHON`으로 바꿀 수 있지만 Airflow 3.3.1의 supported Python 범위 안에서
-사용한다.
-
-먼저 다음을 실행한다.
+처음에는 command 수를 늘리지 않는다.
 
 ```bash
 bash lab/scripts/preflight.sh
-```
-
-그 뒤 metadata schema를 명시적으로 준비한다.
-
-```bash
 bash lab/airflow.sh db migrate
 ```
 
-scheduler-backed runtime이 필요한 단계에서만 `standalone`을 시작한다.
+그 다음 [U1 Mental model](textbook/01-mental-model.md)을 읽고 [Lab Guide](lab/README.md)의 verification ladder를 따른다.
+
+첫 session의 핵심 distinction:
+
+```text
+source file exists
+!=
+Dag parses/discovers
+!=
+local test succeeds
+!=
+scheduler-backed DagRun exists
+!=
+TaskInstance executes
+!=
+external output is correct
+```
+
+## Learning path
+
+Curriculum unit과 file 생성 번호는 같지 않다. **아래 순서를 학습 순서로 사용한다.**
+
+| Unit | 핵심 질문 | Textbook |
+| --- | --- | --- |
+| U1 Runtime mental model | definition과 runtime identity는 어떻게 다른가? | [01 Mental model](textbook/01-mental-model.md) |
+| U2 Authoring/loading | source는 언제 Dag/Task definition이 되는가? | [04 Authoring/loading](textbook/04-authoring-and-loading.md) |
+| U3 Time model | logical date/data interval과 wall-clock은 어떻게 다른가? | [02 Scheduling](textbook/02-scheduling-and-data-intervals.md) |
+| U4 Task lifecycle | dependency, failure, retry, side effect는 어떻게 연결되는가? | [03 Task design/state](textbook/03-task-design-and-state.md) |
+| U5 Data/config boundary | Param, XCom, data, config, credential의 owner는 누구인가? | [05 Data/config boundaries](textbook/05-data-and-configuration-boundaries.md) |
+| U6 Recovery/reprocessing | retry, clear/re-run, backfill, catchup은 언제 다른가? | [07 Recovery/reprocessing](textbook/07-recovery-and-reprocessing.md) |
+| U7 Integration | 최소 evidence로 workflow를 설계·진단·수정할 수 있는가? | [06 Cumulative integration](textbook/06-cumulative-integration.md) |
+
+상세 outcome/dependency/coverage는 [Basic Curriculum Plan](docs/curriculum.md)이 source of truth다.
+
+## Learning contract
+
+주요 hands-on unit은 다음 cycle을 사용한다.
+
+```text
+Target
+→ Predict
+→ Run
+→ Observe
+→ Explain
+→ Change one condition
+→ Re-observe
+```
+
+실습 성공 기준은 command success가 아니다.
+
+> **어떤 runtime object/state가 바뀌었고, 그 판단을 어느 evidence로 했는지 설명할 수 있어야 한다.**
+
+### Evidence levels
+
+```text
+source/import
+→ Dag/task discovery
+→ local tasks test / dags test
+→ standalone scheduler-backed execution
+→ UI/CLI/log/metadata correlation
+→ external side effect
+```
+
+Airflow 3.3.1의 `tasks test`는 dependency check나 DB state recording 없이 task를 test하는 local surface다. Local test 성공을
+scheduler-backed execution 증거로 승격하지 않는다.
+
+## Lab
+
+Lab은 production topology를 재현하지 않는다. 한 machine에서 control flow와 state를 관찰하기 위한 disposable environment다.
+
+```text
+lab/
+├── airflow.sh
+├── dags/
+├── fixtures/
+├── inspect_metadata.py
+├── scripts/
+└── output/        # runtime-generated, gitignored
+```
+
+주요 helper:
 
 ```bash
+bash lab/scripts/preflight.sh
 bash lab/airflow.sh standalone
+bash lab/scripts/snapshot.sh <DAG_ID> [RUN_ID]
+bash lab/scripts/reset.sh
 ```
 
-`lab/airflow.sh`는 다음을 deck 내부에 고정한다.
+`inspect_metadata.py`는 학습용 read-only probe다. Airflow internal metadata schema를 application integration API로 취급하지
+않는다.
 
-- `AIRFLOW_HOME` → `lab/.airflow/`
-- DAG folder → `lab/dags/`
-- 실습 output → `lab/output/`
-- example DAG 비활성화
-- local lab에서만 authentication을 단순화
+## Validation boundary
 
-runtime state와 output은 `.gitignore` 대상이며 Git에 기록하지 않는다.
+Repository CI가 통과해도 learner-visible Airflow runtime을 자동으로 검증한 것은 아니다.
 
-별도 terminal에서 같은 wrapper로 CLI를 사용한다.
+| Evidence | 말할 수 있는 것 |
+| --- | --- |
+| repository CI | committed tree의 deterministic checks |
+| primary-doc review | version-sensitive command/API expectation |
+| local discovery/test | source와 local execution surface |
+| standalone run | actual DagRun/TaskInstance runtime evidence |
+| output inspection | external business side effect |
 
-```bash
-bash lab/airflow.sh dags list
-bash lab/airflow.sh dags list-runs adudeck_observable_runtime -o table
-```
+특히 UI/CLI/metadata와 external output은 서로 다른 responsibility를 관찰한다.
 
-metadata DB는 Python 표준 라이브러리만 사용하는 probe로 읽는다.
+## Version baseline
 
-```bash
-python lab/inspect_metadata.py --dag-id adudeck_observable_runtime
-```
+- Apache Airflow: **3.3.1**
+- default lab Python: **3.12**
+- Dag authoring: `airflow.sdk`
+- local runtime: `standalone`
+- metadata inspection: read-only
 
-UI는 기본 API Server port인 `http://localhost:8080`에서 확인한다.
+Airflow 3.3.1은 `airflow.sdk`를 stable Dag-authoring public interface로 제공한다. CLI, UI, scheduling default, internal schema처럼
+version-sensitive한 surface는 current primary documentation과 실제 lab evidence를 구분해 검증한다.
 
-## Completion Boundary
+## Scope boundary
 
-현재 textbook은 U1~U7 Basic curriculum의 substantial explanation/practice/assessment path를 연결한다. 하지만
-**파일이 존재한다는 사실만으로 learner competence나 runtime validation까지 완료되었다고 선언하지 않는다.**
+Basic core에서 다루지 않는다.
 
-- U2/U5는 기존 starter와 새 textbook slice를 연결해 authoring/loading 및 data/configuration judgment를 학습·평가한다.
-- U6는 retry·selected TaskInstance clear/re-run·backfill·catchup을 같은 logical-work identity로 비교하고 repeated
-  execution의 side-effect invariant를 평가한다.
-- U7은 learner가 작은 workflow를 직접 설계·실행·실패·수정·재검증하는 cumulative assessment다.
-- fresh/disposable Airflow runtime에서 learner-visible evidence가 실제로 documentation의 expectation과 일치하는지는 별도
-  runtime validation boundary로 남는다.
+- distributed production executor/topology 운영
+- Kubernetes HA/performance tuning
+- dynamic mapping/complex branching의 깊은 설계
+- deferrable/sensor architecture
+- assets/event-driven scheduling
+- large-scale resource tuning
+- custom provider/plugin/executor 개발
+- multi-team authorization/security 운영
 
-따라서 이 deck의 구조적 curriculum coverage와 실제 hands-on completion을 구분한다.
-
-## Version Baseline
-
-작성 기준은 Apache Airflow 3.3.1이다. Airflow 3에서는 standalone Dag Processor가 필수 component이고, executor는 별도
-daemon이 아니라 scheduler 안에서 사용되는 execution abstraction이다. minor release에서 CLI, UI, internal metadata
-schema가 바뀔 수 있으므로 Dag/task authoring은 `airflow.sdk`를 중심으로 사용하고, scheduling lab처럼 필요한 경우에는
-Airflow가 public interface로 문서화한 `airflow.timetables`를 사용한다. Internal DB 관측은 read-only로 제한한다.
-
-Airflow 3에서는 bare cron string이 기본적으로 `CronTriggerTimetable` semantics를 사용한다. 이 deck의 scheduling
-chapter는 연속 data interval을 학습하기 위해 explicit `CronDataIntervalTimetable`을 사용하며, 이 선택을 Airflow 전체의
-default로 일반화하지 않는다.
-
-Clear/rerun/backfill에서는 logical-work identity와 실제 Dag bundle/code version이 별도 축일 수 있다. Airflow 3.3.1의
-`rerun_with_latest_version` 같은 version-sensitive policy를 다룰 때는 현재 configuration과 runtime evidence를 확인한다.
+새 topic은 current outcome에 실제로 필요할 때만 curriculum delta로 검토한다.
 
 ## References
 
-- [Apache Airflow — Quick Start](https://airflow.apache.org/docs/apache-airflow/stable/start.html)
-- [Apache Airflow — Prerequisites](https://airflow.apache.org/docs/apache-airflow/stable/installation/prerequisites.html)
-- [Apache Airflow — Airflow 101](https://airflow.apache.org/docs/apache-airflow/stable/tutorial/fundamentals.html)
-- [Apache Airflow — Architecture Overview](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/overview.html)
-- [Apache Airflow — Core Concepts](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/)
-- [Apache Airflow — Dag Runs](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/dag-run.html)
-- [Apache Airflow — Timetables](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/timetable.html)
-- [Apache Airflow — Scheduler](https://airflow.apache.org/docs/apache-airflow/stable/concepts/scheduler.html)
-- [Apache Airflow — Params](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/params.html)
-- [Apache Airflow — Connections & Hooks](https://airflow.apache.org/docs/apache-airflow/3.3.1/authoring-and-scheduling/connections.html)
-- [Apache Airflow — CLI Reference](https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html)
-- [Apache Airflow — Logging and Monitoring](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/index.html)
+- [Airflow 3.3.1 documentation](https://airflow.apache.org/docs/apache-airflow/3.3.1/)
+- [Core concepts](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/)
+- [CLI reference](https://airflow.apache.org/docs/apache-airflow/stable/cli-and-env-variables-ref.html)
+- [Timetables](https://airflow.apache.org/docs/apache-airflow/stable/authoring-and-scheduling/timetable.html)
