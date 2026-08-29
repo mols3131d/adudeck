@@ -364,19 +364,34 @@ adudeck_observable_runtime
 adudeck_observable_schedule
 ```
 
-`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Clear할 때 broad
-operation을 바로 승인하지 않고 logical date와 task selector로 정확한 target을 먼저 확인한다.
+`observable_runtime`에서는 retry와 completed TaskInstance의 selected clear/re-run을 비교한다. Airflow 3.3.1 manual trigger는
+`--logical-date`를 생략하면 logical date가 `None`일 수 있으므로, clear 실험은 재현 가능한 identity를 먼저 명시한다.
+
+```bash
+RUN_ID='adudeck_recovery_2026_08_27'
+LOGICAL_DATE='2026-08-27T00:00:00+00:00'
+
+bash lab/airflow.sh dags trigger \
+  -r "$RUN_ID" \
+  -l "$LOGICAL_DATE" \
+  -c '{"failure_mode":"none"}' \
+  adudeck_observable_runtime
+```
+
+Run이 성공한 뒤 run 목록과 snapshot에서 지정한 `RUN_ID`와 `LOGICAL_DATE`가 실제 evidence와 일치하는지 확인한다. 그 다음
+broad operation을 바로 승인하지 않고 logical date와 task selector로 target을 좁힌다.
 
 ```bash
 bash lab/airflow.sh tasks clear \
   adudeck_observable_runtime \
-  -s '<LOGICAL_DATE>' \
-  -e '<LOGICAL_DATE>' \
+  -s "$LOGICAL_DATE" \
+  -e "$LOGICAL_DATE" \
   -t '^transform$'
 ```
 
-대상이 맞을 때만 disposable local lab에서 `-y`를 사용할 수 있다. `-d`를 추가하는 variation은 downstream side effect도
-다시 수행해야 하는지를 business invariant로 판단하기 위한 실험이다.
+같은 logical date에 다른 run이 있거나 confirmation target이 예상보다 넓으면 승인하지 않는다. 대상이 맞을 때만 disposable
+local lab에서 `-y`를 사용할 수 있다. `-d` variation은 downstream side effect도 다시 수행해야 하는지를 business
+invariant로 판단하기 위한 실험이다.
 
 `observable_schedule`에서는 scheduling chapter의 catchup/backfill evidence를 재사용한다. U6의 핵심은 command가 아니라
 **retry / clear-re-run / backfill / catchup이 어떤 logical work를 왜 다시 실행하는지 구분하는 것**이다.
