@@ -208,8 +208,8 @@ mental model과 lab observation이 여전히 유효한지 함께 검토한다.
 ## Outcome Coverage
 
 - Unit 1은 application call arguments, network boundary, typed response와 identifiers를 worked trace와 playground에서
-  관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다. live response observation이 없는
-  경우 hands-on outcome은 아직 검증되지 않은 것으로 남긴다.
+  관찰하고, transfer task와 self-contained assessment에서 독립적으로 설명하도록 평가한다. live response observation이
+  없는 경우 hands-on outcome은 아직 검증되지 않은 것으로 남긴다.
 - context ownership, failure handling, structured output, function calling, streaming/async outcome은 아직 미구현
   completion gap이다.
 - 전체 deck completion은 planned unit이 파일로 존재하는지가 아니라 각 outcome에 explanation, practice, observable
