@@ -9,6 +9,13 @@ from pathlib import Path
 
 from adudeck_data import generate_ecommerce
 
+EXPECTED_FIELDS = {
+    "users": ["user_id", "name", "email", "city", "created_at"],
+    "products": ["product_id", "name", "category", "price"],
+    "orders": ["order_id", "user_id", "status", "created_at", "total_amount"],
+    "order_items": ["order_item_id", "order_id", "product_id", "quantity", "unit_price"],
+}
+
 
 class GenerateEcommerceTest(unittest.TestCase):
     def test_generates_related_rows_with_expected_invariants(self) -> None:
@@ -45,6 +52,20 @@ class GenerateEcommerceTest(unittest.TestCase):
                 )
                 self.assertGreaterEqual(item_counts[order["order_id"]], 1)
                 self.assertEqual(Decimal(order["total_amount"]), totals[order["order_id"]])
+
+    def test_preserves_documented_csv_schema_and_primary_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = generate_ecommerce(tmp, users=5, products=4, orders=10, seed=13)
+
+            for name, expected_fields in EXPECTED_FIELDS.items():
+                with self.subTest(name=name):
+                    with paths[name].open(encoding="utf-8", newline="") as handle:
+                        reader = csv.DictReader(handle)
+                        self.assertEqual(reader.fieldnames, expected_fields)
+                        rows = list(reader)
+
+                    primary_key = expected_fields[0]
+                    self.assertEqual(len(rows), len({row[primary_key] for row in rows}))
 
     def test_same_seed_generates_identical_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
