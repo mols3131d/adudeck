@@ -1,5 +1,8 @@
 # 1. Client → Arguments → Request → Response
 
+이 단원은 [00-introduction.md](00-introduction.md)의 경계 모델과 [00-environment.md](00-environment.md)의 환경 설정을
+바탕으로 진행한다.
+
 첫 SDK 호출에서 가장 중요한 것은 method 이름을 외우는 것이 아니다. **내 Python process 안의 값이 어디까지 local
 state이고, 어느 순간 network request가 되며, 돌아온 data를 SDK가 어떤 Python object로 바꾸는지** 구분하는 것이다.
 
