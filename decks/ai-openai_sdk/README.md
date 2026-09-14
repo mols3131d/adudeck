@@ -38,6 +38,7 @@ Pydantic, retry, async는 prerequisite로 요구하지 않고 필요한 unit에�
 
 | Unit | 핵심 질문 | Material |
 | --- | --- | --- |
+| 0. Introduction & Setup | SDK 경계 모델이란 무엇이며, 실행 환경과 엔드포인트는 어떻게 구성하는가? | [Intro](textbook/00-introduction.md) · [Environment](textbook/00-environment.md) |
 | 1. Client → Request → Response | Python value는 언제 network request가 되고 무엇이 돌아오는가? | [Textbook](textbook/01-client-request-response.md) · [Playground](playground/request_response.py) |
 | 2. Conversation state | 다음 turn의 context를 누가 소유하는가? | [Textbook](textbook/02-conversation-state.md) · [Playground](playground/conversation_state.py) |
 | 3. Failure boundaries | 한 Python call 안에서 몇 HTTP attempt가 일어날 수 있는가? | [Textbook](textbook/03-failure-boundaries.md) · [Playground](playground/failure_boundaries.py) |
