@@ -88,6 +88,10 @@ trap 'rm -rf "$tmp_dir"' EXIT
 uv run --project tools/dataset_generator --locked adudeck-data generate ecommerce --output "$tmp_dir" --users 2 --products 2 --orders 2 --seed 1
 '''
 
+[tasks.test]
+description = "Run all repository test suites"
+run = "bash scripts/test.sh"
+
 [tasks."git:setup"]
 description = "Configure repository-local Git defaults"
 run = "git config --local commit.template .gitmessage"
@@ -98,11 +102,11 @@ run = "lefthook install"
 
 [tasks.setup]
 description = "Set up the local workspace"
-run = """
-uv sync --locked
-git config --local commit.template .gitmessage
-lefthook install
-"""
+run = "bash scripts/setup.sh"
+
+[tasks.update]
+description = "Update toolchain, dependencies, and agent projections"
+run = "bash scripts/update.sh"
 
 [tasks."ci:fast"]
 description = "Auto-fix and run cheap deterministic PR validation"
@@ -114,6 +118,5 @@ mise run rulesync:doctor
 mise run rulesync:generate
 mise run rulesync:check
 mise run chatbot:check
-mise run test:smoke
-mise run test:dataset-generator
+mise run test
 """
