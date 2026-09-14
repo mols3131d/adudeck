@@ -3,49 +3,76 @@
   "sources": {
     "mols3131d/mols-agent-assets": {
       "requestedRef": "main",
-      "resolvedRef": "6db356e512e5f4c2cab561653ae9b37c47702e7f",
-      "resolvedAt": "2026-08-28T11:26:43.148Z",
+      "resolvedRef": "6daae9c25d7f4a33ec3c0abcfb0fa259f559b720",
+      "resolvedAt": "2026-09-14T04:58:29.120Z",
       "skills": {
-        "mols-agent-asset": {
-          "integrity": "sha256-124fdbded5fa2d787da6c207c1bbe3db428cc2395b586e8ad25d91936465e0eb"
-        },
-        "mols-chatbot-bootstrap": {
-          "integrity": "sha256-bbd2c76d95263bc4beb579ff727219a39f3ad922f3339c00254c1f902a3c7687"
-        },
-        "mols-markdown-for-human": {
-          "integrity": "sha256-d12d681eaad30d33946ef7493e244320e6113accf2a6d1a4ba8962600294a5e0"
-        },
-        "mols-agent-asset-find": {
-          "integrity": "sha256-6ace67d927da8eedcdd359593ddcbd7a80d97a2fa9cab42288f634116382aef6"
-        },
-        "clarify-code": {
-          "integrity": "sha256-91089c5e6720eeba282098eb4a2f35dadba1e1487ff3592e1eebf87b3e32143b"
+        "text-humanize-korean": {
+          "integrity": "sha256-4cfb7bff27a8888f8c7bb690b6e1f6cf31a9226a112dec746d36d4eebc49c79b"
         },
         "technical-document-fidelity": {
           "integrity": "sha256-ae0cd88ac490bb23e52d909f030750e1177f6f59fa6c3749d6f2bef2edb01a78"
         },
-        "mols-markdown-maintenance": {
-          "integrity": "sha256-9512e6f65bfaced6569353e749f8abe899f89283a3bf21a69d39057b6c752f6c"
+        "mols-mermaid-diagram": {
+          "integrity": "sha256-da671d353ab39b2bbd5ec6675e7c0bf67e2937c5bf1f71a028b4b74923edf76e"
         },
-        "mols-rpi": {
-          "integrity": "sha256-cea1aeea21c7dbe1ff56eb3cf46e510ef50f691e6a4a97b5f5582922b0d4046d"
+        "mols-mermaid-chart": {
+          "integrity": "sha256-b12a3c7ac7cab501778842571ee739672014fd4913b2e01953a218967c06a204"
+        },
+        "mols-markdown-maintenance": {
+          "integrity": "sha256-360d1b22d74b8027004d60b266c8a4adf040c8adbad11526fac61fb14ccbcb43"
+        },
+        "mols-loops": {
+          "integrity": "sha256-f3f3de0ae4d899fe029748440d537b2a0624074e238a575dce7565916efa5c9f"
+        },
+        "mols-documentation": {
+          "integrity": "sha256-1f7ec4eb7ee2c3597e0fda64c6a224e58e0cf1bb3c4be33c53e5a5cae3dff8dc"
+        },
+        "mols-coding-context": {
+          "integrity": "sha256-af62134c63221d4f34da41d3ead4f2fe7559887e7615b7a3bec92831731cfa5d"
+        },
+        "mols-coding-context-python": {
+          "integrity": "sha256-e2798e4258fa49212fffb3df22e12879e8b4e9644ad25736ec07f650818cbec4"
+        },
+        "mols-code-comprehension-refactor": {
+          "integrity": "sha256-98d64024af13225b0b1764712e11cb66233d461062c31dabb65fc26b50366073"
+        },
+        "mols-clarify-code": {
+          "integrity": "sha256-b472713479ed4a45d2d7b9f83f8dcf6a5d82b1e66a3988166e75b1a68585fc10"
         },
         "mols-ci-design": {
           "integrity": "sha256-d1e45b38bab766af738f50b2828ce615eacf2ec4d63b5c8cd9b83b31344161b5"
         },
+        "mols-chatbot-bootstrap": {
+          "integrity": "sha256-bbd2c76d95263bc4beb579ff727219a39f3ad922f3339c00254c1f902a3c7687"
+        },
+        "mols-agent-asset": {
+          "integrity": "sha256-ba10320d7fadba56e9619c4336d3d6adb57c52fcd2f2a45b8347ffe5d8b84d59"
+        },
+        "mols-agent-asset-find": {
+          "integrity": "sha256-6ace67d927da8eedcdd359593ddcbd7a80d97a2fa9cab42288f634116382aef6"
+        },
         "guidance-context": {
           "integrity": "sha256-c159b50eafb82b34b4c7473cf89c87d34ec4428b72c58541e258608f80ef2f08"
-        },
-        "mols-mermaid-diagram": {
-          "integrity": "sha256-f3b689fb9cf960fc9e31a3b6ed4b84b8f6314af4c03293410d38a7c38acf50b3"
-        },
-        "mols-agent-asset-validator": {
-          "integrity": "sha256-3656ca7d568fbc51286cc262210c7499346909c796e2825c5910f421ec16f940"
-        },
-        "mols-mermaid-chart": {
-          "integrity": "sha256-983ff55d920be723a2f86db8bc71615f0c8b7ecb9d6b64c7d96b2ab314cbf563"
         }
-      }
+      },
+      "skillSelection": [
+        "guidance-context",
+        "mols-agent-asset",
+        "mols-agent-asset-find",
+        "mols-chatbot-bootstrap",
+        "mols-ci-design",
+        "mols-clarify-code",
+        "mols-code-comprehension-refactor",
+        "mols-coding-context",
+        "mols-coding-context-python",
+        "mols-documentation",
+        "mols-loops",
+        "mols-markdown-maintenance",
+        "mols-mermaid-chart",
+        "mols-mermaid-diagram",
+        "technical-document-fidelity",
+        "text-humanize-korean"
+      ]
     }
   }
 }

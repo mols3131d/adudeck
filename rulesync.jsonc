@@ -17,18 +17,21 @@
       "path": "src/rulesync/.rulesync/skills",
       "skills": [
         "guidance-context",
-        "clarify-code",
+        "mols-clarify-code",
         "mols-agent-asset",
-        "mols-agent-asset-validator",
         "mols-agent-asset-find",
         "mols-chatbot-bootstrap",
         "mols-ci-design",
-        "mols-markdown-for-human",
         "mols-markdown-maintenance",
         "mols-mermaid-diagram",
         "mols-mermaid-chart",
-        "mols-rpi",
-        "technical-document-fidelity"
+        "mols-loops",
+        "technical-document-fidelity",
+        "mols-coding-context",
+        "mols-coding-context-python",
+        "mols-documentation",
+        "text-humanize-korean",
+        "mols-code-comprehension-refactor"
       ]
     }
   ],
