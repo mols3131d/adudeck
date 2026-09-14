@@ -117,7 +117,25 @@ python3 decks/ai-openai_sdk/playground/request_response.py --preview
 
 ---
 
-## 0.5 환경 점검 (Preflight Check)
+## 0.5 자동 환경 진단 스크립트 (`scripts/setup.py`)
+
+Linux, macOS, Windows(PowerShell/CMD) 환경에서 환경 설정과 사전 점검을 한 번에 수행할 수 있도록 크로스 플랫폼 진단
+스크립트를 제공한다.
+
+```bash
+# 기본 실행: Python 버전, uv 설치 여부, preview 검증 및 실행 중인 Ollama 자동 감지
+python3 decks/ai-openai_sdk/scripts/setup.py
+
+# 실제 API 호출까지 한 번에 테스트
+python3 decks/ai-openai_sdk/scripts/setup.py --test-live
+```
+
+스크립트가 OS에 맞는 환경 변수 설정 명령어(`export` 또는 `$env:`)를 출력해주므로, 안내된 명령어를 복사하여 터미널에
+적용하면 즉시 실습 준비가 완료된다.
+
+---
+
+## 0.6 수동 환경 점검 (Preflight Check)
 
 환경 구성이 완료되었는지 확인하기 위해 다음 명령을 실행해 본다.
 
