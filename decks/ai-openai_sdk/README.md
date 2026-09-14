@@ -91,6 +91,17 @@ Application/business validation
 
 이 distinction이 deck의 신뢰도 기준이다.
 
+## Setup and Preflight
+
+실습 환경(Python 3.10+, uv, 로컬 Ollama 또는 OpenAI API)을 자동으로 점검하고 OS에 맞는 환경변수 명령어를 확인하려면 다음
+스크립트를 실행한다.
+
+```bash
+python scripts/setup.py
+# 또는 실제 호출까지 함께 테스트
+python scripts/setup.py --test-live
+```
+
 ## Running playgrounds
 
 API key 없이 local state를 볼 수 있는 unit은 `--preview`를 먼저 사용한다.
