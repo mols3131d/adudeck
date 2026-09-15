@@ -1,0 +1,15 @@
+[project]
+name = "ai-openai-sdk"
+version = "0.1.0"
+description = "OpenAI Python SDK typed request/response boundary learning deck"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "openai>=3,<4",
+  "pydantic>=2,<3",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+]
