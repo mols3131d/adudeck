@@ -11,7 +11,8 @@ Status: working note in `inbox/`; non-canonical.
 - environment setup
 - environment update
 
-새 automation framework를 추가하지 않는다. 이미 존재하는 `mise`, `uv`, `rumdl`, `Biome`, `Tombi`, `Lefthook`, `Rulesync`를 그대로 사용하고, shell script와 `mise` task 사이의 책임만 명확하게 만든다.
+새 automation framework를 추가하지 않는다. 이미 존재하는 `mise`, `uv`, `rumdl`, `Biome`, `Tombi`, `Lefthook`,
+`Rulesync`를 그대로 사용하고, shell script와 `mise` task 사이의 책임만 명확하게 만든다.
 
 ## Current State
 
@@ -22,7 +23,8 @@ Status: working note in `inbox/`; non-canonical.
 - `scripts/setup.sh`
 - `scripts/update.sh`
 
-또한 `mise.toml`이 동일한 작업의 일부를 직접 구현하고 있다. 특히 formatting과 test subtask는 script와 `mise` 양쪽에 command sequence가 중복되어 있다.
+또한 `mise.toml`이 동일한 작업의 일부를 직접 구현하고 있다. 특히 formatting과 test subtask는 script와 `mise` 양쪽에
+command sequence가 중복되어 있다.
 
 이 작업의 핵심은 script를 다시 만드는 것이 아니라 실행 경로를 정리하는 것이다.
 
@@ -42,7 +44,8 @@ mise run update
 mise run ci:fast
 ```
 
-`mise.toml`은 task 이름, tool resolution, orchestration만 담당한다. multi-step shell implementation을 가능한 한 복제하지 않는다.
+`mise.toml`은 task 이름, tool resolution, orchestration만 담당한다. multi-step shell implementation을 가능한 한 복제하지
+않는다.
 
 ### `scripts/`
 
@@ -89,7 +92,8 @@ scripts/format.sh [--check]
 
 `mise run format`은 이 script에 위임한다.
 
-기존 세부 task가 계속 필요하면 `format:markdown`, `format:json`, `format:toml`은 leaf task로 유지할 수 있다. 단, 같은 multi-step sequence를 두 군데서 유지하지 않는다.
+기존 세부 task가 계속 필요하면 `format:markdown`, `format:json`, `format:toml`은 leaf task로 유지할 수 있다. 단, 같은
+multi-step sequence를 두 군데서 유지하지 않는다.
 
 ### `scripts/test.sh`
 
@@ -149,7 +153,8 @@ ShellCheck 같은 새 dependency는 실제 failure mode가 생기기 전에는 �
 
 `setup`과 달리 tracked file 변경이 발생할 수 있는 mutation command다.
 
-완료 후 별도 검증 경로인 `mise run ci:fast`로 결과를 확인한다. `update.sh` 내부에 전체 CI orchestration을 다시 복제하지 않는다.
+완료 후 별도 검증 경로인 `mise run ci:fast`로 결과를 확인한다. `update.sh` 내부에 전체 CI orchestration을 다시 복제하지
+않는다.
 
 ## `mise.toml` Changes
 
@@ -223,4 +228,5 @@ mise run ci:fast
 - 필요 시 `scripts/format.sh`: argument validation 보강
 - behavior가 바뀐 경우에만 관련 문서 수정
 
-`setup.sh`와 `update.sh`는 현재 구현이 위 contract를 이미 대체로 만족하므로, 실제 검증에서 문제가 확인되지 않으면 불필요하게 다시 쓰지 않는다.
+`setup.sh`와 `update.sh`는 현재 구현이 위 contract를 이미 대체로 만족하므로, 실제 검증에서 문제가 확인되지 않으면
+불필요하게 다시 쓰지 않는다.
