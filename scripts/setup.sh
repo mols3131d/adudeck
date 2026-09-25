@@ -4,13 +4,14 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-echo "==> [setup] Checking toolchain with mise..."
-if command -v mise >/dev/null 2>&1; then
-  mise install
-  eval "$(mise env -s bash 2>/dev/null)" || true
-else
-  echo "Warning: 'mise' is not installed or not in PATH. Skipping 'mise install'." >&2
+if ! command -v mise >/dev/null 2>&1; then
+  echo "Error: 'mise' must be installed before setting up this repository." >&2
+  exit 1
 fi
+
+echo "==> [setup] Installing repository toolchain with mise..."
+mise install
+eval "$(mise env -s bash 2>/dev/null)" || true
 
 echo "==> [setup] Syncing root Python environment with uv..."
 uv sync --locked
