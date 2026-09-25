@@ -21,6 +21,11 @@ if [[ -d "tools/dataset_generator" ]]; then
   env -u VIRTUAL_ENV uv sync --project tools/dataset_generator --locked
 fi
 
+if [[ -d "decks/ai-openai_sdk" ]]; then
+  echo "==> [setup] Syncing decks/ai-openai_sdk environment..."
+  env -u VIRTUAL_ENV uv sync --project decks/ai-openai_sdk --locked
+fi
+
 echo "==> [setup] Configuring git commit template..."
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git config --local commit.template .gitmessage
