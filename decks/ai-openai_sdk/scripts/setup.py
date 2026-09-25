@@ -11,7 +11,7 @@ MIN_PYTHON = (3, 10)
 DECK_ROOT = Path(__file__).resolve().parent.parent
 PROJECT_FILE = DECK_ROOT / "pyproject.toml"
 LOCK_FILE = DECK_ROOT / "uv.lock"
-FIRST_PLAYGROUND = DECK_ROOT / "playground" / "request_response.py"
+FIRST_PLAYGROUND = DECK_ROOT / "textbook" / "01-client-request-response" / "request_response.py"
 
 
 def main() -> int:
@@ -58,7 +58,7 @@ def main() -> int:
     if ok:
         print("\nReady:")
         print("  uv sync --locked")
-        print("  uv run playground/request_response.py")
+        print("  uv run textbook/01-client-request-response/request_response.py")
         return 0
 
     print("\nFix the failed checks, then run this script again.")

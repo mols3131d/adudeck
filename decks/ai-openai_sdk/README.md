@@ -48,14 +48,17 @@ Pydantic, retry, async는 prerequisite가 아니다. 필요한 unit에서 도입
 
 | Unit | 핵심 질문 | Material |
 | --- | --- | --- |
-| 0. Start | SDK를 실행할 최소 환경은 무엇인가? | [Introduction](textbook/00-introduction.md) · [Environment](textbook/00-environment.md) |
-| 1. Client → Response | 한 번의 SDK call에서 무엇을 보내고 무엇을 받는가? | [Textbook](textbook/01-client-request-response.md) · [Playground](playground/request_response.py) |
-| 2. Conversation state | 다음 turn의 context를 누가 소유하는가? | [Textbook](textbook/02-conversation-state.md) · [Playground](playground/conversation_state/) |
-| 3. Failure boundaries | Python call 하나가 몇 HTTP attempt를 만들 수 있는가? | [Textbook](textbook/03-failure-boundaries.md) · [Playground](playground/failure_boundaries.py) |
-| 4. Structured Outputs | 언제 model output을 typed application data로 받아들여도 되는가? | [Textbook](textbook/04-structured-outputs.md) · [Playground](playground/structured_output.py) |
-| 5. Function Calling | 누가 tool을 제안하고 누가 실제 code를 실행하는가? | [Textbook](textbook/05-function-calling.md) · [Playground](playground/function_calling.py) |
+| 0. Start | SDK를 실행할 최소 환경은 무엇인가? | [Bundle](textbook/00-start/README.md) |
+| 1. Client → Response | 한 번의 SDK call에서 무엇을 보내고 무엇을 받는가? | [Bundle](textbook/01-client-request-response/README.md) |
+| 2. Conversation state | 다음 turn의 context를 누가 소유하는가? | [Bundle](textbook/02-conversation-state/README.md) |
+| 3. Failure boundaries | Python call 하나가 몇 HTTP attempt를 만들 수 있는가? | [Bundle](textbook/03-failure-boundaries/README.md) |
+| 4. Structured Outputs | 언제 model output을 typed application data로 받아들여도 되는가? | [Bundle](textbook/04-structured-outputs/README.md) |
+| 5. Function Calling | 누가 tool을 제안하고 누가 실제 code를 실행하는가? | [Bundle](textbook/05-function-calling/README.md) |
 | 6. Streaming + async | intermediate event와 final state를 어떻게 구분하는가? | planned |
 | 7. Integration | SDK boundary를 application code에서 어떻게 작고 testable하게 유지하는가? | planned |
+
+Unit 0~5의 textbook은 unit directory bundle이다. 각 bundle의 `README.md`가 교본 entrypoint이고, 그 unit에서 사용하는
+runnable playground와 supporting code를 같은 directory에 둔다.
 
 Unit 1~5는 구현되어 있다. Unit 6~7이 구현되기 전에는 전체 deck completion을 선언하지 않는다.
 
@@ -67,7 +70,7 @@ Repository root에서 deck directory로 이동한 뒤 committed lockfile 그대�
 cd decks/ai-openai_sdk
 uv sync --locked
 export OPENAI_API_KEY='...'
-uv run playground/request_response.py
+uv run textbook/01-client-request-response/request_response.py
 ```
 
 `uv run`도 필요하면 project environment를 동기화하므로 이후에는 playground 실행만 반복하면 된다.
@@ -101,22 +104,22 @@ pyproject.toml
 uv.lock
 → 이 deck에서 실제로 resolve한 exact dependency set
 
-playground/*.py
-→ 학습할 Python/SDK code만 포함
+textbook/<unit>/*.py
+→ 해당 unit에서 학습할 Python/SDK code와 supporting code
 ```
 
 Playground마다 PEP 723 dependency metadata를 반복하지 않는다. Dependency range를 바꾸려면 `pyproject.toml`을 수정한 뒤
 `uv lock`으로 `uv.lock`을 갱신한다. 일반 학습 실행에서는 committed lockfile을 사용한다.
 
-## How to use the playgrounds
+## How to use the bundled playgrounds
 
 Playground는 완성된 CLI 도구가 아니다. **학습자가 수정해도 되는 작은 실험 파일**이다.
 
-각 chapter의 순서대로:
+각 unit bundle의 순서대로:
 
 1. 먼저 실행 결과를 예측한다.
 2. 파일을 읽고 어떤 줄이 핵심인지 찾는다.
-3. chapter가 지정한 한 부분만 직접 수정한다.
+3. 교본이 지정한 한 부분만 직접 수정한다.
 4. 다시 실행한다.
 5. 출력 차이를 SDK state/data flow로 설명한다.
 

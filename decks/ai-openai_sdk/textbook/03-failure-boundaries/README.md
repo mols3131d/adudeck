@@ -11,7 +11,7 @@ local synthetic server가 같은 status를 반복해서 반환하게 하고, SDK
 실행한다.
 
 ```bash
-uv run playground/failure_boundaries.py
+uv run textbook/03-failure-boundaries/failure_boundaries.py
 ```
 
 핵심 부분은 다음 정도다.
@@ -36,7 +36,7 @@ with synthetic_error_server(STATUS) as server:
         print(server.request_count)
 ```
 
-HTTP server 구현은 `_support/retry_server.py`에 있다.
+HTTP server 구현은 `retry_server.py`에 있다.
 이번 학습 목표가 Python stdlib HTTP server 작성법이 아니므로 learner-facing file에서 숨긴다.
 
 ## 3.2 먼저 예상한다

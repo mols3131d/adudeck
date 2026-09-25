@@ -1,7 +1,7 @@
 import openai
 from openai import OpenAI
 
-from _support.retry_server import synthetic_error_server
+from retry_server import synthetic_error_server
 
 STATUS = 429
 MAX_RETRIES = 2

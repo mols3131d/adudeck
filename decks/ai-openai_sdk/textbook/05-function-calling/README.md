@@ -16,7 +16,7 @@ function_call
 먼저 실행한다.
 
 ```bash
-uv run playground/function_calling.py
+uv run textbook/05-function-calling/function_calling.py
 ```
 
 이번 playground는 하나의 read-only tool만 사용한다.
