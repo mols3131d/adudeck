@@ -8,10 +8,26 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise env -s bash 2>/dev/null)" || true
 fi
 
+usage() {
+  echo "Usage: scripts/format.sh [--check]" >&2
+}
+
 CHECK_MODE=false
-if [[ "${1:-}" == "--check" ]]; then
-  CHECK_MODE=true
-fi
+case "$#" in
+  0)
+    ;;
+  1)
+    if [[ "$1" != "--check" ]]; then
+      usage
+      exit 2
+    fi
+    CHECK_MODE=true
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
 
 MARKDOWN_EXCLUDES="AGENTS.md,**/AGENTS.md,AGENTS.override.md,**/AGENTS.override.md,.github/copilot-instructions.md,.github/instructions/**,.github/skills/**,.agents/**,.codex/**"
 
@@ -19,11 +35,11 @@ if [[ "$CHECK_MODE" == true ]]; then
   echo "==> [format:check] Checking Markdown formatting..."
   rumdl fmt --check --exclude "$MARKDOWN_EXCLUDES" .
 
-  echo "==> [format:check] Checking JSON / JSONC..."
-  biome check .
+  echo "==> [format:check] Checking JSON / JSONC formatting..."
+  biome format .
 
-  echo "==> [format:check] Linting TOML..."
-  tombi lint --error-on-warnings .
+  echo "==> [format:check] Checking TOML formatting..."
+  tombi format --check .
 
   echo "==> All format checks passed."
 else
@@ -38,4 +54,3 @@ else
 
   echo "==> Formatting complete."
 fi
-

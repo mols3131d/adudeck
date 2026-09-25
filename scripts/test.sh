@@ -8,6 +8,11 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise env -s bash 2>/dev/null)" || true
 fi
 
+if [[ "$#" -gt 1 ]]; then
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|scripts]" >&2
+  exit 2
+fi
+
 TARGET="${1:-all}"
 
 run_smoke() {
@@ -65,6 +70,12 @@ PY
   echo "==> [test:openai-sdk-deck] Locked deck validation passed."
 }
 
+run_scripts() {
+  echo "==> [test:scripts] Checking shell script syntax..."
+  bash -n scripts/*.sh
+  echo "==> [test:scripts] Shell script syntax passed."
+}
+
 case "$TARGET" in
   smoke)
     run_smoke
@@ -75,14 +86,18 @@ case "$TARGET" in
   openai-sdk-deck)
     run_openai_sdk_deck
     ;;
+  scripts)
+    run_scripts
+    ;;
   all)
     run_smoke
     run_dataset_generator
     run_openai_sdk_deck
+    run_scripts
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, scripts" >&2
     exit 1
     ;;
 esac

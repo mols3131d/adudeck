@@ -61,11 +61,7 @@ run = "tombi format ."
 
 [tasks.format]
 description = "Auto-format repository-owned text formats"
-run = """
-mise run format:markdown
-mise run format:json
-mise run format:toml
-"""
+run = "bash scripts/format.sh"
 
 [tasks."check:json"]
 description = "Check JSON and JSONC with Biome"
@@ -77,20 +73,19 @@ run = "tombi lint --error-on-warnings ."
 
 [tasks."test:smoke"]
 description = "Run the minimal local runtime smoke test"
-run = "uv run python -c 'import sys; assert sys.version_info[:2] == (3, 14)'"
+run = "bash scripts/test.sh smoke"
 
 [tasks."test:dataset-generator"]
 description = "Run dataset generator unit tests and CLI smoke test"
-run = '''
-uv run --project tools/dataset_generator --locked python -m unittest discover -s tools/dataset_generator/tests -v
-tmp_dir="$(mktemp -d)"
-trap 'rm -rf "$tmp_dir"' EXIT
-uv run --project tools/dataset_generator --locked adudeck-data generate ecommerce --output "$tmp_dir" --users 2 --products 2 --orders 2 --seed 1
-'''
+run = "bash scripts/test.sh dataset-generator"
+
+[tasks."test:scripts"]
+description = "Validate repository shell script syntax"
+run = "bash scripts/test.sh scripts"
 
 [tasks.test]
 description = "Run all repository test suites"
-run = "bash scripts/test.sh"
+run = "bash scripts/test.sh all"
 
 [tasks."git:setup"]
 description = "Configure repository-local Git defaults"
