@@ -24,9 +24,9 @@ mise run setup
 mise run ci:fast
 ```
 
-`setup`은 `mise.toml`에 선언된 tool을 설치하고 locked dependency와 local hook을 구성한다. version pin이나 lock을 upgrade하지
-않는다. 의도적으로 repository-managed tool pin, dependency lock, Rulesync dependency/generated state를 갱신할 때만
-`mise run update`를 사용한다.
+`setup`은 `mise.toml`에 선언된 tool을 설치하고 locked dependency와 local hook을 구성한다. version pin이나 lock을
+upgrade하지 않는다. 의도적으로 repository-managed tool pin, dependency lock, Rulesync dependency/generated state를
+갱신할 때만 `mise run update`를 사용한다.
 
 `ci:fast`는 format 이후 Rulesync projection을 생성·검증하고 테스트를 실행한다. 필요한 단계만 실행할 때는
 `mise run format`, `mise run test`, `mise run test:scripts` 또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
@@ -44,7 +44,8 @@ bash scripts/update.sh
 
 `format.sh --check`는 파일을 수정하지 않고 Markdown, JSON/JSONC, TOML formatting drift를 검사한다.
 
-local hook은 staged file의 formatting 문제를 수정하고 수정된 file을 다시 stage한다. full-repository script로 대체하지 않는다.
+local hook은 staged file의 formatting 문제를 수정하고 수정된 file을 다시 stage한다. full-repository script로 대체하지
+않는다.
 
 ## CI
 
