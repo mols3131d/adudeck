@@ -1,0 +1,10 @@
+[project]
+name = "adudeck-ai-openai-sdk"
+version = "0.1.0"
+description = "Hands-on OpenAI Python SDK learning deck."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "openai>=3.19.2,<4",
+  "pydantic>=2,<3",
+]
