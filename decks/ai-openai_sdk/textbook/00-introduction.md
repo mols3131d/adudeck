@@ -1,99 +1,112 @@
-# 0. Introduction: Typed Request/Response Boundary
+# 0. Introduction: Python code와 API 사이의 경계
 
-OpenAI Python SDK를 배우는 과정은 단순히 `client.responses.create(...)`의 매개변수를 외우는 작업이 아니다. 핵심은
-**Python application과 언어 모델 API 사이의 경계(Boundary)와 상태(State)의 소유권을 명확히 구분하는 것**이다.
+OpenAI Python SDK를 처음 배울 때 가장 먼저 필요한 것은 큰 architecture가 아니다.
+**한 번의 호출이 어디서 시작하고 어디서 끝나는지** 볼 수 있으면 된다.
 
-이 교재는 프롬프트 엔지니어링 요령이나 모델의 내부 이론을 다루지 않는다. 대신 application 코드의 관점에서 다음 데이터
-흐름을 추적한다.
+```python
+from openai import OpenAI
+
+client = OpenAI()
+response = client.responses.create(
+    model="gpt-5.5",
+    input="Explain a Python tuple in one sentence.",
+)
+
+print(response.output_text)
+```
+
+이 짧은 code에는 이미 deck 전체에서 반복할 구조가 들어 있다.
 
 ```text
-Python local values
-       ↓
-Application call arguments
-       ↓
-SDK serialization & transport
-       ↓
-[ Network / API Boundary ]
-       ↓
-External model processing
-       ↓
-[ Network / API Boundary ]
-       ↓
-SDK parsing & deserialization
-       ↓
-Typed Response object
-       ↓
-Application decision & state
+Python input
+→ OpenAI client
+→ responses.create(...)
+→ network/API
+→ Response object
+→ application이 필요한 값 읽기
 ```
 
----
+## 0.1 먼저 세 object만 구분한다
 
-## 0.1 왜 '경계(Boundary)' 관점인가?
+### `client`
 
-많은 개발자가 LLM 라이브러리를 사용할 때 "SDK가 답을 생성한다"거나 "내가 넘긴 딕셔너리가 그대로 서버로 전송된다"고
-착각한다. 이러한 모호한 멘탈 모델은 다음과 같은 실무 문제에 직면했을 때 디버깅을 어렵게 만든다.
-
-- API 키 오류인지, 로컬 인자 오류인지 분리하지 못함
-- 네트워크 타임아웃이나 Rate Limit 발생 시 재시도 주체가 누구인지 혼동
-- 다중 턴(multi-turn) 대화에서 이전 문맥을 클라이언트와 서버 중 누가 기억하고 있는지 통제 불능
-- 모델이 생성한 텍스트를 검증 없이 도메인 로직에 전달하여 런타임 에러 유발
-- 도구 호출(Function calling) 시 실제 코드가 어디서 실행되는지 오해
-
-이 deck은 모든 단원에서 **"지금 이 값은 누가 소유하는가?"**와 **"지금 네트워크 경계를 넘었는가?"**라는 두 가지 질문을
-던진다.
-
----
-
-## 0.2 Responses API 중심 학습
-
-OpenAI SDK에는 역사적으로 `client.chat.completions` API가 널리 쓰여왔으나, 최신 baseline은 **Responses
-API(`client.responses`)**를 기본 인터페이스로 삼는다.
-
-Responses API는 다음과 같은 아키텍처적 이점을 제공한다:
-
-1. **일관된 Output 구조**: 단순 텍스트뿐만 아니라 추론(reasoning), 메시지(message), 도구 호출(tool call) 등을 일관된
-   `output` 아이템 배열로 다룬다.
-2. **명확한 상태 식별자**: 응답 리소스 식별자(`response.id`)와 네트워크 추적 식별자(`response._request_id`)를 분리하여
-   제공한다.
-3. **유연한 대화 문맥**: 클라이언트가 대화 전체를 들고 있는 방식과 서버 측 `previous_response_id` 체이닝을 일관된
-   인터페이스로 지원한다.
-
----
-
-## 0.3 Learning Path (학습 로드맵)
-
-이 deck은 기초 경계부터 복잡한 상태 분리까지 점진적인 5단계 유닛으로 구성되어 있다.
-
-```mermaid
-flowchart TD
-    U0["00. 환경 구축<br/>(uv, Base URL, Ollama/API)"] --> U1["01. Client → Request → Response<br/>(단일 호출 경계와 Typed Response)"]
-    U1 --> U2["02. Conversation State<br/>(멀티턴 대화 문맥의 소유권)"]
-    U2 --> U3["03. Failure Boundaries<br/>(네트워크/HTTP/애플리케이션 에러와 Retry)"]
-    U3 --> U4["04. Structured Outputs<br/>(Pydantic 스키마 계약과 비즈니스 검증)"]
-    U4 --> U5["05. Function Calling<br/>(모델 제안과 애플리케이션 실행의 분리)"]
+```python
+client = OpenAI()
 ```
 
-| Unit | 핵심 질문 | 다루는 주제 | 실습 파일 |
-| :--- | :--- | :--- | :--- |
-| **0. 환경 구축** | 내 실행 환경과 엔드포인트를 어떻게 분리하고 구성하는가? | `uv`, 로컬 Ollama, 공식 API, 환경변수 | [00-environment.md](00-environment.md) |
-| **1. Client & Response** | Python 값은 언제 네트워크 요청이 되고 무엇이 돌아오는가? | `OpenAI()` 클라이언트, 인자 구성, `Response` 객체 | [01-client-request-response.md](01-client-request-response.md) |
-| **2. Conversation State** | 다음 턴의 대화 문맥(Context)은 누가 소유하는가? | 수동 히스토리 vs `previous_response_id` | [02-conversation-state.md](02-conversation-state.md) |
-| **3. Failure Boundaries** | 한 번의 함수 호출 안에서 실제 HTTP 시도는 몇 번 일어나는가? | Connection error, 429/5xx, SDK 재시도와 타임아웃 | [03-failure-boundaries.md](03-failure-boundaries.md) |
-| **4. Structured Outputs** | 모델의 응답을 언제 신뢰할 수 있는 데이터로 받아들여도 되는가? | Schema Contract, Pydantic 파싱, Business Validation | [04-structured-outputs.md](04-structured-outputs.md) |
-| **5. Function Calling** | 누가 도구 실행을 제안하고 누가 실제 코드를 실행하는가? | Tool definition, Model Proposal, Local Execution | [05-function-calling.md](05-function-calling.md) |
+API와 통신하기 위한 Python object다. model 자체가 아니다.
 
----
+### `response`
 
-## 0.4 증거 기반 학습 원칙 (Evidence Levels)
+```python
+response = client.responses.create(...)
+```
 
-각 단원의 실습(Playground)은 단순히 화면에 결과 문자열을 띄우는 것이 목적이 아니다. 실습에서 얻은 결과가 어떤 수준의
-증거인지 구별해야 한다.
+이 줄에서 실제 Responses API operation이 시작된다. 성공하면 SDK가 typed `Response` object를 돌려준다.
 
-- **Preview**: 네트워크 요청 없이 내 로컬 애플리케이션이 만든 인자(`call_args`)만 검증한다. 비용이 들지 않는다.
-- **Synthetic Local HTTP**: 로컬 모의 서버를 통해 제어된 실패(429, 500 등) 상황에서 SDK의 동작을 검증한다.
-- **Live Call (Local or Remote)**: 로컬 Ollama 또는 공식 OpenAI API 엔드포인트와 실제로 통신하여 typed response를
-  검증한다.
-- **Business Validation**: 모델이 스키마에 맞는 JSON을 주었더라도, 그것이 도메인 규칙(예: 유효한 날짜, 양수 금액)을
-  만족하는지는 애플리케이션이 별도로 검증한다.
+### `response.output_text`
 
-이제 [00-environment.md](00-environment.md)에서 실습에 필요한 실행 환경과 엔드포인트를 구축한다.
+```python
+print(response.output_text)
+```
+
+Response 전체가 아니라 text output을 편하게 읽기 위한 view다.
+
+처음에는 이 세 가지면 충분하다. Response의 세부 item, request ID, retry, schema, tool call은 필요해질 때 추가한다.
+
+## 0.2 이 deck의 학습 방식
+
+각 playground는 가능한 한 작은 runnable file로 시작한다.
+
+chapter를 읽을 때 다음 순서를 지킨다.
+
+1. code를 실행하기 전에 결과를 예상한다.
+2. 핵심 줄을 찾는다.
+3. 한 가지를 직접 수정한다.
+4. 다시 실행한다.
+5. 바뀐 결과를 설명한다.
+
+예를 들어 Unit 1에서는 prompt를 직접 바꾼다.
+
+```python
+input="Explain a Python tuple in one sentence."
+```
+
+다음처럼 바꾸고 다시 실행한다.
+
+```python
+input="Explain a Python dictionary in one sentence."
+```
+
+이 작은 수정은 CLI flag를 외우는 것보다 중요한 것을 보여준다.
+**어떤 Python 값이 request를 바꾸는지 직접 확인할 수 있다.**
+
+## 0.3 관찰한 것과 추론한 것을 구분한다
+
+실습에서는 output을 얻는 것보다 무엇을 실제로 봤는지가 중요하다.
+
+예를 들어 `response.output_text`가 출력되었다면 다음은 직접 관찰했다.
+
+- Python code가 SDK call까지 실행됐다.
+- API call이 성공해 `Response`가 반환됐다.
+- text convenience view를 읽었다.
+
+하지만 이것만으로 API 내부 model processing 과정을 본 것은 아니다.
+
+이 구분은 이후 retry, conversation state, Structured Outputs, Function Calling에서 더 중요해진다.
+
+## 0.4 Learning path
+
+```text
+1. 한 번 호출한다.
+2. Response를 조금 더 들여다본다.
+3. 두 호출 사이의 context를 연결한다.
+4. 실패와 retry를 관찰한다.
+5. text 대신 typed data를 받는다.
+6. model이 제안한 tool call을 application이 실행한다.
+```
+
+각 단계는 이전 단계의 code와 mental model을 조금씩 확장한다.
+
+먼저 [00-environment.md](00-environment.md)에서 실행 환경을 준비한 뒤
+[01-client-request-response.md](01-client-request-response.md)로 이동한다.

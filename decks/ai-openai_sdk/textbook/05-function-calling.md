@@ -1,6 +1,6 @@
-# 5. Function Calling: model의 제안과 application 실행을 분리한다
+# 5. Function Calling: model proposal과 application execution
 
-Function Calling에서 model이 만드는 것은 **실행 결과가 아니라 실행 요청**이다.
+Function Calling에서 model이 만드는 것은 실행 결과가 아니라 **실행 요청**이다.
 
 ```text
 function_call
@@ -9,97 +9,71 @@ function_call
 - call_id
 ```
 
-> **model은 무엇을 호출할지 제안한다. 실제 function 실행과 authority는 application이 소유한다.**
+실제 Python function 실행은 application이 한다.
 
-이 한 문장을 유지하면 Function Calling의 control flow, validation, side effect를 훨씬 쉽게 설명할 수 있다.
+## 5.1 한 번의 tool loop를 그대로 읽는다
 
-## 5.1 Tool schema와 executable function은 다른 object다
+먼저 실행한다.
 
-Application code:
+```bash
+uv run playground/function_calling.py
+```
+
+이번 playground는 하나의 read-only tool만 사용한다.
 
 ```python
 def lookup_order(order_id: str) -> dict:
     ...
 ```
 
-Model에게 보내는 tool definition:
+그리고 model에게 이 function의 interface를 설명하는 schema를 보낸다.
 
 ```python
-tool = {
+LOOKUP_ORDER_TOOL = {
     "type": "function",
     "name": "lookup_order",
-    "description": "Look up one order.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "order_id": {"type": "string"},
-        },
-        "required": ["order_id"],
-        "additionalProperties": False,
-    },
-    "strict": True,
+    ...
 }
 ```
 
-역할은 다르다.
+Python function body가 API server로 upload되는 것은 아니다.
 
-```text
-tool schema
-→ model이 사용할 callable interface를 설명
+## 5.2 첫 Response는 proposal을 담는다
 
-Python function
-→ application process에서 실제 business logic을 실행
-```
-
-Schema를 API에 보냈다고 local function이 remote server에 upload되거나 자동 실행되는 것은 아니다.
-
-## 5.2 Function loop 전체를 먼저 본다
-
-```text
-request + tools
-      ↓
-model
-      ↓
-function_call(name, arguments, call_id)
-      ↓
-application
-  - allowlist / authorization
-  - arguments validation
-  - local function execution
-      ↓
-function_call_output(call_id, output)
-      ↓
-next Responses request
-      ↓
-final text or another function_call
-```
-
-Ownership은 간단하다.
-
-```text
-model owns proposal
-application owns execution
-```
-
-첫 Response에 final text가 없고 `function_call`만 있어도 정상적인 intermediate state일 수 있다.
-
-## 5.3 `arguments`는 실행 명령이 아니라 untrusted input이다
-
-Function-call arguments는 JSON-encoded data로 온다.
+첫 request:
 
 ```python
-args = json.loads(call.arguments)
+response = client.responses.create(
+    model=model,
+    input="Look up order A-102 and tell me its current status.",
+    tools=[LOOKUP_ORDER_TOOL],
+    tool_choice={"type": "function", "name": "lookup_order"},
+)
 ```
 
-`strict=True` schema가 argument shape를 강화해도 application은 최소한 다음을 판단해야 한다.
+playground는 `response.output`에서 `function_call` item 하나를 찾는다.
 
-```text
-이 function name을 허용하는가?
-현재 caller가 이 operation을 실행할 권한이 있는가?
-business precondition이 맞는가?
+```python
+call = next(
+    item for item in response.output
+    if item.type == "function_call"
+)
 ```
 
-즉:
+이 시점에 local `lookup_order()`는 아직 실행되지 않았다.
+
+## 5.3 Arguments는 data다
+
+```python
+arguments = json.loads(call.arguments)
+```
+
+이 값은 model-generated input이다.
+
+Lab은 read-only function 하나만 다루므로 code를 짧게 유지한다.
+Production application에서는 function allowlist, authorization, business precondition 같은 boundary가 추가될 수 있다.
+
+중요한 등식:
 
 ```text
 schema-valid
@@ -109,21 +83,66 @@ authorized
 safe to execute
 ```
 
-Read-only lookup과 payment cancellation을 같은 dispatcher policy로 다루면 안 된다.
-
-## 5.4 `call_id`는 proposal과 result를 연결한다
-
-실행 결과를 다음 request에 돌려줄 때:
+## 5.4 Application이 직접 실행한다
 
 ```python
-{
+result = lookup_order(arguments["order_id"])
+```
+
+여기서 처음 local business data가 생긴다.
+
+Playground output에서 다음 두 부분을 비교한다.
+
+```text
+model proposal
+local execution result
+```
+
+`status="shipped"` 같은 order 상태는 model이 임의로 만든 값이 아니라
+application-owned lookup result에서 나와야 한다.
+
+## 5.5 Result를 다시 model에게 보낸다
+
+Local Python value는 자동으로 model context가 되지 않는다.
+
+Application이 `function_call_output`을 만든다.
+
+```python
+tool_output = {
     "type": "function_call_output",
     "call_id": call.call_id,
     "output": json.dumps(result),
 }
 ```
 
-`call_id`는 어느 function request의 결과인지 연결하는 correlation key다.
+그리고 next request에 넣는다.
+
+```python
+final = client.responses.create(
+    model=model,
+    previous_response_id=response.id,
+    input=[tool_output],
+    tools=[LOOKUP_ORDER_TOOL],
+    tool_choice="none",
+)
+```
+
+이 lab은 한 번의 tool proposal과 한 번의 local execution만 추적하려는 controlled experiment다. 두 번째 request의
+`tool_choice="none"`은 추가 tool call을 막아 마지막 stage를 final text로 제한한다. 일반 application에서는 후속
+turn에서도 tool을 허용할 수 있으며, 그 경우 또 다른 `function_call`을 처리하는 loop가 필요하다.
+
+Control flow:
+
+```text
+request + tool schema
+→ model function_call proposal
+→ application argument parsing
+→ local function execution
+→ function_call_output
+→ final text response
+```
+
+## 5.6 Identifier를 구분한다
 
 ```text
 response.id
@@ -132,221 +151,45 @@ response.id
 response._request_id
 → HTTP/API request tracing
 
-call_id
-→ function proposal ↔ function result
+call.call_id
+→ function proposal과 function output correlation
 ```
 
-Identifier 역할을 분리하면 multi-call debugging이 쉬워진다.
+세 ID를 전부 "response ID"라고 부르지 않는다.
 
-## 5.5 Local return value는 자동으로 model context가 되지 않는다
+## 5.7 직접 수정: 존재하지 않는 order를 요청한다
+
+Input을 다음처럼 바꾼다.
 
 ```python
-result = lookup_order(args["order_id"])
+input="Look up order A-999 and tell me its current status."
 ```
 
-이 Python value는 아직 application memory에만 있다. Application이 serialize해 다음 Responses request에 넣어야 한다.
+실행 전에 예측한다.
 
-```python
-second = client.responses.create(
-    model=model,
-    previous_response_id=first.id,
-    input=[
-        {
-            "type": "function_call_output",
-            "call_id": call.call_id,
-            "output": json.dumps(result),
-        }
-    ],
-    tools=[tool],
-)
-```
+- model proposal의 `arguments`는 어떻게 달라질까?
+- local `lookup_order()` result는 어떻게 달라질까?
+- final response는 어떤 application-owned data를 근거로 답해야 할까?
 
-여기서 Unit 2의 conversation-state concept가 다시 등장한다.
+다시 실행해 각 stage를 비교한다.
 
-```text
-first response identity
-+
-function_call_output
-→ next model turn
-```
+## 5.8 Lab이 일부러 하지 않는 것
 
-Function Calling은 독립 기능 하나가 아니라 **state ownership + structured arguments + application execution**을
-결합한다.
+이 playground는 function calling control flow를 선명하게 보이기 위해:
 
-## 5.6 Worked trace: order A-102 조회
+- tool 하나
+- 한 번의 function call
+- read-only local data
+- serial execution
 
-```text
-user
-"Look up order A-102."
+만 사용한다.
 
-Round 1 model output
-function_call
-  name      = lookup_order
-  arguments = {"order_id":"A-102"}
-  call_id   = call_1
+Production system에서 여러 tool, parallel call, write side effect, retry/recovery가 필요하면
+그때 별도 abstraction과 policy를 추가한다. 처음부터 generic dispatcher framework를 만들지 않는다.
 
-application
-  parse arguments
-  validate allowed tool
-  execute lookup_order("A-102")
+## Practice
 
-application result
-{"order_id":"A-102","status":"shipped","found":true}
-
-next input
-function_call_output
-  call_id = call_1
-  output  = serialized result
-
-Round 2
-model interprets returned business data
-```
-
-`status="shipped"`는 첫 model response가 아니라 **application-owned lookup result**에서 처음 등장해야 한다. 이 위치를
-찾는 것이 control-flow 이해의 핵심이다.
-
-## 5.7 한 Response에 function call 하나만 있다고 가정하지 않는다
-
-Brittle:
-
-```python
-call = response.output[0]
-```
-
-더 안전한 mental model:
-
-```python
-calls = [
-    item for item in response.output
-    if item.type == "function_call"
-]
-```
-
-여러 call이 있으면 각각 matching `call_id`의 output이 필요하다.
-
-Parallel execution 여부는 별도 application decision이다. Side effect, ordering, resource limits가 중요하면 무조건
-parallelize하지 않는다.
-
-## 5.8 Tool execution은 side-effect boundary다
-
-Read-only tool:
-
-```text
-lookup_order
-```
-
-Write tool:
-
-```text
-send_email
-cancel_payment
-update_database
-delete_file
-```
-
-Write tool에서는 다음 application responsibility가 중요해진다.
-
-```text
-explicit allowlist
-authorization
-business precondition
-idempotence / duplicate handling
-timeout / error mapping
-audit evidence
-```
-
-`call_id`는 API correlation key이지 external side effect를 자동 idempotent하게 만드는 key가 아니다.
-
-Unit 3의 SDK retry도 구분한다.
-
-```text
-Responses API HTTP retry
-!=
-local tool execution retry
-```
-
-Whole tool loop를 다시 실행하면 local side effect가 반복될 수 있으므로 business-level recovery policy가 필요할 수 있다.
-
-## 5.9 Playground: proposal과 execution 사이의 경계를 관찰한다
-
-먼저 preview:
-
-```bash
-python playground/function_calling.py --preview
-```
-
-확인할 것:
-
-1. API에 보내는 것은 tool schema이지 Python dataset/function body가 아니다.
-2. model이 만들 것으로 기대하는 `function_call` shape.
-3. application이 validation/dispatch를 소유한다.
-4. result는 `function_call_output`으로 다시 보낸다.
-
-Live access가 있다면:
-
-```bash
-uv run playground/function_calling.py
-```
-
-다음 순서만 추적한다.
-
-```text
-first Response IDs
-→ function_call name / arguments / call_id
-→ local execution result
-→ function_call_output
-→ second Response
-```
-
-Output text의 문장 품질보다 **어느 state가 model-generated이고 어느 state가 application-generated인지** 먼저 설명한다.
-
-### Variation
-
-Dispatcher를 다음처럼 만들자는 제안을 검토한다.
-
-```python
-globals()[call.name](**args)
-```
-
-왜 explicit allowlist보다 위험한지 설명한다. Lab에는 function 하나뿐이므로 거대한 registry abstraction을 추가할 필요는
-없다.
-
-## 5.10 Validation boundary
-
-| Evidence | 검증하는 것 | 검증하지 않는 것 |
-| --- | --- | --- |
-| preview | application control-flow plan | 실제 model tool choice |
-| live first Response | model이 function call item을 반환함 | local function이 안전함 |
-| local execution result | application function behavior | model final interpretation correctness |
-| final Response | tool output을 model이 후속 turn에 사용함 | business action authorization 전체 |
-
-## 5.11 흔한 오해
-
-### "model이 Python function을 실행한다"
-
-Model은 function-call proposal을 만든다. Execution은 application이 한다.
-
-### "tool schema가 authorization이다"
-
-Schema는 argument contract다. Authority는 application policy다.
-
-### "`call_id`가 Response ID다"
-
-서로 다른 identity다.
-
-### "function return value는 SDK가 자동으로 model에게 보낸다"
-
-Application이 `function_call_output`을 만들어 next request에 넣는다.
-
-### "`response.output[0]`은 항상 function_call이다"
-
-Output item은 type으로 판단한다.
-
-## 5.12 Practice
-
-### A. Ownership trace
-
-다음 값을 `model-generated` / `application-generated`로 분류한다.
+다음 값을 `model-generated` 또는 `application-generated`로 분류한다.
 
 ```text
 call.name
@@ -357,36 +200,13 @@ function_call_output JSON
 final response text
 ```
 
-### B. Safe dispatcher
+## Checkpoint
 
-다음 요구만 만족하는 최소 dispatcher를 설계한다.
+`lookup_order` 대신 read-only `lookup_user_timezone(user_id)` tool을 설계한다.
 
-```text
-허용 tool: lookup_order
-argument: order_id string 하나
-unknown tool은 실행하지 않음
-```
+다음을 설명한다.
 
-추상화를 늘리는 것이 아니라 **authority boundary가 code에 보이게** 만든다.
-
-### C. Side-effect review
-
-`cancel_payment` tool을 추가한다고 가정한다. 다음을 구분해 설계한다.
-
-```text
-argument schema
-caller authorization
-duplicate execution protection
-API call retry
-tool execution retry/recovery
-audit evidence
-```
-
-## Assessment checkpoint
-
-다음을 독립적으로 설명할 수 있으면 통과한다.
-
-1. Function Calling loop를 `proposal → validation → execution → correlated output → next response`로 추적한다.
-2. `response.id`, request ID, `call_id`의 역할을 구분한다.
-3. Schema-valid tool call이 application authority를 자동으로 갖지 않는 이유를 설명한다.
-4. Retry나 workflow restart가 tool side effect를 반복할 수 있는 지점을 찾아 안전한 boundary를 제안한다.
+1. model에게 보내는 schema
+2. application이 검증할 최소 argument
+3. local function이 만드는 result
+4. result를 어떤 `call_id`와 연결해 돌려보내는지
