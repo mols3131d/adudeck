@@ -37,7 +37,7 @@ Dependency ownership을 deck project에 유지하기 위해서다.
 `uv run`은 이 project environment를 사용한다.
 
 ```bash
-uv run playground/request_response.py
+uv run textbook/01-client-request-response/request_response.py
 ```
 
 `uv`가 설치되어 있지 않다면 [uv 공식 설치 문서](https://docs.astral.sh/uv/getting-started/installation/)를 따른다.
@@ -65,7 +65,7 @@ SDK는 기본적으로 이 environment variable을 사용할 수 있다.
 Deck directory에서 실행한다.
 
 ```bash
-uv run playground/request_response.py
+uv run textbook/01-client-request-response/request_response.py
 ```
 
 정상이라면 한 줄짜리 model output이 출력된다.
@@ -136,7 +136,7 @@ Provider compatibility를 학습하려는 별도 목적이 아니라면, 처음�
 다음 command가 성공하면 Unit 1을 시작할 수 있다.
 
 ```bash
-uv run playground/request_response.py
+uv run textbook/01-client-request-response/request_response.py
 ```
 
-이제 [01-client-request-response.md](01-client-request-response.md)로 이동한다.
+이제 [Unit 1](../01-client-request-response/README.md)로 이동한다.

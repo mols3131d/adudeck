@@ -6,7 +6,7 @@
 
 ## 1.1 가장 작은 runnable example
 
-[playground/request_response.py](../playground/request_response.py)를 연다.
+[request_response.py](request_response.py)를 연다.
 
 핵심 code는 다음 정도다.
 
@@ -24,7 +24,7 @@ print(response.output_text)
 먼저 실행한다.
 
 ```bash
-uv run playground/request_response.py
+uv run textbook/01-client-request-response/request_response.py
 ```
 
 ### 실행 전 prediction
@@ -77,7 +77,7 @@ input="Explain a Python dictionary in one sentence."
 다시 실행한다.
 
 ```bash
-uv run playground/request_response.py
+uv run textbook/01-client-request-response/request_response.py
 ```
 
 설명할 것은 단순하다.

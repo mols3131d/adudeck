@@ -7,7 +7,7 @@ Model output이 다음 application step의 input이 된다면 단순한 free tex
 ## 4.1 먼저 실행한다
 
 ```bash
-uv run playground/structured_output.py
+uv run textbook/04-structured-outputs/structured_output.py
 ```
 
 Playground의 중심은 다음 code다.

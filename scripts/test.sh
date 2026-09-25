@@ -41,7 +41,7 @@ run_openai_sdk_deck() {
   local retry_output
 
   env -u VIRTUAL_ENV uv run --project "$project_dir" --locked python -m compileall -q \
-    "$project_dir/playground" \
+    "$project_dir/textbook" \
     "$project_dir/scripts"
 
   env -u VIRTUAL_ENV uv run --project "$project_dir" --locked python - <<'PY'
@@ -58,7 +58,7 @@ PY
 
   retry_output="$(
     env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
-      python "$project_dir/playground/failure_boundaries.py"
+      python "$project_dir/textbook/03-failure-boundaries/failure_boundaries.py"
   )"
   printf '%s\n' "$retry_output"
 

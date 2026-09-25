@@ -21,7 +21,7 @@ Conversation
 먼저 실행한다.
 
 ```bash
-uv run playground/conversation_state/lineage.py
+uv run textbook/02-conversation-state/lineage.py
 ```
 
 핵심은 두 번째 call의 한 argument다.
@@ -68,7 +68,7 @@ standard API behavior에서는 Response object가 기본적으로 30일 저장�
 다음 file을 실행한다.
 
 ```bash
-uv run playground/conversation_state/manual_history.py
+uv run textbook/02-conversation-state/manual_history.py
 ```
 
 핵심은 application이 `history`를 직접 변경한다는 점이다.
@@ -107,7 +107,7 @@ print([getattr(item, "type", "input_message") for item in history])
 다음 file을 실행한다.
 
 ```bash
-uv run playground/conversation_state/conversation.py
+uv run textbook/02-conversation-state/conversation.py
 ```
 
 핵심 state는 `conversation.id`다.

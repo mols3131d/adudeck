@@ -108,5 +108,5 @@ input="Explain a Python dictionary in one sentence."
 
 각 단계는 이전 단계의 code와 mental model을 조금씩 확장한다.
 
-먼저 [00-environment.md](00-environment.md)에서 실행 환경을 준비한 뒤
-[01-client-request-response.md](01-client-request-response.md)로 이동한다.
+먼저 [environment.md](environment.md)에서 실행 환경을 준비한 뒤
+[Unit 1](../01-client-request-response/README.md)로 이동한다.
