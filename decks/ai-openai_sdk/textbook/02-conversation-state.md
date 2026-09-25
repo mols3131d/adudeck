@@ -1,289 +1,211 @@
-# 2. Conversation state: "이전 대화"를 누가 소유하는가
+# 2. Conversation state: 다음 request가 이전 turn을 아는 이유
 
-한 번의 `responses.create()`는 현재 request의 input을 처리한다. Multi-turn interaction에서 중요한 질문은
-"model이 기억하는가?"가 아니라 다음이다.
+두 번 `responses.create()`를 호출했다고 해서 client가 자동으로 이전 대화를 기억하지 않는다.
 
-> **다음 request가 사용할 context를 누가 보관하고, 어떤 값으로 이어 주는가?**
+핵심 질문은 이것이다.
 
-Responses API에서는 세 가지 state model을 구분해 두면 대부분의 설계가 단순해진다.
+> 두 번째 request에 prior context를 연결하는 값은 무엇인가?
 
-| 방식 | application이 보관하는 핵심 | 다음 call의 연결 방식 |
-| --- | --- | --- |
-| manual history | prior input/output items | history 전체를 다시 `input`으로 보냄 |
-| response lineage | 이전 `response.id` | `previous_response_id` |
-| Conversation | `conversation.id` | 같은 durable Conversation을 계속 사용 |
-
-세 방식 모두 multi-turn을 만들 수 있지만 **state owner와 persistence boundary가 다르다.**
-
-## 2.1 기본값: 연결하지 않으면 별개의 call이다
-
-```python
-first = client.responses.create(
-    model="...",
-    input="My project codename is Juniper.",
-)
-
-second = client.responses.create(
-    model="...",
-    input="What is my project codename?",
-)
-```
-
-두 번째 call에 prior context를 연결하는 정보가 없다. 따라서 "client object가 알아서 이전 turn을 기억한다"는 mental
-model은 버린다.
+이번 unit에서는 같은 문제를 세 방식으로 본다.
 
 ```text
-current request context
-= application이 보낸 input
-+ application이 명시적으로 연결한 API-side state
+manual history
+previous_response_id
+Conversation
 ```
 
-## 2.2 Manual history: application이 context를 직접 구성한다
+각 방식은 별도 작은 file로 나뉜다. 한 번에 거대한 multi-mode script를 읽지 않는다.
 
-가장 명시적인 방식은 application이 이전 item을 직접 보관하는 것이다.
+## 2.1 가장 작은 연결: `previous_response_id`
+
+먼저 실행한다.
+
+```bash
+uv run playground/conversation_state/lineage.py
+```
+
+핵심은 두 번째 call의 한 argument다.
 
 ```python
-history = [
-    {"role": "user", "content": "My project codename is Juniper."},
-]
+second = client.responses.create(
+    model=model,
+    previous_response_id=first.id,
+    input="What project codename did I give you? Reply with the codename only.",
+)
+```
+
+첫 call 뒤 application이 보관한 값:
+
+```text
+first.id
+```
+
+두 번째 call에서 그 값을:
+
+```text
+previous_response_id=first.id
+```
+
+로 사용한다.
+
+### 직접 끊어 보기
+
+`previous_response_id=first.id` 줄을 잠시 지우고 다시 실행한다.
+
+실행 전에 예측한다.
+
+- 두 번째 request에 이전 turn을 연결하는 값이 남아 있는가?
+- follow-up이 codename을 맞힐 근거가 있는가?
+
+관찰 후 원래 줄을 복구한다.
+
+`previous_response_id`는 application이 prior content 전체를 다시 보내지 않고 Response lineage를 가리키는 방식이다. 현재
+standard API behavior에서는 Response object가 기본적으로 30일 저장되며, `store=False`를 사용하면 이 저장을 끌 수 있다.
+따라서 lineage 방식은 application이 ID만 보관하더라도 그 ID가 가리키는 remote Response lifecycle과 무관하지 않다.
+
+## 2.2 Manual history: application이 context item을 직접 들고 간다
+
+다음 file을 실행한다.
+
+```bash
+uv run playground/conversation_state/manual_history.py
+```
+
+핵심은 application이 `history`를 직접 변경한다는 점이다.
+
+```python
+history = [{"role": "user", "content": first_prompt}]
 
 first = client.responses.create(
-    model="...",
+    model=model,
     input=history,
     store=False,
 )
 
 history += first.output
-history.append(
-    {"role": "user", "content": "What is my project codename?"}
-)
-
-second = client.responses.create(
-    model="...",
-    input=history,
-    store=False,
-)
+history.append({"role": "user", "content": followup})
 ```
 
-여기서 핵심은 `first.output_text`만 복사하지 않고 **response output items를 context로 유지한다는 것**이다. Text가 아닌
-output item이 등장할 수 있기 때문이다.
+두 번째 call 직전 application memory에는 prior user item, prior output item, 새 user item이 함께 있다.
+이 lab은 `store=False`를 사용하므로 다음 turn을 위한 context ownership을 application 쪽에 명시적으로 둔다.
 
-Manual mode에서 application은 다음 책임까지 소유한다.
+### 직접 관찰하기
 
-```text
-어떤 item을 보관할지
-어디에 persist할지
-언제 truncate/summarize할지
-다음 request에 어떤 history를 넣을지
-```
-
-`store=False`는 이 실험에서 Response 저장을 끄는 설정이다. 이것을 "모든 platform-side retention이 사라진다"는
-privacy/compliance 결론으로 확대하지 않는다.
-
-## 2.3 Response lineage: history 대신 이전 Response ID를 연결한다
+두 번째 call 바로 전에 다음 줄을 추가한다.
 
 ```python
-first = client.responses.create(
-    model="...",
-    input="My project codename is Juniper.",
-)
-
-second = client.responses.create(
-    model="...",
-    previous_response_id=first.id,
-    input="What is my project codename?",
-)
+print([getattr(item, "type", "input_message") for item in history])
 ```
 
-두 call 사이에서 application이 보관하는 핵심 state가 바뀐다.
+질문:
 
-```text
-manual
-prior input/output items
+- `output_text` 문자열만 추가하지 않고 `first.output` item을 보관하는 이유는 무엇인가?
+- 다음 unit에서 function call 같은 non-text output이 등장하면 이 차이가 왜 중요해지는가?
 
-lineage
-first.id
+## 2.3 Conversation: 별도 durable resource를 사용한다
+
+다음 file을 실행한다.
+
+```bash
+uv run playground/conversation_state/conversation.py
 ```
 
-`previous_response_id`는 **이전 Response resource를 다음 request에 명시적으로 연결하는 argument**다. SDK client가 local
-memory에서 conversation을 자동 복원하는 기능으로 이해하지 않는다.
-
-## 2.4 Conversation: long-running identity를 별도 resource로 둔다
+핵심 state는 `conversation.id`다.
 
 ```python
 conversation = client.conversations.create()
 
 first = client.responses.create(
-    model="...",
+    model=model,
     conversation=conversation.id,
-    input="My project codename is Juniper.",
+    input=first_prompt,
 )
 
 second = client.responses.create(
-    model="...",
+    model=model,
     conversation=conversation.id,
-    input="What is my project codename?",
+    input=followup,
 )
 ```
 
-이 방식에서는 Conversation이 durable state container의 중심이 된다. Application은 여전히
-`conversation.id`와 그것을 어느 user/session/job에 연결할지 소유한다.
+Application은 Conversation resource 자체를 local memory에 보관하는 것이 아니라,
+그 resource를 가리키는 ID와 자신의 user/session/job mapping을 관리한다.
 
-다음 identifier를 섞지 않는다.
+여기서는 **remote state의 lifetime**도 함께 봐야 한다. Conversation에 붙은 item은 일반 Response의 기본 30일 TTL 대상이
+아니다. 즉, `conversation.id`는 단순한 편의용 pointer가 아니라 durable server-side state의 identity다.
 
-```text
-response.id
-→ 한 Response resource
-
-conversation.id
-→ 여러 turn을 연결하는 Conversation resource
-```
-
-## 2.5 선택 기준: "어떤 API가 편한가"보다 state owner를 본다
-
-| 요구 | 우선 검토할 방식 |
-| --- | --- |
-| application이 context item을 직접 inspect/transform해야 함 | manual history |
-| 직전 Response를 간단히 이어 가면 충분함 | `previous_response_id` |
-| session/device/job을 넘어 유지할 long-running identity가 필요함 | Conversation |
-
-이 표는 정답표가 아니다. 특히 persistence, data-control, token-cost requirement가 중요하면 해당 요구를 별도로 검토한다.
-`previous_response_id`를 쓴다고 prior context token cost가 사라지는 것도 아니다.
-
-## 2.6 Worked trace: 두 번째 request 직전 무엇이 존재하는가
-
-같은 첫 turn을 세 방식으로 실행했다고 하자.
+또 하나 중요한 cleanup boundary가 있다.
 
 ```text
-user: My project codename is Juniper.
+conversation container 삭제
+!=
+conversation item 삭제
 ```
 
-두 번째 turn 직전 state를 비교한다.
+현재 API에서 `client.conversations.delete(conversation.id)`는 Conversation container를 삭제하지만 그 안의 item까지
+삭제하지는 않는다. 그래서 playground는 종료 전에 저장된 item ID를 직접 관찰한 뒤 item을 하나씩 삭제하고 마지막에
+Conversation container를 삭제한다.
+
+```python
+items = list(client.conversations.items.list(conversation.id, order="asc", limit=100))
+print([item.id for item in items])
+
+for item in items:
+    client.conversations.items.delete(item.id, conversation_id=conversation.id)
+
+client.conversations.delete(conversation.id)
+```
+
+이 cleanup code는 production lifecycle policy의 완성형이 아니라, 이 lab이 만든 remote state를 남기지 않기 위한 teaching
+boundary다.
+
+## 2.4 세 방식을 같은 질문으로 비교한다
+
+| 방식 | call 사이에 application이 보관하는 핵심 state | 다음 call 연결 | remote state / lifetime 관점 |
+| --- | --- | --- | --- |
+| manual history | prior input/output items | history 전체를 `input`으로 보냄 | 이 lab은 `store=False`; next-turn context는 application이 직접 보관 |
+| lineage | `response.id` | `previous_response_id` | Response는 기본적으로 30일 저장되므로 remote Response lifetime에 의존 |
+| Conversation | `conversation.id` | 같은 `conversation` 사용 | Conversation item은 일반 Response의 30일 TTL 대상이 아니며 명시적 lifecycle 관리가 필요 |
+
+중요한 것은 "어떤 API가 더 멋진가"가 아니다.
+
+다음 질문으로 선택한다.
 
 ```text
-manual
-application:
-  [user item, first.output..., followup user item]
-
-lineage
-application:
-  first.id
-  followup user input
-
-conversation
-application:
-  conversation.id
-  followup user input
+context item을 application이 직접 inspect/transform해야 하는가?
+직전 Response만 간단히 이어 가면 되는가?
+long-running identity가 별도 resource로 필요한가?
+remote state를 얼마나 오래 유지하고 어떻게 정리할 것인가?
 ```
 
-질문은 하나다.
+## 2.5 Ollama compatibility 주의
 
-> **두 번째 request가 prior context를 사용할 수 있게 만드는 값은 정확히 무엇인가?**
+이 unit은 official OpenAI Responses API의 stateful features를 학습한다.
 
-이 질문에 답할 수 있으면 "model memory"라는 모호한 표현 없이 state flow를 설명할 수 있다.
+현재 Ollama의 `/v1/responses` compatibility는 non-stateful subset이며
+`previous_response_id`와 `conversation`을 지원하지 않는다.
 
-## 2.7 Playground: 같은 질문을 세 ownership model로 비교한다
+따라서 Unit 1의 stateless example이 Ollama에서 동작했다는 사실만으로
+이 unit도 같은 방식으로 동작한다고 가정하지 않는다.
 
-먼저 network 없이 call plan을 본다.
+## Practice
 
-```bash
-python playground/conversation_state.py --mode manual --preview
-python playground/conversation_state.py --mode lineage --preview
-python playground/conversation_state.py --mode conversation --preview
-```
-
-Preview에서 확인할 것은 세 가지뿐이다.
-
-1. application이 call 사이에 무엇을 보관하는가?
-2. 두 번째 call에 어떤 argument가 추가되는가?
-3. API-side resource identity가 필요한가?
-
-Preview는 SDK serialization, 실제 API persistence, model behavior를 검증하지 않는다.
-
-Live access가 있다면 같은 순서로 실행한다.
-
-```bash
-uv run playground/conversation_state.py --mode manual
-uv run playground/conversation_state.py --mode lineage
-uv run playground/conversation_state.py --mode conversation
-```
-
-관찰 결과를 다음 표로 기록한다.
-
-| Mode | first call 뒤 application state | second call 연결 evidence |
-| --- | --- | --- |
-| manual | | |
-| lineage | | |
-| conversation | | |
-
-답변 text가 맞았다는 사실만 기록하지 않는다. **왜 두 번째 call에 context가 있었는지**를 state evidence로 설명한다.
-
-### Validation boundary
-
-- `--preview`: application-owned call plan만 검증
-- live manual: history mutation + API response를 관찰
-- live lineage: `response.id → previous_response_id` 연결을 관찰
-- live conversation: 같은 `conversation.id`가 여러 Response에 연결되는 것을 관찰
-- 어느 경로도 privacy/compliance policy나 domain correctness를 대신 검증하지 않음
-
-## 2.8 흔한 오해
-
-### "`OpenAI()` client가 conversation을 기억한다"
-
-아니다. Context는 application이 다시 보내거나, `previous_response_id` 또는 Conversation resource로 명시적으로 연결한다.
-
-### "`output_text`만 transcript에 넣으면 항상 충분하다"
-
-Text-only case에는 가능할 수 있지만 Response에는 text 외 item이 존재할 수 있다. Manual history에서는 필요한 output item
-전체를 보존하는 이유를 이해해야 한다.
-
-### "Conversation을 쓰면 application state가 0이 된다"
-
-아니다. Application은 최소한 Conversation ID의 ownership과 lifecycle mapping을 관리한다.
-
-### "`store=False`는 모든 data retention을 끈다는 뜻이다"
-
-이번 chapter에서는 Response 저장 설정의 좁은 의미만 사용한다. broader data-control 판단은 별도 current policy surface를
-확인해야 한다.
-
-## 2.9 Practice
-
-### A. State trace
-
-다음 세 application state를 보고 mode를 분류하고, second request에 필요한 값을 적는다.
+다음 state만 보고 어떤 방식인지 분류한다.
 
 ```text
-1. [user item, output items, next user item]
-2. resp_123
-3. conv_456
+A. [user item, output items, next user item]
+B. resp_123
+C. conv_456
 ```
 
-### B. Design choice
+각 경우 두 번째 request가 prior context를 사용할 수 있게 만드는 값을 직접 적는다.
+그다음 각 방식에서 **application-owned state**와 **remote state lifetime**을 따로 적는다.
 
-다음 요구에 대해 ownership model을 선택하고 이유를 설명한다.
+## Checkpoint
 
-- application DB가 이미 canonical chat history를 소유한다.
-- 한 process 안에서 직전 answer를 이어 가는 간단한 assistant다.
-- 여러 device에서 같은 long-running support conversation을 이어야 한다.
+세 방식 중 하나를 선택해 다음 requirement를 설계한다.
 
-API 이름보다 **누가 state를 소유해야 하는지**를 근거로 답한다.
+> 여러 process restart 이후에도 같은 support session을 이어야 한다.
 
-### C. Debugging
-
-Follow-up이 prior context를 전혀 반영하지 않는다. 다음 순서로 조사한다.
-
-```text
-application이 기대한 state를 실제로 보관했는가?
-→ second call에 연결 argument가 들어갔는가?
-→ 연결한 resource/ID가 의도한 것인가?
-→ 그 뒤에야 model output을 해석한다
-```
-
-## Assessment checkpoint
-
-다음을 독립적으로 할 수 있으면 통과한다.
-
-1. 세 ownership model에서 **call 사이에 application이 보관하는 state**를 정확히 그린다.
-2. "대화를 이어야 한다"는 요구 하나를 받아 manual / lineage / Conversation 중 하나를 선택하고, persistence와 control
-   trade-off를 설명한다.
-3. Preview evidence와 live API evidence를 구분한다.
+선택한 방식에서 application이 반드시 보관해야 하는 state, remote state의 lifetime, cleanup 책임을 함께 설명한다.
+정답은 API 이름보다 ownership과 lifecycle requirement에 달려 있다.
