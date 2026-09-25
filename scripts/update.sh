@@ -9,8 +9,11 @@ if ! command -v mise >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "==> [update] Updating repository-local tool pins with mise..."
-mise upgrade --bump --local
+echo "==> [update] Updating Python within the repository-supported 3.14 series..."
+mise use --pin python@3.14
+
+echo "==> [update] Updating other repository-local tool pins with mise..."
+mise upgrade --bump --local --exclude python
 eval "$(mise env -s bash 2>/dev/null)" || true
 
 echo "==> [update] Updating root Python dependencies and lockfile..."
