@@ -26,6 +26,12 @@ if [[ -d "tools/dataset_generator" ]]; then
   env -u VIRTUAL_ENV uv sync --project tools/dataset_generator --locked
 fi
 
+if [[ -d "decks/ai-openai_sdk" ]]; then
+  echo "==> [update] Updating decks/ai-openai_sdk dependencies and lockfile..."
+  env -u VIRTUAL_ENV uv lock --upgrade --project decks/ai-openai_sdk
+  env -u VIRTUAL_ENV uv sync --project decks/ai-openai_sdk --locked
+fi
+
 echo "==> [update] Updating rulesync external dependencies..."
 rulesync install
 
