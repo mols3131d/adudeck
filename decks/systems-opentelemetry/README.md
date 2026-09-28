@@ -37,8 +37,8 @@ process와 service 경계를 하나씩 추가한다.
 - terminal에서 Python program을 실행하고 dependency를 설치할 수 있다.
 - process, environment variable, HTTP request/response의 기본 개념을 알고 있다.
 
-Distributed Systems 전체나 observability backend 사용 경험은 prerequisite가 아니다. 필요한 network/process boundary는 해당
-unit에서 최소 범위로 다룬다.
+Distributed Systems 전체나 observability backend 사용 경험은 prerequisite가 아니다. 필요한 network/process boundary는
+해당 unit에서 최소 범위로 다룬다.
 
 ## Learning scope
 
@@ -98,8 +98,8 @@ uv run textbook/00-first-trace/first_trace.py
 
 이 deck의 Python dependency range는 [`pyproject.toml`](pyproject.toml)이 소유한다.
 
-현재 PR은 incremental build 중인 draft이므로 committed `uv.lock`과 repository smoke test는 아직 calibration gap으로 남겨 둔다.
-Unit 0의 runtime contract를 고정한 뒤 lockfile과 deterministic validation을 추가한다.
+현재 PR은 incremental build 중인 draft이므로 committed `uv.lock`과 repository smoke test는 아직 calibration gap으로 남겨
+둔다. Unit 0의 runtime contract를 고정한 뒤 lockfile과 deterministic validation을 추가한다.
 
 ## Version baseline
 

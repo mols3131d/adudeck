@@ -133,8 +133,8 @@ Span
 
 ## 6. Variation · current context를 끊어 본다
 
-이제 [`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` span의 `with` block 밖으로 옮긴다.
-다른 코드는 바꾸지 않는다.
+이제 [`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` span의 `with` block 밖으로
+옮긴다. 다른 코드는 바꾸지 않는다.
 
 실행 전에 먼저 예측한다.
 
