@@ -1,18 +1,94 @@
-# PR #33 · OpenTelemetry deck 남은 작업
+# PR #33 · OpenTelemetry 덱 잔여 작업 보고서
 
-2026-10-01 기준 작업 인계 메모다. Curriculum과 진행 상태의 기준은
-[deck README](../../decks/systems-opentelemetry/README.md)이며, 이 문서는 후속 작업을 위한 임시 정리다.
+작성일: 2026-10-01. 갱신일: 2026-10-02.
+
+현재 구현은 Unit 0–2까지다. 우선 Unit 2 검토 사항과 저장소 환경 관리 누락을 보완한 뒤,
+Unit 3–9를 작은 단위로 구현하고 최종 통합 검토를 진행한다.
+
+Curriculum과 진행 상태의 기준은 [덱 README](../../decks/systems-opentelemetry/README.md)다.
+이 보고서는 임시 작업 인계 자료이며, 커리큘럼이나 PR 범위를 독자적으로 변경하지 않는다.
 
 ## 현재 상태
 
 - PR: [#33 · feat(opentelemetry): build hands-on learning deck](https://github.com/mols3131d/adudeck/pull/33)
 - Branch: `feat/opentelemetry-deck-foundation` → `main`, Draft.
 - 현재 구현: `00-intro` → `01-setup` → `02-first-trace`.
-- Unit 2 구현과 로컬 검토 완료: 첫 trace, identifier 관계, parent context 복원, context 변형, transfer 평가.
+- Unit 2 구현과 기존 로컬 검토 완료: 첫 trace, identifier 관계, parent context 복원, context 변형, transfer 평가.
+  후속 문서 검토에서 발견한 세 보완 항목은 아래 체크리스트에 남아 있다.
 - `uv.lock` 추가. Python 3.14.6, OpenTelemetry API/SDK 1.45.0으로 실행 검증.
 - 정상 실행과 context 변형을 실제 console JSON으로 검사하는 테스트 2개 통과.
 - Python 3.10+ 전체 matrix, 학습자 평가, Collector 전송, backend UI는 아직 검증하지 않았다.
 - Unit 3–9은 미구현이다. Deck 전체 완료를 선언하지 않는다.
+
+이번 갱신은 최신 PR 본문·코멘트, 덱 README, Unit 2 본문과 setup/update 스크립트를 대조한 문서 작업이다.
+위 실행 결과는 기존에 기록된 검증 이력이며, 이번 보고서 작성에서 runtime 테스트나 원격 CI를 재실행하지 않았다.
+
+## 실행 우선순위
+
+| 순서 | 작업 | 현재 상태 | 완료 기준 |
+| --- | --- | --- | --- |
+| 1 | Unit 2 문서 보완 | 검토 사항 세 개 미반영 | 식별자 비교와 컨텍스트 복원 문제의 의미가 명확하다. |
+| 2 | setup/update 환경 관리 연동 | OpenTelemetry 덱 처리 누락 확인 | 기존 explicit project 방식으로 환경 동기화·갱신을 처리하고 관련 검증을 통과한다. |
+| 3 | PR 범위와 조사 권고 판단 | 미결정 | Agent Asset 변경의 처리와 curriculum 변경 후보의 채택·보류를 기록한다. |
+| 4 | Unit 3 구현 | 미구현 | 성공·실패 의미와 telemetry 차이를 설명·실습·평가하고 실제 출력으로 검증한다. |
+| 5 | Unit 4–9 순차 구현 | 미구현 | 각 단위의 공통 acceptance를 충족한 뒤 다음 단위로 진행한다. |
+| 6 | 최종 통합 검토 | 미착수 | 학습 목표의 설명·실습·평가, 실행 검증, 최종 테스트·CI와 진행 상태가 일치한다. |
+
+Unit 3를 시작할 때는 framework, Collector, backend를 추가하지 않는다. 현재 local console 환경을 재사용한다.
+후속 단위의 상세 작업은 이 보고서의 Unit별 계획을 따른다.
+
+## 우선 보완 체크리스트
+
+### Unit 2 · 첫 트레이스
+
+대상: [첫 트레이스 교재](../../decks/systems-opentelemetry/textbook/02-first-trace/README.md).
+
+- [ ] **`service.name`과 동일 Resource를 구분한다.** 같은 서비스 이름은 같은 Resource나 프로세스라는 증거가 아니다.
+  관찰 항목은 서비스 이름의 일치를 확인하도록 바꾸고, 이 예제의 Resource 공유는 하나의 provider 구성으로 설명한다.
+- [ ] **적용 문제의 컨텍스트 조건을 명시한다.** 동기식 `start_as_current_span()` 블록을 중첩하고,
+  `import_job` 시작 전에는 활성 스팬이 없다고 가정한다. “스팬이 끝난 직후” 대신
+  “해당 `with` 블록을 빠져나온 직후”를 물어 종료와 컨텍스트 복원을 혼동하지 않게 한다.
+- [ ] **변형 실험에서 같은 실행 안의 관계를 묻는다.** “`trace_id`는 이전과 같을까?”를
+  “이번 실행에서도 `charge_payment`는 `checkout`과 같은 `trace_id`를 가질까?”로 바꾼다.
+
+보완 후 정상 실행과 들여쓰기 변형의 관계가 본문 설명과 일치하는지 확인한다.
+함수 호출만으로 스팬이 생기지 않는다는 반복 설명의 통합은 선택적인 가독성 개선이다.
+
+### 저장소 환경 관리와 PR 범위
+
+- [ ] [setup 스크립트](../../scripts/setup.sh)에 덱의 locked dependency 동기화를 연결한다.
+- [ ] [update 스크립트](../../scripts/update.sh)에 덱의 lockfile 갱신과 환경 동기화를 연결한다.
+- [ ] 변경한 shell 구문의 유효성을 확인하고, 덱 테스트로 갱신된 환경의 정상 실행과 변형 실험을 확인한다.
+  실제 setup/update를 실행하지 않았다면 구문 검사만으로 전체 workflow 검증을 주장하지 않는다.
+- [ ] 덱과 독립적인 ELI5 Skill 도입 등 Agent Asset 변경을 같은 PR에 유지할지 검토한다.
+  분리는 미확정이며, 결정 전 기존 변경을 제거하거나 이 보고서 작성만으로 별도 PR을 만들지 않는다.
+
+## 2026-10-02 조사 권고와 미결정 사항
+
+@mols3131d가 PR #33에 추가한 `OpenTelemetry textbook research — 2026-10-02` 코멘트를 요약한 작업 후보다.
+코멘트는 research evidence이며, 다음 권고가 채택된 curriculum이라는 뜻은 아니다.
+Version-sensitive 주장은 구현 시점의 공식 문서·specification과 실제 runtime으로 다시 확인한다.
+
+- [ ] **Semantic Conventions 학습 목표의 채택 여부를 결정한다.** 공통 이름·attribute·metric 단위가
+  instrumentation 간 의미를 맞추는 원리를 Unit 3·5·8에 연결하는 후보다. 채택하면 덱 README의 학습 목표와
+  평가 책임을 함께 갱신하고, 채택·보류 이유를 기록한다. 새 단위를 만드는 것이 전제는 아니다.
+- [ ] **Unit 3 실패 설명의 기준을 대조한다.** 코멘트는 `span status=Error`, 낮은 cardinality의 `error.type`,
+  exception의 log record 기록 방향을 권고한다. 기존 계획의 span exception event 실습과 최신 규약 사이의
+  차이·안정성·SDK 지원 여부를 확인하고, `record_exception()`을 유일하거나 영구적인 표준 경로로 설명하지 않는다.
+- [ ] **현재 범위 안에서 설명을 보강할지 검토한다.** 아래 후보는 해당 Unit 작성 시 누락 여부를 점검한다.
+
+| 대상 | 보강 후보 |
+| --- | --- |
+| Intro | OpenTelemetry의 생성·수집·전송 책임과 저장·검색·UI 백엔드의 책임을 명시한다. |
+| Unit 4 | Resource와 Instrumentation Scope를 구분하고 provider → processor → exporter의 역할을 연결한다. |
+| Unit 5 | manual, instrumentation library, zero-code의 차이와 framework span·business span의 상호 보완을 설명한다. |
+| Unit 6 | in-process Context와 cross-process Propagation을 구분한다. Baggage는 span attribute의 자동 전파가 아님을 밝힌다. |
+| Unit 7 | Collector component 선언과 `service.pipelines` 연결을 구분하는 실패 실험을 검토한다. |
+| Unit 8 | instrument 선택 근거와 attribute 조합에 따른 timeseries cardinality를 함께 관찰한다. |
+| Unit 9 | 고장을 하나씩 주입해 경계별 근거로 진단한다. 데이터 부재가 항상 pipeline 고장인 것은 아님을 sampling 언급으로 보완한다. |
+
+Logs 심화, advanced/tail sampling, production 운영으로 범위를 확대하지 않는다.
+공식 Demo 분석은 core 완료 후 선택 과제이며, Ready 전환과 merge는 별도 요청 사항이다.
 
 ## 2026-10-01 최신 tutorial 조사
 
@@ -70,7 +146,7 @@ Version은 기억이나 vendor tutorial의 pin을 그대로 사용하지 않고 
 
 ## 구현 전 repository 정리 후보
 
-Unit 3 착수 전 현재 PR의 repository consistency를 한 번 정리한다.
+Unit 3 착수 전 위 체크리스트에 따라 현재 PR의 repository consistency를 정리한다.
 
 1. `scripts/setup.sh`와 `scripts/update.sh`가 `decks/systems-opentelemetry`를 repository-managed uv project로 함께
    처리하도록 기존 explicit project pattern에 맞춰 보완한다.
@@ -82,6 +158,10 @@ Unit 3 착수 전 현재 PR의 repository consistency를 한 번 정리한다.
 ## 다음 착수 범위: Unit 3 · Span data와 failure evidence
 
 기존 Unit 2의 작은 local console 환경을 그대로 사용한다. Framework, Collector, backend는 아직 추가하지 않는다.
+
+아래 내용은 2026-10-01의 구현 계획이다. 구현 전에 위 2026-10-02 조사 권고와 대조해 예외 기록 방식의
+현재 규약과 SDK 동작을 확인한다. 특히 처리되거나 재시도된 예외를 작업의 최종 실패와 자동으로 동일시하지 않는다.
+학습 범위나 평가 목표를 바꾸는 결정은 먼저 덱 README에 반영하고, 보류한 후보를 확정된 요구처럼 구현하지 않는다.
 
 ### 학습 목표
 
@@ -242,6 +322,7 @@ Core completion 뒤에만 진행한다.
 7. vendor tutorial은 workflow 아이디어의 보조 근거로만 쓰고 technical contract는 official OpenTelemetry source로
    검증한다.
 8. Deck README의 build progress와 PR body의 validation claim을 실제 검증 범위까지만 갱신한다.
+9. 해당 학습 목표를 새로운 사례에 적용하는 문제와 스스로 판단할 기준을 제공한다.
 
 ## 최종 통합 검토와 완료 조건
 
@@ -251,7 +332,9 @@ Core completion 뒤에만 진행한다.
 - [ ] 교재가 독립적인 주 학습 자료로 역할을 하는지 검토한다.
 - [ ] 필요한 playground의 실제 실행과 관찰 evidence를 검증한다.
 - [ ] Curriculum 변경과 integration finding을 해결한다.
+- [ ] 조사 권고의 채택·보류를 기록하고, 채택된 목표가 설명·실습·평가에 반영됐는지 확인한다.
 - [ ] 완료 주장에 필요한 검증 한계를 해결하고, 남는 한계는 명시한다.
+  Python 3.10+ 지원 선언과 실제 실행한 버전의 범위, 학습자 평가 여부를 구분한다.
 - [ ] 최종 revision에 맞춰 전체 테스트와 CI 결과를 확인한다.
 - [ ] Deck README와 PR 본문을 최종 구현 상태로 갱신한다.
 
@@ -269,7 +352,7 @@ mise run test:opentelemetry-deck
 ```
 
 Repository guidance와 deck README를 읽고, 현재 head에서 미완료 범위를 재확인한 뒤 repository 정리 후보와 Unit 3부터
-진행한다.
+진행한다. 먼저 Unit 2 보완 체크리스트와 조사 권고의 결정 상태를 확인한다.
 
 ## Research references
 
