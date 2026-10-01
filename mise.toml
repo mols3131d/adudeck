@@ -79,6 +79,10 @@ run = "bash scripts/test.sh smoke"
 description = "Run dataset generator unit tests and CLI smoke test"
 run = "bash scripts/test.sh dataset-generator"
 
+[tasks."test:langfuse-deck"]
+description = "Run Langfuse deck credential-free contract tests"
+run = "bash scripts/test.sh langfuse-deck"
+
 [tasks."test:scripts"]
 description = "Validate repository shell script syntax"
 run = "bash scripts/test.sh scripts"
