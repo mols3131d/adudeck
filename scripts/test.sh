@@ -9,7 +9,7 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 if [[ "$#" -gt 1 ]]; then
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|scripts]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|scripts]" >&2
   exit 2
 fi
 
@@ -70,6 +70,17 @@ PY
   echo "==> [test:openai-sdk-deck] Locked deck validation passed."
 }
 
+run_langfuse_deck() {
+  echo "==> [test:langfuse-deck] Checking credential-free teaching contracts..."
+  local project_dir="decks/llmops-langfuse"
+
+  uv run python -m compileall -q "$project_dir/textbook"
+  uv run python "$project_dir/textbook/01-first-trace/test_first_trace.py"
+  uv run python "$project_dir/textbook/02-trace-design/test_trace_design.py"
+
+  echo "==> [test:langfuse-deck] Teaching contract tests passed."
+}
+
 run_scripts() {
   echo "==> [test:scripts] Checking shell script syntax..."
   bash -n scripts/*.sh
@@ -86,6 +97,9 @@ case "$TARGET" in
   openai-sdk-deck)
     run_openai_sdk_deck
     ;;
+  langfuse-deck)
+    run_langfuse_deck
+    ;;
   scripts)
     run_scripts
     ;;
@@ -93,11 +107,12 @@ case "$TARGET" in
     run_smoke
     run_dataset_generator
     run_openai_sdk_deck
+    run_langfuse_deck
     run_scripts
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, scripts" >&2
     exit 1
     ;;
 esac
