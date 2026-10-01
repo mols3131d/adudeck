@@ -382,7 +382,7 @@ python textbook/02-trace-design/test_trace_design.py
 
 ```text
 trace
-├─ gpt-5.6-user-18472
+├─ model-call-user-18472
 ├─ helper-1
 └─ helper-2
 ```
