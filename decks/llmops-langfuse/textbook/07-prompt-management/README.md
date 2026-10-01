@@ -73,25 +73,66 @@ staging_prompt = langfuse.get_prompt("support/refund-answer", label="staging")
 version_12 = langfuse.get_prompt("support/refund-answer", version=12)
 ```
 
-## 4. Prompt와 trace를 연결한다
+## 4. Prompt version을 실제 generation에 연결한다
 
-Experiment에서 “prompt v2가 더 좋았다”고 말하려면 실제 generation이 어떤 prompt version을 사용했는지 추적할 수 있어야
-한다.
+Experiment에서 “prompt v21이 더 좋았다”고 말하려면 실제 generation이 어떤 prompt version을 사용했는지 추적할 수 있어야 한다.
+Prompt를 fetch하고 compile만 해서는 그 관계가 자동으로 명확해지는 것이 아니다. LLM call과 prompt object를 연결한다.
 
-현재 SDK에서는 prompt object를 generation에 연결하거나 `propagate_attributes(prompt=prompt)` 같은 방식으로 child
-generation에 전파할 수 있다.
+OpenAI Responses API를 사용하는 예:
 
-Mental model:
+```python
+import os
 
-```text
-prompt version
-      ↓ linked
-actual generation
-      ↓
-trace / experiment
+from langfuse import get_client
+from langfuse.openai import OpenAI
+
+langfuse = get_client()
+client = OpenAI()
+
+prompt = langfuse.get_prompt(
+    "support/refund-answer",
+    type="chat",
+    label="production",
+)
+
+response = client.responses.create(
+    model=os.environ["OPENAI_MODEL"],
+    input=prompt.compile(
+        policy_days=14,
+        question="환불 기간은?",
+    ),
+    langfuse_prompt=prompt,
+)
+
+print(response.output_text)
 ```
 
-그 결과 UI에서 output을 볼 때 “이 응답을 만든 prompt는 무엇이었나?”를 추적하기 쉬워진다.
+여기서 서로 다른 세 값이 연결된다.
+
+```text
+prompt.name
++ prompt.version
+        ↓
+compiled runtime messages
+        ↓
+actual generation observation
+```
+
+그 결과 output을 조사할 때 “이 응답을 만든 prompt version은 무엇이었나?”를 trace에서 따라갈 수 있다.
+
+직접 generation observation을 만들 때는 observation의 `prompt=` argument로 연결할 수 있고, 여러 자동 계측 generation에 같은
+prompt를 전파해야 한다면 Python SDK 4.14+의 `propagate_attributes(prompt=prompt)`를 사용할 수 있다.
+
+```python
+from langfuse import propagate_attributes
+
+with propagate_attributes(prompt=prompt):
+    # 이 context에서 자동 계측으로 생기는 generation에
+    # 같은 prompt version linkage를 전파할 수 있다.
+    call_model()
+```
+
+Explicit `prompt` linkage와 context propagation은 같은 목적을 다른 instrumentation surface에서 해결한다.
 
 ## 5. Cache와 failure boundary
 
@@ -102,6 +143,7 @@ cache/fallback 기능을 제공하지만 application이 어떤 stale/fallback be
 
 - Langfuse가 잠시 unavailable이면 application은 실패해야 하는가?
 - cached production prompt를 계속 사용해도 되는가?
+- 첫 fetch부터 실패했을 때 explicit fallback을 허용할 것인가?
 - 특정 version pin이 필요한 batch experiment인가?
 
 기술 기능이 business policy를 자동으로 결정하지 않는다.
@@ -145,6 +187,7 @@ experiment comparison
 - historical refund dataset에서 먼저 검증하고 싶다.
 
 어떤 label/version을 fetch하고 어떤 experiment metadata를 남길지 설명한다.
+또 experiment trace에서 실제 prompt version linkage를 어떤 evidence로 확인할지도 정한다.
 
 ## 다음 장
 
