@@ -122,22 +122,48 @@ Langfuse
 
 ## Build state
 
-현재 textbook 0–8장은 초안 상태다. 전체를 한 번에 runnable tutorial로 확장하지 않고 각 hands-on mode를 작은 calibration
-slice로 검증한 뒤 다음 단위로 진행한다.
+현재 textbook 0–8장은 초안 상태다. 전체를 한 번에 runnable tutorial로 확장하지 않고 각 hands-on mode를 작은 learning
+slice로 구현·검증한 뒤 다음 단위로 진행한다.
 
-현재 calibration slice는 **1장 First Trace**다.
+현재 구현된 hands-on slice는 **1장 First Trace**와 **2장 Trace Design**이다.
+
+### Unit 1 · First Trace
 
 - deck-local `pyproject.toml`에 `langfuse>=4.16,<5` dependency contract를 추가했다.
 - `first_trace.py`는 nested baseline과 `--detach-search` variation을 같은 code path에서 비교한다.
 - stdout의 `trace_id`, `observation_id`, current-context evidence와 Langfuse UI를 함께 관찰하도록 구성했다.
 - `test_first_trace.py`는 external credential 없이 teaching code의 nesting/variation contract를 검증한다.
 - local syntax compile과 contract test 2개는 통과했다.
-- 현재 작업 환경의 network 제한 때문에 `uv.lock` 생성, Langfuse SDK 4.16.x 실제 실행, Cloud ingestion/UI 확인은 아직
-  검증하지 않았다. 이 항목을 완료하기 전에는 First Trace slice의 end-to-end acceptance를 선언하지 않는다.
+
+### Unit 2 · Trace Design
+
+- `trace_design.py`는 같은 support workflow를 서로 다른 user/session으로 실행한다.
+- stable mode는 `support-turn`, `search-policy`라는 operation name을 유지하고 run-specific identity는
+  `propagate_attributes()`의 `user_id`, `session_id`, tags, metadata로 분리한다.
+- `--unstable-names` variation은 application work와 correlation attributes는 그대로 둔 채 user ID만 observation name에
+  섞어 query dimension이 파편화되는 문제를 비교한다.
+- `test_trace_design.py`는 stable naming, cross-user grouping, propagated attribute contract를 credential 없이 검증한다.
+- local Python compile과 contract test 3개는 통과했다.
+- `mise run test:langfuse-deck` / `scripts/test.sh langfuse-deck`을 추가해 Unit 1–2의 credential-free tests를 fast CI
+  경로에 포함했다.
+
+### Validation boundary
+
+현재 작업 환경의 network 제한 때문에 다음은 아직 검증하지 않았다.
+
+- `uv.lock` 생성과 locked deck environment
+- Langfuse SDK 4.16.x의 실제 runtime execution
+- Langfuse Cloud ingestion과 UI tree/filter 확인
+- `propagate_attributes()`가 실제 exported observations에 남긴 결과
+- 이후 OpenAI-backed examples
+
+따라서 Unit 1–2는 **teaching code의 local contract는 검증됐지만 live Langfuse end-to-end acceptance는 아직 아니다.**
+Dependency lock을 신뢰성 있게 생성할 수 있는 환경에서 먼저 이 gap을 닫고, live API 호출은 repository automation policy에
+따라 기본 fast CI가 아니라 explicit smoke로 검증한다.
 
 ## Version baseline
 
-작성/검토 기준일: **2026-10-01**
+작성/검토 기준일: **2026-10-02**
 
 - Python: 3.10+
 - Langfuse Python SDK reviewed baseline: `4.16.0` (2026-09-30)
