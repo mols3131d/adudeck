@@ -36,6 +36,7 @@ Provider integration이 지원하면 이 중 상당수를 자동으로 수집할
 ## 2. OpenAI integration
 
 현재 Python SDK에서는 Langfuse의 OpenAI integration client를 사용할 수 있다.
+아래 예제는 현재 OpenAI의 Responses API를 사용한다.
 
 ```python
 import os
@@ -51,14 +52,14 @@ with langfuse.start_as_current_observation(
     name="support-turn",
     input={"question": "환불 기간은?"},
 ) as root:
-    response = client.chat.completions.create(
+    response = client.responses.create(
         model=os.environ["OPENAI_MODEL"],
-        messages=[
+        input=[
             {"role": "user", "content": "환불 기간은?"},
         ],
     )
 
-    answer = response.choices[0].message.content
+    answer = response.output_text
     root.update(output={"answer": answer})
 
 langfuse.flush()
@@ -67,6 +68,10 @@ langfuse.flush()
 이 code의 핵심은 OpenAI call이 자동으로 generation observation을 만들 수 있다는 점이다.
 Root business span은 “support turn”의 의미를 표현하고, provider integration은 그 안의 model call을 자세히 기록한다.
 
+`responses.create()`를 쓰는 이유는 Langfuse만의 선택이 아니다. 이 deck은 OpenAI 자체의 현재 primary API 흐름과
+Langfuse integration을 맞춰서 학습한다. 오래된 Chat Completions 예제가 존재하더라도 Langfuse 개념을 배우기 위해
+legacy API를 기본 경로로 되돌리지 않는다.
+
 ## 3. 자동화되는 것과 자동화되지 않는 것
 
 Integration이 잘할 수 있는 것:
@@ -74,7 +79,7 @@ Integration이 잘할 수 있는 것:
 ```text
 model call boundary
 model parameters
-messages
+input
 response
 usage
 latency
@@ -161,5 +166,5 @@ answer-request
 ## References
 
 - [Get Started with LLM Tracing](https://langfuse.com/docs/observability/get-started)
-- [Observability Overview](https://langfuse.com/docs/observability/overview)
+- [Evaluate with Datasets](https://langfuse.com/docs/evaluation/get-started/offline)
 - [Langfuse Python SDK](https://python.reference.langfuse.com/)
