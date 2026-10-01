@@ -1,8 +1,6 @@
-# Unit 2 · First Trace
+# 2장 · 첫 트레이스
 
-첫 실습의 목표는 OpenTelemetry 설정을 많이 배우는 것이 아니다.
-
-**한 process 안에서 세 operation이 어떤 parent/child 관계를 가진 telemetry가 되는지 직접 확인하는 것**이 목표다.
+첫 실습에서는 **한 프로세스 안에서 세 작업이 스팬으로 기록되고, 부모·자식 관계로 연결되는 과정**을 직접 확인한다.
 
 ```text
 checkout
@@ -10,20 +8,21 @@ checkout
 └─ charge_payment
 ```
 
-## Learning target
+## 학습 목표
 
-이 unit을 마치면 다음을 설명할 수 있어야 한다.
+이 장을 마치면 다음을 설명할 수 있어야 한다.
 
-- span과 trace가 무엇을 표현하는지 구분한다.
-- 같은 trace에 속한 span들이 어떤 identifier를 공유하는지 찾는다.
-- child span의 parent가 무엇인지 output에서 확인한다.
-- `start_as_current_span()`의 `current`가 다음 child span 생성에 왜 중요한지 설명한다.
+- 스팬과 트레이스가 무엇을 표현하는지 구분한다.
+- 같은 트레이스에 속한 스팬들이 어떤 식별자를 공유하는지 찾는다.
+- 자식 스팬의 부모가 무엇인지 출력에서 확인한다.
+- `start_as_current_span()`의 `current`가 다음 자식 스팬 생성에 왜 중요한지 설명한다.
 
-`Resource`, processor, exporter의 세부 책임은 아직 외우지 않는다. 이번에는 span 관계를 관찰할 수 있을 만큼만 사용한다.
+`Resource`, 스팬 처리기(processor), 전송기(exporter)의 세부 역할은 아직 외우지 않는다. 이번에는 스팬 관계를 관찰할 수
+있을 만큼만 사용한다.
 
-## 1. 먼저 code를 읽는다
+## 1. 먼저 코드를 읽는다
 
-[`first_trace.py`](first_trace.py)를 실행하기 전에 다음 control flow를 손으로 그린다.
+[`first_trace.py`](first_trace.py)를 실행하기 전에 다음 제어 흐름을 손으로 그린다.
 
 ```text
 checkout()
@@ -31,25 +30,25 @@ checkout()
   └─ charge_payment()
 ```
 
-각 함수는 `tracer.start_as_current_span()`으로 span을 시작한다.
+각 함수는 `tracer.start_as_current_span()`으로 스팬을 시작한다.
 
-중요한 점은 `with` block 안에서 span이 **current span**이 된다는 것이다. 그 안에서 다른 span을 시작하면 별도 parent를
-직접 지정하지 않아도 현재 context를 이용해 parent/child 관계가 만들어진다.
+중요한 점은 `with` 블록 안에서 스팬이 **현재 스팬(current span)**이 된다는 것이다. 그 안에서 다른 스팬을 시작하면 별도
+부모를 직접 지정하지 않아도 현재 컨텍스트를 이용해 부모·자식 관계가 만들어진다.
 
-함수 호출 관계만으로 telemetry가 연결되는 것은 아니다. `checkout()`이 호출한 함수라도 span을 만들지 않으면 그 함수의
-span record는 생기지 않는다. 반대로 함수 하나 안에서도 여러 operation에 각각 span을 만들 수 있다. 이번 code는
-함수와 operation의 경계를 같게 잡아 관계를 읽기 쉽게 만든 예다.
+함수 호출 관계만으로 텔레메트리가 연결되는 것은 아니다. `checkout()`이 호출한 함수라도 스팬을 만들지 않으면 그 함수의
+스팬 기록은 생기지 않는다. 반대로 함수 하나 안에서도 여러 작업에 각각 스팬을 만들 수 있다. 이번 코드는
+함수와 작업의 경계를 같게 잡아 관계를 읽기 쉽게 만든 예다.
 
-`checkout`의 `with`에 들어가면 current span은 `checkout`이다. `validate_cart`의 `with`에 들어갈 때 SDK는 이 context를
-parent로 사용하고, block 안에서는 `validate_cart`가 current span이 된다. 그 block을 나가면 이전 context인 `checkout`이
-복원된다. 그래서 다음에 시작하는 `charge_payment`는 `validate_cart`의 child가 아니라 `checkout`의 또 다른 child다.
-마지막으로 `checkout` block을 나가면 그 이전 context가 복원된다. 별도 parent 없이 시작한 이 script에서는 active parent가
-없는 상태로 돌아간다.
+`checkout`의 `with`에 들어가면 현재 스팬은 `checkout`이다. `validate_cart`의 `with`에 들어갈 때 SDK는 이 컨텍스트를
+부모로 사용하고, 블록 안에서는 `validate_cart`가 현재 스팬이 된다. 그 블록을 나가면 이전 컨텍스트인 `checkout`이
+복원된다. 그래서 다음에 시작하는 `charge_payment`는 `validate_cart`의 자식이 아니라 `checkout`의 또 다른 자식이다.
+마지막으로 `checkout` 블록을 나가면 그 이전 컨텍스트가 복원된다. 별도 부모 없이 시작한 이 스크립트에서는 활성 부모
+스팬이 없는 상태로 돌아간다.
 
-현재 script는 `SimpleSpanProcessor`와 `ConsoleSpanExporter`를 사용한다.
+현재 스크립트는 `SimpleSpanProcessor`와 `ConsoleSpanExporter`를 사용한다.
 
 ```text
-Span ends
+스팬 종료
    ↓
 SimpleSpanProcessor
    ↓
@@ -58,30 +57,30 @@ ConsoleSpanExporter
 stdout
 ```
 
-`SimpleSpanProcessor`는 학습 중 span 하나가 끝날 때 바로 관찰하기 쉽게 선택한 teaching setup이다. Network exporter를
-사용하는 일반 application에서는 batching이 더 적합할 수 있으며, 그 차이는 이후 unit에서 다룬다.
+`SimpleSpanProcessor`는 학습 중 스팬 하나가 끝날 때 바로 관찰하기 쉽게 선택한 학습용 설정이다. 네트워크로 전송하는
+exporter를 사용하는 일반 애플리케이션에서는 묶음 전송이 더 적합할 수 있으며, 그 차이는 이후 장에서 다룬다.
 
-## 2. Predict
+## 2. 실행 결과를 예측한다
 
 실행하기 전에 다음 질문에 답한다.
 
-1. span은 총 몇 개 만들어질까?
-2. 세 span의 `trace_id`는 같을까, 다를까?
-3. `validate_cart`의 parent는 어떤 span일까?
-4. `charge_payment`의 parent는 어떤 span일까?
-5. `checkout`에도 parent가 있을까?
+1. 스팬은 총 몇 개 만들어질까?
+2. 세 스팬의 `trace_id`는 같을까, 다를까?
+3. `validate_cart`의 부모는 어떤 스팬일까?
+4. `charge_payment`의 부모는 어떤 스팬일까?
+5. `checkout`에도 부모가 있을까?
 
-정확한 16진수 identifier 값을 맞히는 것이 아니다. **identifier 사이의 관계**를 예측한다.
+정확한 16진수 식별자 값을 맞히는 것이 아니다. **식별자 사이의 관계**를 예측한다.
 
-## 3. Run
+## 3. 실행한다
 
-먼저 [Setup](../01-setup/README.md)을 완료한다. Dependency를 준비한 deck root에서 실행한다.
+먼저 [환경 준비](../01-setup/README.md)를 완료한다. 의존 패키지를 준비한 덱 최상위 디렉터리에서 실행한다.
 
 ```bash
 uv run --locked textbook/02-first-trace/first_trace.py
 ```
 
-먼저 application output이 보이고, span이 끝날 때 `ConsoleSpanExporter`의 JSON output이 이어진다.
+먼저 애플리케이션 출력이 보이고, 스팬이 끝날 때 `ConsoleSpanExporter`의 JSON 출력이 이어진다.
 
 ```text
 validate_cart: ok
@@ -90,7 +89,7 @@ charge_payment: ok
 ...
 ```
 
-JSON 전체를 읽으려고 하지 말고 각 span에서 다음 field만 찾는다.
+JSON 전체를 읽으려고 하지 말고 각 스팬에서 다음 필드만 찾는다.
 
 ```text
 name
@@ -101,57 +100,57 @@ attributes
 resource.attributes.service.name
 ```
 
-## 4. Observe
+## 4. 결과를 관찰한다
 
-세 span을 작은 표로 직접 옮겨 적는다.
+세 스팬을 작은 표로 직접 옮겨 적는다.
 
-| span | trace_id | span_id | parent_id |
+| 스팬 | trace_id | span_id | parent_id |
 | --- | --- | --- | --- |
 | checkout |  |  |  |
 | validate_cart |  |  |  |
 | charge_payment |  |  |  |
 
-다음 invariant가 실제 output에서 성립하는지 확인한다.
+다음 불변 조건이 실제 출력에서 성립하는지 확인한다.
 
-- 세 span은 하나의 logical checkout execution을 표현한다.
-- child span은 자신만의 `span_id`를 가진다.
-- child의 `parent_id`는 parent span의 `span_id`와 연결된다.
-- `service.name`은 세 span 모두 같은 application resource에서 온 telemetry임을 보여준다.
+- 세 스팬은 하나의 논리적인 주문 처리 실행을 표현한다.
+- 자식 스팬은 자신만의 `span_id`를 가진다.
+- 자식의 `parent_id`는 부모 스팬의 `span_id`와 연결된다.
+- `service.name`은 세 스팬 모두 같은 애플리케이션 리소스에서 온 텔레메트리임을 보여준다.
 
-Output 순서만 보고 parent/child 관계를 판단하지 않는다. Child span은 parent보다 먼저 끝날 수 있으므로 console에 먼저
-export될 수 있다. 관계의 근거는 identifier다.
+출력 순서만 보고 부모·자식 관계를 판단하지 않는다. 자식 스팬은 부모보다 먼저 끝날 수 있으므로 콘솔에 먼저
+출력될 수 있다. 관계의 근거는 식별자다.
 
-## 5. Interpret
+## 5. 결과를 해석한다
 
-이 실습에서 trace를 다음처럼 이해하면 된다.
-
-```text
-Trace
-= 하나의 logical execution을 연결하는 span들의 관계
-```
-
-그리고 span은:
+이 실습에서 트레이스를 다음처럼 이해하면 된다.
 
 ```text
-Span
-= 그 execution 안의 한 operation에 대한 telemetry record
+트레이스
+= 하나의 논리적인 실행을 연결하는 스팬들의 관계
 ```
 
-따라서 `checkout`, `validate_cart`, `charge_payment`는 서로 다른 span이지만 같은 `trace_id`를 공유할 수 있다.
-`span_id`는 각각 다르고, `parent_id`가 tree structure를 만든다.
+그리고 스팬은:
 
-예를 들어 자신의 output에서 `checkout`의 `span_id`를 C, `validate_cart`를 V, `charge_payment`를 P라고 적어 보자.
-실제 값은 실행마다 달라지므로 여기서는 이름표로만 쓴다. V와 P의 `parent_id`가 모두 C라면 두 operation은 sibling이다.
-만약 P의 `parent_id`가 V라면 payment는 validation의 child다. 세 span의 `trace_id`가 같다는 정보만으로는 이 두 tree를
-구분할 수 없다. 먼저 `trace_id`로 같은 trace인지 확인하고, 다음에 `parent_id`를 각 `span_id`와 맞춰 tree를 복원한다.
+```text
+스팬
+= 그 실행 안의 한 작업에 대한 텔레메트리 기록
+```
 
-`service.name`이 같다는 것도 같은 trace라는 뜻은 아니다. 같은 application에서 checkout을 두 번 실행하면 service 이름은
-같아도 각 실행은 새 root span에서 시작하는 별도 trace가 될 수 있다. Service는 발생 주체를, trace는 연결된 실행을
-구분한다.
+따라서 `checkout`, `validate_cart`, `charge_payment`는 서로 다른 스팬이지만 같은 `trace_id`를 공유할 수 있다.
+`span_id`는 각각 다르고, `parent_id`가 트리 구조를 만든다.
 
-## 6. Variation · current context를 끊어 본다
+예를 들어 자신의 출력에서 `checkout`의 `span_id`를 C, `validate_cart`를 V, `charge_payment`를 P라고 적어 보자.
+실제 값은 실행마다 달라지므로 여기서는 이름표로만 쓴다. V와 P의 `parent_id`가 모두 C라면 두 작업은 형제 관계이다.
+만약 P의 `parent_id`가 V라면 결제는 검증의 자식이다. 세 스팬의 `trace_id`가 같다는 정보만으로는 이 두 트리를
+구분할 수 없다. 먼저 `trace_id`로 같은 트레이스인지 확인하고, 다음에 `parent_id`를 각 `span_id`와 맞춰 트리를 복원한다.
 
-이제 [`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` span의 `with` block 밖으로
+`service.name`이 같다는 것도 같은 트레이스라는 뜻은 아니다. 같은 애플리케이션에서 주문 처리를 두 번 실행하면 서비스
+이름은 같아도 각 실행은 새 루트 스팬에서 시작하는 별도 트레이스가 될 수 있다. 서비스는 발생 주체를, 트레이스는 연결된
+실행을 구분한다.
+
+## 6. 변형 실험 · 현재 컨텍스트를 끊어 본다
+
+이제 [`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` 스팬의 `with` 블록 밖으로
 옮긴다. 다른 코드는 바꾸지 않는다.
 
 실행 전에 먼저 예측한다.
@@ -162,31 +161,31 @@ Span
 
 다시 실행한 뒤 표를 새로 작성한다.
 
-이 variation의 목적은 “indentation을 바꾸면 output이 달라진다”가 아니다. `charge_payment()`가 실행될 때 **current span이
-존재하는가**가 새 span의 관계를 어떻게 바꾸는지 설명하는 것이 목적이다.
+이 변형 실험에서는 들여쓰기 자체보다 `charge_payment()` 실행 시점의 **현재 스팬 유무**에 주목한다.
+현재 스팬이 있는지에 따라 새 스팬의 관계가 어떻게 달라지는지 설명해 본다.
 
 실험이 끝나면 파일을 원래 상태로 되돌린다.
 
-판단할 때는 서로 다른 실행의 무작위 identifier 값을 비교하지 않는다. 두 번째 실행 안에서 `charge_payment`가
-`checkout`과 같은 `trace_id`를 가지는지, 그 `parent_id`가 `null`인지 확인한다. 현재 span이 없는 곳에서 시작한 payment는
-새 root가 된다. 함수가 여전히 `checkout()` 안에서 호출되어도 span의 parent를 정하는 current context는 이미 복원됐다.
+판단할 때는 서로 다른 실행의 무작위 식별자 값을 비교하지 않는다. 두 번째 실행 안에서 `charge_payment`가
+`checkout`과 같은 `trace_id`를 가지는지, 그 `parent_id`가 `null`인지 확인한다. 현재 스팬이 없는 곳에서 시작한 결제는
+새 루트 스팬이 된다. 함수가 여전히 `checkout()` 안에서 호출되어도 스팬의 부모를 정하는 현재 컨텍스트는 이미 복원됐다.
 
-## Checkpoint
+## 이해도 점검
 
-다음 질문에 자신의 말로 답할 수 있으면 이 unit의 목표를 달성한 것이다.
+다음 질문에 자신의 말로 답할 수 있으면 이 장의 목표를 달성한 것이다.
 
 1. `trace_id`와 `span_id`는 각각 무엇을 식별하는가?
-2. child span은 parent를 어떻게 알게 되었는가?
-3. console에 출력된 순서와 span tree가 반드시 같은 순서가 아닌 이유는 무엇인가?
-4. `charge_payment()`를 current span 밖으로 옮겼을 때 trace 관계가 달라진 이유는 무엇인가?
+2. 자식 스팬은 부모를 어떻게 알게 되었는가?
+3. 콘솔에 출력된 순서와 스팬 트리가 반드시 같은 순서가 아닌 이유는 무엇인가?
+4. `charge_payment()`를 현재 스팬 밖으로 옮겼을 때 트레이스 관계가 달라진 이유는 무엇인가?
 
-다음 slice에서는 span에 attribute와 failure evidence를 어떻게 남기고, “실패한 operation”을 telemetry에서 어떻게 읽을지
+다음 학습 단위에서는 스팬에 속성과 실패를 보여 주는 근거를 어떻게 남기고, “실패한 작업”을 텔레메트리에서 어떻게 읽을지
 다룬다.
 
-## Transfer check
+## 다른 사례에 적용하기
 
-다른 program에서 다음 span record를 발견했다고 하자. T, A, B, C, D는 실제 identifier 대신 붙인 이름표다.
-출력은 span이 끝난 순서로 나열되어 있다.
+다른 프로그램에서 다음 스팬 기록을 발견했다고 하자. T, A, B, C, D는 실제 식별자 대신 붙인 이름표다.
+출력은 스팬이 끝난 순서로 나열되어 있다.
 
 | name | trace_id | span_id | parent_id |
 | --- | --- | --- | --- |
@@ -195,12 +194,12 @@ Span
 | save_result | T | D | A |
 | import_job | T | A | null |
 
-1. 함수 이름이나 출력 순서에 기대지 않고 span tree를 그린다. 각 edge를 어떤 field로 판단했는지 설명한다.
-2. `parse_file`의 current-span block 안에서 `read_file`을 시작했다고 가정하자. `read_file`이 끝난 직후와
-   `parse_file`이 끝난 직후의 current span을 각각 예측한다.
-3. `save_result`만 `import_job`의 current-span block 밖에서 시작하도록 옮기면 어떤 관계가 바뀌는가?
+1. 함수 이름이나 출력 순서에 기대지 않고 스팬 트리를 그린다. 각 연결선을 어떤 필드로 판단했는지 설명한다.
+2. `parse_file`의 현재 스팬을 설정한 블록 안에서 `read_file`을 시작했다고 가정하자. `read_file`이 끝난 직후와
+   `parse_file`이 끝난 직후의 현재 스팬을 각각 예측한다.
+3. `save_result`만 `import_job`의 현재 스팬을 설정한 블록 밖에서 시작하도록 옮기면 어떤 관계가 바뀌는가?
    `read_file`과 `parse_file` 사이에서 유지되어야 할 관계도 설명한다.
 
-스스로 점검할 기준: root를 `parent_id`로 찾고 모든 edge를 identifier로 설명했는가? Block 종료를 parent context의
-복원과 연결했는가? Variation에서 바뀌는 span과 그대로 연결되는 span을 구분했는가? 답이 막히면 위의 current context
-설명과 자신의 실습 output을 다시 대조한다.
+스스로 점검할 기준: 루트를 `parent_id`로 찾고 모든 연결선을 식별자로 설명했는가? 블록 종료를 부모 컨텍스트의
+복원과 연결했는가? 변형 실험에서 바뀌는 스팬과 그대로 연결되는 스팬을 구분했는가? 답이 막히면 위의 현재 컨텍스트
+설명과 자신의 실습 출력을 다시 대조한다.
