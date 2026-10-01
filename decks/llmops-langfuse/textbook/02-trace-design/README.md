@@ -1,8 +1,7 @@
 # 2장 · 다시 찾을 수 있는 Trace 설계하기
 
-Trace가 보인다고 observability가 완성된 것은 아니다.
-몇 달 뒤에도 같은 operation을 묶어서 보고, 특정 user/session을 찾아가고, 실패 사례를 dataset이나 evaluator로 다시 사용할 수
-있어야 한다.
+Trace가 보인다고 observability가 완성된 것은 아니다. 몇 달 뒤에도 같은 operation을 묶어서 보고, 특정 user/session을
+찾아가고, 실패 사례를 dataset이나 evaluator로 다시 사용할 수 있어야 한다.
 
 이번 장에서는 같은 support operation을 두 user로 실행하면서 다음 질문을 다룬다.
 
@@ -260,8 +259,8 @@ output
 
 Root input/output은 trace 전체를 열었을 때 사람이 가장 먼저 이해해야 하는 요청과 최종 결과를 표현하는 편이 좋다.
 
-반대로 HTTP request object 전체, framework internal state, 대형 raw payload를 무조건 root input으로 넣으면 핵심 질문이 묻힐
-수 있다.
+반대로 HTTP request object 전체, framework internal state, 대형 raw payload를 무조건 root input으로 넣으면 핵심 질문이
+묻힐 수 있다.
 
 판단 기준은 다음처럼 잡을 수 있다.
 
@@ -351,8 +350,8 @@ export할 OpenTelemetry span attribute를 내보내기 전에 patch할 수 있�
 
 ## 10. Local contract test
 
-[`test_trace_design.py`](test_trace_design.py)는 credential이나 live Langfuse project 없이 teaching code의 설계 contract를
-검사한다.
+[`test_trace_design.py`](test_trace_design.py)는 credential이나 live Langfuse project 없이 teaching code의 설계
+contract를 검사한다.
 
 ```bash
 python textbook/02-trace-design/test_trace_design.py
