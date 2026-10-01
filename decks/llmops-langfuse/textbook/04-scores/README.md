@@ -73,7 +73,7 @@ with langfuse.start_as_current_observation(
     passed = "14일" in answer
     root.score_trace(
         name="policy-answer-correct",
-        value=1 if passed else 0,
+        value=1.0 if passed else 0.0,
         data_type="BOOLEAN",
         comment="deterministic keyword check",
     )
@@ -84,6 +84,9 @@ langfuse.flush()
 이 예제의 중요한 질문은 API 이름이 아니다.
 
 > `policy-answer-correct`는 어떤 rule의 결과이며, 그 rule은 어디에 정의되어 있는가?
+
+`BOOLEAN` score는 의미가 pass/fail이라는 뜻이다. 전송 값은 numeric 0/1 형태를 사용하더라도 evaluator의 semantic contract가
+Boolean이라는 점을 명시한다.
 
 ## 4. Score type을 선택한다
 
