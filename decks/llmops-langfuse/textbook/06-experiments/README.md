@@ -1,7 +1,6 @@
 # 6장 · Experiment로 변경 전후 비교하기
 
-Dataset이 같은 문제를 반복해서 낼 수 있게 해 준다면, experiment는 **application variant가 그 문제를 어떻게 푸는지**를
-비교한다.
+Dataset이 같은 문제를 반복해서 낼 수 있게 해 준다면, experiment는 **application variant가 그 문제를 어떻게 푸는지**를 비교한다.
 
 ```text
 dataset
@@ -25,6 +24,7 @@ scores
 ## 1. 가장 작은 experiment
 
 현재 Python SDK v4의 experiment runner는 local data에도 사용할 수 있다.
+첫 예제에서는 LLM 비용 없이 experiment의 control/data flow만 볼 수 있도록 작은 deterministic task를 사용한다.
 
 ```python
 from langfuse import get_client
@@ -38,8 +38,8 @@ local_data = [
 
 
 def task(*, item, **kwargs):
-    # 실제 tutorial에서는 application 함수를 호출한다.
-    return item["expected_output"]
+    left, right = item["input"].split(" + ")
+    return str(int(left) + int(right))
 
 
 result = langfuse.run_experiment(
@@ -51,8 +51,11 @@ result = langfuse.run_experiment(
 print(result.format())
 ```
 
-Runner는 각 item 실행을 trace로 만들기 때문에 실패 case를 aggregate table에서 끝내지 않고 실제 execution으로 내려가
-조사할 수 있다.
+중요한 점은 task가 `expected_output`을 읽어 그대로 반환하지 않는다는 것이다.
+Dataset의 expected output은 **정답 근거**, task는 **검증하려는 application**이다. 둘을 연결해 버리면 experiment가 스스로 정답을
+보는 leakage가 생긴다.
+
+Runner는 각 item 실행을 trace로 만들기 때문에 실패 case를 aggregate table에서 끝내지 않고 실제 execution으로 내려가 조사할 수 있다.
 
 ## 2. Evaluator 추가
 
@@ -81,6 +84,19 @@ result = langfuse.run_experiment(
 여기서 evaluator code는 **experiment process 안에서 실행되는 correctness logic**이다.
 Langfuse는 결과를 score로 연결하고 run을 비교하기 쉽게 만든다.
 
+이 세 책임을 섞지 않는다.
+
+```text
+dataset expected_output
+= 판단에 사용할 reference
+
+task
+= 검증할 application behavior
+
+evaluator
+= output과 reference를 비교하는 rule
+```
+
 ## 3. Hosted dataset
 
 Dataset을 Langfuse에 저장했다면:
@@ -95,8 +111,11 @@ result = dataset.run_experiment(
 )
 ```
 
-Hosted dataset은 팀이 같은 test cases와 historical versions를 공유하고 experiment들을 같은 dataset 기준으로 비교하기
-좋다.
+Hosted dataset은 팀이 같은 test cases와 historical versions를 공유하고 experiment들을 같은 dataset 기준으로 비교하기 좋다.
+
+Local data의 `item`은 dict이지만 hosted dataset의 task에는 `DatasetItem` object가 전달된다.
+실제 playground에서는 application function 앞에 얇은 adapter를 두어 dataset representation과 domain function signature를
+분리하는 편이 이해하기 쉽다.
 
 ## 4. 한 번에 하나의 중요한 조건을 바꾼다
 
@@ -153,8 +172,7 @@ aggregate score 확인
 
 ## 6. 비교 조건을 기록한다
 
-Experiment metadata에 application revision, prompt version, model/config 같은 비교 조건을 남기면 재현성과 해석이
-좋아진다.
+Experiment metadata에 application revision, prompt version, model/config 같은 비교 조건을 남기면 재현성과 해석이 좋아진다.
 
 ```python
 result = langfuse.run_experiment(
