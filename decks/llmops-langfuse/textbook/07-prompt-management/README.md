@@ -75,8 +75,9 @@ version_12 = langfuse.get_prompt("support/refund-answer", version=12)
 
 ## 4. Prompt version을 실제 generation에 연결한다
 
-Experiment에서 “prompt v21이 더 좋았다”고 말하려면 실제 generation이 어떤 prompt version을 사용했는지 추적할 수 있어야 한다.
-Prompt를 fetch하고 compile만 해서는 그 관계가 자동으로 명확해지는 것이 아니다. LLM call과 prompt object를 연결한다.
+Experiment에서 “prompt v21이 더 좋았다”고 말하려면 실제 generation이 어떤 prompt version을 사용했는지 추적할 수 있어야
+한다. Prompt를 fetch하고 compile만 해서는 그 관계가 자동으로 명확해지는 것이 아니다. LLM call과 prompt object를
+연결한다.
 
 OpenAI Responses API를 사용하는 예:
 
@@ -120,8 +121,8 @@ actual generation observation
 
 그 결과 output을 조사할 때 “이 응답을 만든 prompt version은 무엇이었나?”를 trace에서 따라갈 수 있다.
 
-직접 generation observation을 만들 때는 observation의 `prompt=` argument로 연결할 수 있고, 여러 자동 계측 generation에 같은
-prompt를 전파해야 한다면 Python SDK 4.14+의 `propagate_attributes(prompt=prompt)`를 사용할 수 있다.
+직접 generation observation을 만들 때는 observation의 `prompt=` argument로 연결할 수 있고, 여러 자동 계측 generation에
+같은 prompt를 전파해야 한다면 Python SDK 4.14+의 `propagate_attributes(prompt=prompt)`를 사용할 수 있다.
 
 ```python
 from langfuse import propagate_attributes
