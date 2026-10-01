@@ -1,6 +1,7 @@
 # 6장 · Experiment로 변경 전후 비교하기
 
-Dataset이 같은 문제를 반복해서 낼 수 있게 해 준다면, experiment는 **application variant가 그 문제를 어떻게 푸는지**를 비교한다.
+Dataset이 같은 문제를 반복해서 낼 수 있게 해 준다면, experiment는 **application variant가 그 문제를 어떻게 푸는지**를
+비교한다.
 
 ```text
 dataset
@@ -50,7 +51,8 @@ result = langfuse.run_experiment(
 print(result.format())
 ```
 
-Runner는 각 item 실행을 trace로 만들기 때문에 실패 case를 aggregate table에서 끝내지 않고 실제 execution으로 내려가 조사할 수 있다.
+Runner는 각 item 실행을 trace로 만들기 때문에 실패 case를 aggregate table에서 끝내지 않고 실제 execution으로 내려가
+조사할 수 있다.
 
 ## 2. Evaluator 추가
 
@@ -93,7 +95,8 @@ result = dataset.run_experiment(
 )
 ```
 
-Hosted dataset은 팀이 같은 test cases와 historical versions를 공유하고 experiment들을 같은 dataset 기준으로 비교하기 좋다.
+Hosted dataset은 팀이 같은 test cases와 historical versions를 공유하고 experiment들을 같은 dataset 기준으로 비교하기
+좋다.
 
 ## 4. 한 번에 하나의 중요한 조건을 바꾼다
 
@@ -150,7 +153,8 @@ aggregate score 확인
 
 ## 6. 비교 조건을 기록한다
 
-Experiment metadata에 application revision, prompt version, model/config 같은 비교 조건을 남기면 재현성과 해석이 좋아진다.
+Experiment metadata에 application revision, prompt version, model/config 같은 비교 조건을 남기면 재현성과 해석이
+좋아진다.
 
 ```python
 result = langfuse.run_experiment(

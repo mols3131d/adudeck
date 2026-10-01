@@ -75,9 +75,11 @@ version_12 = langfuse.get_prompt("support/refund-answer", version=12)
 
 ## 4. Prompt와 trace를 연결한다
 
-Experiment에서 “prompt v2가 더 좋았다”고 말하려면 실제 generation이 어떤 prompt version을 사용했는지 추적할 수 있어야 한다.
+Experiment에서 “prompt v2가 더 좋았다”고 말하려면 실제 generation이 어떤 prompt version을 사용했는지 추적할 수 있어야
+한다.
 
-현재 SDK에서는 prompt object를 generation에 연결하거나 `propagate_attributes(prompt=prompt)` 같은 방식으로 child generation에 전파할 수 있다.
+현재 SDK에서는 prompt object를 generation에 연결하거나 `propagate_attributes(prompt=prompt)` 같은 방식으로 child
+generation에 전파할 수 있다.
 
 Mental model:
 
@@ -93,8 +95,8 @@ trace / experiment
 
 ## 5. Cache와 failure boundary
 
-Prompt fetching을 runtime critical path로 만들 때는 external dependency가 하나 늘어난다.
-Langfuse SDK는 prompt cache/fallback 기능을 제공하지만 application이 어떤 stale/fallback behavior를 허용할지는 별도로 결정해야 한다.
+Prompt fetching을 runtime critical path로 만들 때는 external dependency가 하나 늘어난다. Langfuse SDK는 prompt
+cache/fallback 기능을 제공하지만 application이 어떤 stale/fallback behavior를 허용할지는 별도로 결정해야 한다.
 
 중요한 질문:
 

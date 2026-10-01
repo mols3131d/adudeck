@@ -164,7 +164,8 @@ child()
 
 ## 다음 장
 
-다음 장에서는 observation을 많이 만드는 법이 아니라 **나중에 사람이 읽고 evaluator가 사용할 수 있는 trace를 어떻게 설계할지** 다룬다.
+다음 장에서는 observation을 많이 만드는 법이 아니라
+**나중에 사람이 읽고 evaluator가 사용할 수 있는 trace를 어떻게 설계할지** 다룬다.
 
 ## References
 

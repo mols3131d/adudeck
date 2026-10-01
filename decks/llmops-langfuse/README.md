@@ -103,8 +103,8 @@ Langfuse
 + 변경 전후를 비교
 ```
 
-예를 들어 deterministic correctness rule이 Python 코드에 있다면 Langfuse score는 그 결과를 저장하고 비교하는 역할을 한다.
-Langfuse가 그 domain rule 자체를 대신 소유한다고 가정하지 않는다.
+예를 들어 deterministic correctness rule이 Python 코드에 있다면 Langfuse score는 그 결과를 저장하고 비교하는 역할을
+한다. Langfuse가 그 domain rule 자체를 대신 소유한다고 가정하지 않는다.
 
 ## 학습 방식
 
@@ -120,9 +120,9 @@ Langfuse가 그 domain rule 자체를 대신 소유한다고 가정하지 않는
 → 설명 또는 transfer 문제
 ```
 
-현재 commit은 **textbook 초안**이다. Code block은 최신 API를 기준으로 작성했지만 deck-local dependency lock과 실제 Langfuse
-Cloud/OpenAI 호출을 통한 end-to-end playground 검증은 아직 수행하지 않았다. 이후 calibration slice에서 실행 가능한 예제로
-옮길 때 별도로 검증한다.
+현재 commit은 **textbook 초안**이다. Code block은 최신 API를 기준으로 작성했지만 deck-local dependency lock과 실제
+Langfuse Cloud/OpenAI 호출을 통한 end-to-end playground 검증은 아직 수행하지 않았다. 이후 calibration slice에서 실행
+가능한 예제로 옮길 때 별도로 검증한다.
 
 ## Version baseline
 
@@ -132,7 +132,8 @@ Cloud/OpenAI 호출을 통한 end-to-end playground 검증은 아직 수행하�
 - Langfuse Python SDK reviewed baseline: `4.16.0` (2026-09-30)
 - Python SDK v4는 OpenTelemetry 기반이며 observations-first data model을 사용한다.
 - Python SDK v2 client API는 deprecated이며 새 instrumentation의 기본 경로로 사용하지 않는다.
-- v3 → v4 migration에서 observation API와 attribute propagation 방식이 바뀌었으므로 오래된 예제를 그대로 복사하지 않는다.
+- v3 → v4 migration에서 observation API와 attribute propagation 방식이 바뀌었으므로 오래된 예제를 그대로 복사하지
+  않는다.
 
 ## Source hierarchy
 

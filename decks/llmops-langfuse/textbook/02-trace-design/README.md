@@ -79,8 +79,8 @@ experiment:refund-v2
 
 ## 4. correlating attributes는 context로 전파한다
 
-Python SDK v4에서는 user/session/tags/metadata 같은 correlating attribute를 `propagate_attributes()`로 current context 아래에
-전파하는 방식이 중요하다.
+Python SDK v4에서는 user/session/tags/metadata 같은 correlating attribute를 `propagate_attributes()`로 current context
+아래에 전파하는 방식이 중요하다.
 
 ```python
 from langfuse import get_client, propagate_attributes
@@ -104,8 +104,8 @@ with langfuse.start_as_current_observation(
             pass
 ```
 
-v4의 observations-first model에서는 이런 correlating attributes가 child observations에도 함께 존재하는 것이 query와 분석에 유리하다.
-오래된 v3 tutorial의 `update_current_trace()` pattern을 새 코드의 기본 경로로 가져오지 않는다.
+v4의 observations-first model에서는 이런 correlating attributes가 child observations에도 함께 존재하는 것이 query와
+분석에 유리하다. 오래된 v3 tutorial의 `update_current_trace()` pattern을 새 코드의 기본 경로로 가져오지 않는다.
 
 ## 5. trace를 너무 잘게 쪼개지 않는다
 
@@ -143,11 +143,11 @@ LLM trace에는 prompt, response, retrieved text가 들어가기 쉽다.
 
 이다.
 
-현재 Python SDK는 export 단계의 `mask_otel_spans` hook을 권장한다.
-실제 production masking rule은 domain과 compliance 요구에 따라 달라지므로 이 초안에서는 특정 regex가 충분하다고 가정하지 않는다.
+현재 Python SDK는 export 단계의 `mask_otel_spans` hook을 권장한다. 실제 production masking rule은 domain과 compliance
+요구에 따라 달라지므로 이 초안에서는 특정 regex가 충분하다고 가정하지 않는다.
 
-또한 `@observe()`의 automatic input/output capture가 너무 넓다면 `capture_input=False`, `capture_output=False` 같은 option으로
-관찰 범위를 줄일 수 있다.
+또한 `@observe()`의 automatic input/output capture가 너무 넓다면 `capture_input=False`, `capture_output=False` 같은
+option으로 관찰 범위를 줄일 수 있다.
 
 ## 7. Trace design review
 

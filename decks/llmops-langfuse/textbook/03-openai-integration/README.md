@@ -124,8 +124,8 @@ quality ↓, cost ↓
 latency ↓, quality ↔
 ```
 
-같은 trade-off가 가능하다.
-Langfuse는 generation을 중심으로 usage/cost를 관찰할 수 있지만 “비싼 것이 나쁘다” 같은 정책은 application/evaluation 쪽에서 결정해야 한다.
+같은 trade-off가 가능하다. Langfuse는 generation을 중심으로 usage/cost를 관찰할 수 있지만 “비싼 것이 나쁘다” 같은 정책은
+application/evaluation 쪽에서 결정해야 한다.
 
 ## 6. Live API 실습의 경계
 
