@@ -62,7 +62,9 @@ class FakeLangfuse:
 
 
 class PropagationContext(AbstractContextManager[None]):
-    def __init__(self, recorder: "PropagationRecorder", attributes: dict[str, object]) -> None:
+    def __init__(
+        self, recorder: "PropagationRecorder", attributes: dict[str, object]
+    ) -> None:
         self.recorder = recorder
         self.attributes = attributes
 
@@ -106,6 +108,25 @@ class TraceDesignContractTest(unittest.TestCase):
             propagation.calls[0]["metadata"],
             {"app_revision": "abc123", "route": "/support"},
         )
+
+    def test_stable_names_group_different_users_under_same_operations(self) -> None:
+        first = record_trace_design(
+            FakeLangfuse(),
+            PropagationRecorder(),
+            user_id="user-18472",
+            session_id="session-refund-1",
+        )
+        second = record_trace_design(
+            FakeLangfuse(),
+            PropagationRecorder(),
+            user_id="user-88420",
+            session_id="session-refund-2",
+        )
+
+        self.assertEqual(first["root_name"], second["root_name"])
+        self.assertEqual(first["search_name"], second["search_name"])
+        self.assertNotEqual(first["user_id"], second["user_id"])
+        self.assertNotEqual(first["session_id"], second["session_id"])
 
     def test_unstable_names_change_grouping_but_not_correlation_attributes(self) -> None:
         client = FakeLangfuse()
