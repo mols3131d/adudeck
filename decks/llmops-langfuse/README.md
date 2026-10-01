@@ -120,9 +120,20 @@ Langfuse
 → 설명 또는 transfer 문제
 ```
 
-현재 commit은 **textbook 초안**이다. Code block은 최신 API를 기준으로 작성했지만 deck-local dependency lock과 실제
-Langfuse Cloud/OpenAI 호출을 통한 end-to-end playground 검증은 아직 수행하지 않았다. 이후 calibration slice에서 실행
-가능한 예제로 옮길 때 별도로 검증한다.
+## Build state
+
+현재 textbook 0–8장은 초안 상태다. 전체를 한 번에 runnable tutorial로 확장하지 않고 각 hands-on mode를 작은 calibration
+slice로 검증한 뒤 다음 단위로 진행한다.
+
+현재 calibration slice는 **1장 First Trace**다.
+
+- deck-local `pyproject.toml`에 `langfuse>=4.16,<5` dependency contract를 추가했다.
+- `first_trace.py`는 nested baseline과 `--detach-search` variation을 같은 code path에서 비교한다.
+- stdout의 `trace_id`, `observation_id`, current-context evidence와 Langfuse UI를 함께 관찰하도록 구성했다.
+- `test_first_trace.py`는 external credential 없이 teaching code의 nesting/variation contract를 검증한다.
+- local syntax compile과 contract test 2개는 통과했다.
+- 현재 작업 환경의 network 제한 때문에 `uv.lock` 생성, Langfuse SDK 4.16.x 실제 실행, Cloud ingestion/UI 확인은 아직
+  검증하지 않았다. 이 항목을 완료하기 전에는 First Trace slice의 end-to-end acceptance를 선언하지 않는다.
 
 ## Version baseline
 
