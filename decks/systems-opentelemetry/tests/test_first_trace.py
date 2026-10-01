@@ -1,4 +1,4 @@
-"""Check learner-visible console evidence in fresh processes, including Unit 0's edit."""
+"""Check learner-visible console evidence in fresh processes, including Unit 2's edit."""
 
 import json
 import os
@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "textbook/00-first-trace/first_trace.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "textbook/02-first-trace/first_trace.py"
 
 
 class FirstTraceTest(unittest.TestCase):

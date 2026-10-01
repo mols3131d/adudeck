@@ -1,4 +1,4 @@
-# Unit 0 · First Trace
+# Unit 2 · First Trace
 
 첫 실습의 목표는 OpenTelemetry 설정을 많이 배우는 것이 아니다.
 
@@ -75,11 +75,10 @@ stdout
 
 ## 3. Run
 
-Deck root에서 실행한다.
+먼저 [Setup](../01-setup/README.md)을 완료한다. Dependency를 준비한 deck root에서 실행한다.
 
 ```bash
-uv sync --locked
-uv run --locked textbook/00-first-trace/first_trace.py
+uv run --locked textbook/02-first-trace/first_trace.py
 ```
 
 먼저 application output이 보이고, span이 끝날 때 `ConsoleSpanExporter`의 JSON output이 이어진다.

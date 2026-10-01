@@ -70,35 +70,33 @@ Logs와 GenAI telemetry는 core tracing/metrics 경계를 이해한 뒤 별도 e
 
 | Unit | 핵심 질문 | Material |
 | --- | --- | --- |
-| 0. First trace | 한 process 안에서 span은 어떻게 trace로 연결되는가? | [Bundle](textbook/00-first-trace/README.md) |
-| 1. Span data + failure | span에는 어떤 상태와 실패 evidence를 남겨야 하는가? | planned |
-| 2. Resource + API/SDK | telemetry를 누가 만들고, 누가 실제로 처리하는가? | planned |
-| 3. Instrumentation | manual과 automatic instrumentation은 무엇이 다른가? | planned |
-| 4. Propagation | 두 service의 span은 어떻게 하나의 trace가 되는가? | planned |
-| 5. OTLP + Collector | telemetry가 application process 밖으로 어떻게 이동하는가? | planned |
-| 6. Metrics | 어떤 상태를 어떤 metric instrument로 표현해야 하는가? | planned |
-| 7. Diagnosis | telemetry가 끊겼을 때 어느 boundary부터 확인해야 하는가? | planned |
+| 0. Intro | 무엇을 관찰하고 어떤 질문에 답할 것인가? | [Intro](textbook/00-intro/README.md) |
+| 1. Setup | 같은 dependency 환경에서 실습을 시작할 수 있는가? | [Setup](textbook/01-setup/README.md) |
+| 2. First trace | 한 process 안에서 span은 어떻게 trace로 연결되는가? | [Bundle](textbook/02-first-trace/README.md) |
+| 3. Span data + failure | span에는 어떤 상태와 실패 evidence를 남겨야 하는가? | planned |
+| 4. Resource + API/SDK | telemetry를 누가 만들고, 누가 실제로 처리하는가? | planned |
+| 5. Instrumentation | manual과 automatic instrumentation은 무엇이 다른가? | planned |
+| 6. Propagation | 두 service의 span은 어떻게 하나의 trace가 되는가? | planned |
+| 7. OTLP + Collector | telemetry가 application process 밖으로 어떻게 이동하는가? | planned |
+| 8. Metrics | 어떤 상태를 어떤 metric instrument로 표현해야 하는가? | planned |
+| 9. Diagnosis | telemetry가 끊겼을 때 어느 boundary부터 확인해야 하는가? | planned |
 
-현재는 Unit 0 calibration slice만 구현한다. 이후 unit은 앞선 slice를 검토한 뒤 같은 PR에서 작은 increment로 추가한다.
-전체 unit이 구현되기 전에는 deck completion을 선언하지 않는다.
+Intro는 학습 목적과 기본 관찰 관점을, Setup은 환경 준비와 실행 확인을 담당한다. 그 뒤 First Trace에서 span 관계를
+직접 조사한다. Core 학습 목표와 후속 주제의 의존 순서는 유지한다.
+
+현재는 Intro, Setup과 First Trace calibration slice를 구현했다. 이후 unit은 앞선 slice를 검토한 뒤 같은 PR에서 작은
+increment로 추가한다. 전체 unit이 구현되기 전에는 deck completion을 선언하지 않는다.
 
 ## Start here
 
-Deck directory에서 dependency를 준비하고 첫 실습을 실행한다.
-
-```bash
-cd decks/systems-opentelemetry
-uv sync --locked
-uv run --locked textbook/00-first-trace/first_trace.py
-```
-
+[Intro](textbook/00-intro/README.md)를 읽고 [Setup](textbook/01-setup/README.md)을 진행한다.
 첫 실습에서는 external backend가 필요하지 않다. `ConsoleSpanExporter`가 span을 stdout에 출력한다.
 
 ## Dependency ownership
 
 이 deck의 Python dependency range는 [`pyproject.toml`](pyproject.toml)이 소유한다.
 
-[`uv.lock`](uv.lock)은 실제 실행 dependency를 고정한다. Dependency를 갱신할 때는 Unit 0의 정상 실행과 current context
+[`uv.lock`](uv.lock)은 실제 실행 dependency를 고정한다. Dependency를 갱신할 때는 Unit 2의 정상 실행과 current context
 변형을 다시 검증한다. Deck directory에서 다음 명령으로 console evidence의 관계를 검사할 수 있다.
 
 ```bash
@@ -111,12 +109,14 @@ instrumentation 없이 실행하고, sampling 등을 바꾸는 `OTEL_*` 설정�
 ## Build progress
 
 - Curriculum baseline: 이 README의 Goal, Prerequisites, Learning scope, Learning path.
-- Unit 0: 정상 실행과 호출 한 줄을 current span 밖으로 옮기는 변형을 검증했다. 세 span의 identifier 관계, attribute,
+- Unit 2: 정상 실행과 호출 한 줄을 current span 밖으로 옮기는 변형을 검증했다. 세 span의 identifier 관계, attribute,
   `service.name`을 실제 `ConsoleSpanExporter` output에서 확인했다.
 - 검증 환경: 2026-10-01, Python 3.14.6, OpenTelemetry API/SDK 1.45.0. Python 3.10+ 전체 matrix는 검증하지 않았다.
-- Unit 0의 설명, 예측, 관찰, 변형, checkpoint를 검토했다. 학습자 평가와 external backend 검증은 수행하지 않았다.
-- 다음 increment: Unit 1의 span data와 failure evidence. Unit 1–7은 미구현이며 deck 전체는 아직 완료되지 않았다.
-- 현재 curriculum 변경 후보와 slice 간 integration finding은 없다.
+- Unit 2의 설명, 예측, 관찰, 변형, checkpoint를 검토했다. 학습자 평가와 external backend 검증은 수행하지 않았다.
+- 다음 increment: Unit 3의 span data와 failure evidence. Unit 3–9은 미구현이며 deck 전체는 아직 완료되지 않았다.
+- 2026-10-01 curriculum 변경: `00-intro`, `01-setup`을 앞에 분리하고 기존 First Trace를 Unit 2로 옮겼다.
+  Setup의 실행 확인은 trace 해석의 prerequisite이며, identifier 관계의 설명·실습·평가는 Unit 2가 담당한다.
+  Intro와 Setup은 진입 준비를 확인하고, 기존 core 학습 목표의 평가 책임은 Unit 2–9에 유지한다.
 
 ## Version baseline
 
