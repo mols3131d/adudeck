@@ -1,7 +1,7 @@
 # 1장 · 첫 Trace와 Observation
 
-이번 장에서는 OpenAI나 LangChain을 붙이지 않는다.
-먼저 작은 Python 작업 하나를 Langfuse data model로 표현하고, **current observation context가 관계를 만드는 방식**을 직접 확인한다.
+이번 장에서는 OpenAI나 LangChain을 붙이지 않는다. 먼저 작은 Python 작업 하나를 Langfuse data model로 표현하고,
+**current observation context가 관계를 만드는 방식**을 직접 확인한다.
 
 ## 학습 목표
 
@@ -52,8 +52,8 @@ support-turn
 └─ search-policy
 ```
 
-두 observation이 같은 trace에 들어가고, `search-policy`가 끝난 뒤 current observation이 다시 `support-turn`으로 복원되는지
-확인한다.
+두 observation이 같은 trace에 들어가고, `search-policy`가 끝난 뒤 current observation이 다시 `support-turn`으로
+복원되는지 확인한다.
 
 그 다음 `--detach-search` variation에서는 `search-policy`를 root observation이 종료된 뒤 실행한다.
 
@@ -230,8 +230,8 @@ Decorator는 function input/output, timing, error를 자동으로 capture하기 
 
 ## 9. Local contract test
 
-[`test_first_trace.py`](test_first_trace.py)는 Langfuse Cloud credential 없이 실행할 수 있는 작은 contract test다.
-외부 SDK를 흉내 내는 fake client를 사용해 **우리 teaching code가 의도한 nesting과 variation을 정확히 수행하는지** 확인한다.
+[`test_first_trace.py`](test_first_trace.py)는 Langfuse Cloud credential 없이 실행할 수 있는 작은 contract test다. 외부
+SDK를 흉내 내는 fake client를 사용해 **우리 teaching code가 의도한 nesting과 variation을 정확히 수행하는지** 확인한다.
 
 ```bash
 python textbook/01-first-trace/test_first_trace.py
