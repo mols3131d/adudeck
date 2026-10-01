@@ -88,8 +88,8 @@ Deck directory에서 dependency를 준비하고 첫 실습을 실행한다.
 
 ```bash
 cd decks/systems-opentelemetry
-uv sync
-uv run textbook/00-first-trace/first_trace.py
+uv sync --locked
+uv run --locked textbook/00-first-trace/first_trace.py
 ```
 
 첫 실습에서는 external backend가 필요하지 않다. `ConsoleSpanExporter`가 span을 stdout에 출력한다.
@@ -98,8 +98,25 @@ uv run textbook/00-first-trace/first_trace.py
 
 이 deck의 Python dependency range는 [`pyproject.toml`](pyproject.toml)이 소유한다.
 
-현재 PR은 incremental build 중인 draft이므로 committed `uv.lock`과 repository smoke test는 아직 calibration gap으로 남겨
-둔다. Unit 0의 runtime contract를 고정한 뒤 lockfile과 deterministic validation을 추가한다.
+[`uv.lock`](uv.lock)은 실제 실행 dependency를 고정한다. Dependency를 갱신할 때는 Unit 0의 정상 실행과 current context
+변형을 다시 검증한다. Deck directory에서 다음 명령으로 console evidence의 관계를 검사할 수 있다.
+
+```bash
+uv run --locked python -m unittest discover -s tests -v
+```
+
+검사는 별도 process에서 실행하며 외부 `OTEL_*` 설정을 제거해 실습의 기본 SDK 환경을 유지한다. 직접 실습할 때도 별도
+instrumentation 없이 실행하고, sampling 등을 바꾸는 `OTEL_*` 설정이 없는 환경을 사용한다.
+
+## Build progress
+
+- Curriculum baseline: 이 README의 Goal, Prerequisites, Learning scope, Learning path.
+- Unit 0: 정상 실행과 호출 한 줄을 current span 밖으로 옮기는 변형을 검증했다. 세 span의 identifier 관계, attribute,
+  `service.name`을 실제 `ConsoleSpanExporter` output에서 확인했다.
+- 검증 환경: 2026-10-01, Python 3.14.6, OpenTelemetry API/SDK 1.45.0. Python 3.10+ 전체 matrix는 검증하지 않았다.
+- Unit 0의 설명, 예측, 관찰, 변형, checkpoint를 검토했다. 학습자 평가와 external backend 검증은 수행하지 않았다.
+- 다음 increment: Unit 1의 span data와 failure evidence. Unit 1–7은 미구현이며 deck 전체는 아직 완료되지 않았다.
+- 현재 curriculum 변경 후보와 slice 간 integration finding은 없다.
 
 ## Version baseline
 

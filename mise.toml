@@ -83,6 +83,10 @@ run = "bash scripts/test.sh dataset-generator"
 description = "Validate repository shell script syntax"
 run = "bash scripts/test.sh scripts"
 
+[tasks."test:opentelemetry-deck"]
+description = "Validate the locked OpenTelemetry deck and current-context experiment"
+run = "bash scripts/test.sh opentelemetry-deck"
+
 [tasks.test]
 description = "Run all repository test suites"
 run = "bash scripts/test.sh all"

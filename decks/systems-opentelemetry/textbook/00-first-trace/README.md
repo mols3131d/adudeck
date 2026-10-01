@@ -36,6 +36,16 @@ checkout()
 중요한 점은 `with` block 안에서 span이 **current span**이 된다는 것이다. 그 안에서 다른 span을 시작하면 별도 parent를
 직접 지정하지 않아도 현재 context를 이용해 parent/child 관계가 만들어진다.
 
+함수 호출 관계만으로 telemetry가 연결되는 것은 아니다. `checkout()`이 호출한 함수라도 span을 만들지 않으면 그 함수의
+span record는 생기지 않는다. 반대로 함수 하나 안에서도 여러 operation에 각각 span을 만들 수 있다. 이번 code는
+함수와 operation의 경계를 같게 잡아 관계를 읽기 쉽게 만든 예다.
+
+`checkout`의 `with`에 들어가면 current span은 `checkout`이다. `validate_cart`의 `with`에 들어갈 때 SDK는 이 context를
+parent로 사용하고, block 안에서는 `validate_cart`가 current span이 된다. 그 block을 나가면 이전 context인 `checkout`이
+복원된다. 그래서 다음에 시작하는 `charge_payment`는 `validate_cart`의 child가 아니라 `checkout`의 또 다른 child다.
+마지막으로 `checkout` block을 나가면 그 이전 context가 복원된다. 별도 parent 없이 시작한 이 script에서는 active parent가
+없는 상태로 돌아간다.
+
 현재 script는 `SimpleSpanProcessor`와 `ConsoleSpanExporter`를 사용한다.
 
 ```text
@@ -68,8 +78,8 @@ stdout
 Deck root에서 실행한다.
 
 ```bash
-uv sync
-uv run textbook/00-first-trace/first_trace.py
+uv sync --locked
+uv run --locked textbook/00-first-trace/first_trace.py
 ```
 
 먼저 application output이 보이고, span이 끝날 때 `ConsoleSpanExporter`의 JSON output이 이어진다.
@@ -131,6 +141,15 @@ Span
 따라서 `checkout`, `validate_cart`, `charge_payment`는 서로 다른 span이지만 같은 `trace_id`를 공유할 수 있다.
 `span_id`는 각각 다르고, `parent_id`가 tree structure를 만든다.
 
+예를 들어 자신의 output에서 `checkout`의 `span_id`를 C, `validate_cart`를 V, `charge_payment`를 P라고 적어 보자.
+실제 값은 실행마다 달라지므로 여기서는 이름표로만 쓴다. V와 P의 `parent_id`가 모두 C라면 두 operation은 sibling이다.
+만약 P의 `parent_id`가 V라면 payment는 validation의 child다. 세 span의 `trace_id`가 같다는 정보만으로는 이 두 tree를
+구분할 수 없다. 먼저 `trace_id`로 같은 trace인지 확인하고, 다음에 `parent_id`를 각 `span_id`와 맞춰 tree를 복원한다.
+
+`service.name`이 같다는 것도 같은 trace라는 뜻은 아니다. 같은 application에서 checkout을 두 번 실행하면 service 이름은
+같아도 각 실행은 새 root span에서 시작하는 별도 trace가 될 수 있다. Service는 발생 주체를, trace는 연결된 실행을
+구분한다.
+
 ## 6. Variation · current context를 끊어 본다
 
 이제 [`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` span의 `with` block 밖으로
@@ -149,6 +168,10 @@ Span
 
 실험이 끝나면 파일을 원래 상태로 되돌린다.
 
+판단할 때는 서로 다른 실행의 무작위 identifier 값을 비교하지 않는다. 두 번째 실행 안에서 `charge_payment`가
+`checkout`과 같은 `trace_id`를 가지는지, 그 `parent_id`가 `null`인지 확인한다. 현재 span이 없는 곳에서 시작한 payment는
+새 root가 된다. 함수가 여전히 `checkout()` 안에서 호출되어도 span의 parent를 정하는 current context는 이미 복원됐다.
+
 ## Checkpoint
 
 다음 질문에 자신의 말로 답할 수 있으면 이 unit의 목표를 달성한 것이다.
@@ -160,3 +183,25 @@ Span
 
 다음 slice에서는 span에 attribute와 failure evidence를 어떻게 남기고, “실패한 operation”을 telemetry에서 어떻게 읽을지
 다룬다.
+
+## Transfer check
+
+다른 program에서 다음 span record를 발견했다고 하자. T, A, B, C, D는 실제 identifier 대신 붙인 이름표다.
+출력은 span이 끝난 순서로 나열되어 있다.
+
+| name | trace_id | span_id | parent_id |
+| --- | --- | --- | --- |
+| read_file | T | C | B |
+| parse_file | T | B | A |
+| save_result | T | D | A |
+| import_job | T | A | null |
+
+1. 함수 이름이나 출력 순서에 기대지 않고 span tree를 그린다. 각 edge를 어떤 field로 판단했는지 설명한다.
+2. `parse_file`의 current-span block 안에서 `read_file`을 시작했다고 가정하자. `read_file`이 끝난 직후와
+   `parse_file`이 끝난 직후의 current span을 각각 예측한다.
+3. `save_result`만 `import_job`의 current-span block 밖에서 시작하도록 옮기면 어떤 관계가 바뀌는가?
+   `read_file`과 `parse_file` 사이에서 유지되어야 할 관계도 설명한다.
+
+스스로 점검할 기준: root를 `parent_id`로 찾고 모든 edge를 identifier로 설명했는가? Block 종료를 parent context의
+복원과 연결했는가? Variation에서 바뀌는 span과 그대로 연결되는 span을 구분했는가? 답이 막히면 위의 current context
+설명과 자신의 실습 output을 다시 대조한다.

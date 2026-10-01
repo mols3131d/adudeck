@@ -9,7 +9,7 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 if [[ "$#" -gt 1 ]]; then
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|scripts]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|opentelemetry-deck|scripts]" >&2
   exit 2
 fi
 
@@ -70,6 +70,12 @@ PY
   echo "==> [test:openai-sdk-deck] Locked deck validation passed."
 }
 
+run_opentelemetry_deck() {
+  echo "==> [test:opentelemetry-deck] Checking first trace and current-context variation..."
+  env -u VIRTUAL_ENV uv run --project decks/systems-opentelemetry --locked \
+    python -m unittest discover -s decks/systems-opentelemetry/tests -v
+}
+
 run_scripts() {
   echo "==> [test:scripts] Checking shell script syntax..."
   bash -n scripts/*.sh
@@ -89,15 +95,19 @@ case "$TARGET" in
   scripts)
     run_scripts
     ;;
+  opentelemetry-deck)
+    run_opentelemetry_deck
+    ;;
   all)
     run_smoke
     run_dataset_generator
     run_openai_sdk_deck
+    run_opentelemetry_deck
     run_scripts
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, opentelemetry-deck, scripts" >&2
     exit 1
     ;;
 esac
