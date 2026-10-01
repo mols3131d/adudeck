@@ -21,7 +21,8 @@
 후속 구현에서 version-sensitive 동작은 다음 기준으로 다시 검증한다.
 
 - OpenTelemetry Python API/SDK: `1.45.0` — 2026-09-25 release, Python 3.10+.
-- Python distro / instrumentation 계열: `0.66b0` — 2026-09-25 release. Contrib instrumentation은 Beta lifecycle을 가진다.
+- Python distro / instrumentation 계열: `0.66b0` — 2026-09-25 release. Contrib instrumentation은 Beta lifecycle을
+  가진다.
 - OTLP exporter: `1.45.0`.
 - OpenTelemetry Collector: `0.162.0` — 2026-09-29 release.
 - OpenTelemetry Demo: `3.1.0` — 2026-09-18 release. `3.0.0`은 load-generator licensing 문제로 사용하지 않는다.
@@ -31,9 +32,11 @@ Version은 기억이나 vendor tutorial의 pin을 그대로 사용하지 않고 
 ### 우선 참고할 tutorial / guide
 
 1. **OpenTelemetry official Python documentation**
-   - Getting Started, manual instrumentation, instrumentation libraries, zero-code, propagation, cookbook을 canonical behavior source로 사용한다.
-   - 현재 deck의 manual-first 학습 방식은 유지한다. Official five-minute quickstart는 Flask auto-instrumentation부터 시작하지만,
-     이 deck에서는 먼저 span/context 관계를 이해한 뒤 같은 application을 library/zero-code instrumentation으로 바꿔 비교한다.
+   - Getting Started, manual instrumentation, instrumentation libraries, zero-code, propagation, cookbook을 canonical
+     behavior source로 사용한다.
+   - 현재 deck의 manual-first 학습 방식은 유지한다. Official five-minute quickstart는 Flask auto-instrumentation부터
+     시작하지만, 이 deck에서는 먼저 span/context 관계를 이해한 뒤 같은 application을 library/zero-code
+     instrumentation으로 바꿔 비교한다.
 2. **OpenTelemetry Collector official Quick Start**
    - Collector를 receiver → processor → exporter pipeline으로 이해하는 Unit 7의 기준으로 사용한다.
    - 별도 backend 없이 OTLP receiver와 debug exporter에서 먼저 evidence를 확인한다.
@@ -50,7 +53,8 @@ Version은 기억이나 vendor tutorial의 pin을 그대로 사용하지 않고 
    - OTLP backend portability, service/resource naming, 실제 telemetry 질문 설계의 보조 참고로 사용한다.
    - archived Honeycomb Python distro나 vendor wrapper를 deck의 canonical setup으로 사용하지 않는다.
 7. **OpenTelemetry Demo 3.1.0**
-   - 처음부터 실행하는 tutorial이 아니라 Unit 9 이후 실제 multi-service reference implementation을 읽는 optional capstone으로 사용한다.
+   - 처음부터 실행하는 tutorial이 아니라 Unit 9 이후 실제 multi-service reference implementation을 읽는 optional
+     capstone으로 사용한다.
 
 ### 최신 동작에서 특히 주의할 점
 
@@ -59,8 +63,8 @@ Version은 기억이나 vendor tutorial의 pin을 그대로 사용하지 않고 
 - HTTP/database stable semantic conventions는 Python 1.44.0 / instrumentation 0.65b0부터 opt-in support가 있다.
   현재 instrumentation은 `OTEL_SEMCONV_STABILITY_OPT_IN`을 사용해 stable convention을 선택할 수 있으므로 Unit 5의
   learner-visible field를 검증할 때 convention mode를 명시해 version drift를 줄인다.
-- Exception 기록과 span status는 같은 개념이 아니다. Unit 3에서는 `record_exception()`과 `StatusCode.ERROR`가 각각 남기는
-  evidence를 분리해서 관찰하고, exact behavior는 SDK 1.45.0에서 실행 검증한다.
+- Exception 기록과 span status는 같은 개념이 아니다. Unit 3에서는 `record_exception()`과 `StatusCode.ERROR`가 각각
+  남기는 evidence를 분리해서 관찰하고, exact behavior는 SDK 1.45.0에서 실행 검증한다.
 - OTLP transport를 배울 때는 Python convenience meta-package보다 선택한 protocol의 구체 exporter package를 우선한다.
   이 deck에서는 HTTP/protobuf와 port 4318을 기본 후보로 삼아 gRPC 자체가 학습 노이즈가 되지 않게 한다.
 
@@ -68,11 +72,12 @@ Version은 기억이나 vendor tutorial의 pin을 그대로 사용하지 않고 
 
 Unit 3 착수 전 현재 PR의 repository consistency를 한 번 정리한다.
 
-1. `scripts/setup.sh`와 `scripts/update.sh`가 `decks/systems-opentelemetry`를 repository-managed uv project로 함께 처리하도록
-   기존 explicit project pattern에 맞춰 보완한다.
+1. `scripts/setup.sh`와 `scripts/update.sh`가 `decks/systems-opentelemetry`를 repository-managed uv project로 함께
+   처리하도록 기존 explicit project pattern에 맞춰 보완한다.
 2. OpenTelemetry deck 구현과 독립적인 repository-wide Agent Asset 변경은 같은 PR에 둘 필요가 있는지 다시 확인한다.
    별도 책임이라면 후속/별도 PR로 분리한다.
-3. Deck build state는 deck README를 canonical owner로 유지하고, 이 inbox 문서는 작업 인계에 필요한 planning detail만 둔다.
+3. Deck build state는 deck README를 canonical owner로 유지하고, 이 inbox 문서는 작업 인계에 필요한 planning detail만
+   둔다.
 
 ## 다음 착수 범위: Unit 3 · Span data와 failure evidence
 
@@ -96,7 +101,8 @@ Unit 3 착수 전 현재 PR의 repository consistency를 한 번 정리한다.
 1. 실행 전에 status, event, exception attribute가 어떻게 달라질지 예측한다.
 2. 성공 operation에 일반 attribute와 의미 있는 event를 남긴다.
 3. 통제된 exception case에서 `record_exception()`과 `set_status(StatusCode.ERROR)`의 결과를 관찰한다.
-4. console JSON에서 `status`, `events`, `exception.type`, `exception.message` 등 현재 SDK가 실제로 내보내는 evidence를 찾는다.
+4. console JSON에서 `status`, `events`, `exception.type`, `exception.message` 등 현재 SDK가 실제로 내보내는 evidence를
+   찾는다.
 5. parent/trace 관계는 Unit 2와 동일하게 유지되는지 확인한다.
 6. 한 가지 조건만 바꾼 variation으로 “exception을 기록했지만 status를 바꾸지 않은 경우” 또는 그 반대를 비교한다.
 7. 테스트는 process 성공 여부가 아니라 learner-visible span evidence 차이를 검사한다.
@@ -148,7 +154,8 @@ client → service A → HTTP → service B
 - W3C `traceparent`가 carrier를 통해 전달되는 evidence를 관찰한다.
 - propagation을 의도적으로 끊고 두 trace로 분리되는 것을 비교한다.
 - Baggage는 Trace Context와 역할이 다르다는 정도만 소개하고 core exercise로 확대하지 않는다.
-- framework/library instrumentation이 header inject/extract를 대신할 때도 current context가 핵심이라는 Unit 2 mental model을 유지한다.
+- framework/library instrumentation이 header inject/extract를 대신할 때도 current context가 핵심이라는 Unit 2 mental
+  model을 유지한다.
 
 ### Unit 7 · OTLP + Collector boundary
 
@@ -171,7 +178,8 @@ terminal
 
 ### Unit 8 · Metrics
 
-Official Python Metrics API를 canonical source로 하고 Better Stack 등의 실전 guide를 instrument-selection 사례로 교차검토한다.
+Official Python Metrics API를 canonical source로 하고 Better Stack 등의 실전 guide를 instrument-selection 사례로
+교차검토한다.
 
 Core instrument는 현재 outcome에 맞춰 세 개만 다룬다.
 
@@ -200,7 +208,8 @@ application
 → Grafana
 ```
 
-먼저 정상 trace/metric이 UI에서 앞선 raw evidence와 같은 execution을 가리키는지 확인한다. 그 다음 controlled failure를 준다.
+먼저 정상 trace/metric이 UI에서 앞선 raw evidence와 같은 execution을 가리키는지 확인한다. 그 다음 controlled failure를
+준다.
 
 - instrumentation 제거
 - propagation 단절
@@ -216,8 +225,8 @@ application
 Core completion 뒤에만 진행한다.
 
 - 공식 Astronomy Shop Demo를 처음부터 구축하지 않는다.
-- 이미 배운 instrumentation, propagation, Collector, Resource, metrics 개념이 실제 multi-language system에서 어디에 있는지
-  찾아보는 repository exploration 과제로 사용한다.
+- 이미 배운 instrumentation, propagation, Collector, Resource, metrics 개념이 실제 multi-language system에서 어디에
+  있는지 찾아보는 repository exploration 과제로 사용한다.
 - `3.0.0`은 사용하지 않고 current `3.1.0` 이상에서 다시 version을 확인한다.
 
 ## 각 increment의 공통 acceptance
@@ -230,7 +239,8 @@ Core completion 뒤에만 진행한다.
 4. 한 learning-relevant condition을 바꾸고 결과 차이와 invariant를 설명한다.
 5. 테스트는 command success가 아니라 learner-visible evidence를 검사한다.
 6. version-sensitive behavior는 current official source와 실제 runtime 양쪽에서 확인한다.
-7. vendor tutorial은 workflow 아이디어의 보조 근거로만 쓰고 technical contract는 official OpenTelemetry source로 검증한다.
+7. vendor tutorial은 workflow 아이디어의 보조 근거로만 쓰고 technical contract는 official OpenTelemetry source로
+   검증한다.
 8. Deck README의 build progress와 PR body의 validation claim을 실제 검증 범위까지만 갱신한다.
 
 ## 최종 통합 검토와 완료 조건
@@ -258,27 +268,28 @@ gh pr checks 33
 mise run test:opentelemetry-deck
 ```
 
-Repository guidance와 deck README를 읽고, 현재 head에서 미완료 범위를 재확인한 뒤 repository 정리 후보와 Unit 3부터 진행한다.
+Repository guidance와 deck README를 읽고, 현재 head에서 미완료 범위를 재확인한 뒤 repository 정리 후보와 Unit 3부터
+진행한다.
 
 ## Research references
 
 Canonical:
 
-- https://opentelemetry.io/docs/languages/python/
-- https://opentelemetry.io/docs/languages/python/getting-started/
-- https://opentelemetry.io/docs/languages/python/instrumentation/
-- https://opentelemetry.io/docs/languages/python/libraries/
-- https://opentelemetry.io/docs/zero-code/python/
-- https://opentelemetry.io/docs/languages/python/propagation/
-- https://opentelemetry.io/docs/collector/quick-start/
-- https://opentelemetry.io/docs/demo/
+- <https://opentelemetry.io/docs/languages/python/>
+- <https://opentelemetry.io/docs/languages/python/getting-started/>
+- <https://opentelemetry.io/docs/languages/python/instrumentation/>
+- <https://opentelemetry.io/docs/languages/python/libraries/>
+- <https://opentelemetry.io/docs/zero-code/python/>
+- <https://opentelemetry.io/docs/languages/python/propagation/>
+- <https://opentelemetry.io/docs/collector/quick-start/>
+- <https://opentelemetry.io/docs/demo/>
 
 Comparative tutorials:
 
-- https://grafana.com/docs/opentelemetry/docker-lgtm/
-- https://grafana.com/events/grafanacon/hands-on-labs/opentelemetry-instrumentation/
-- https://signoz.io/opentelemetry/python/
-- https://betterstack.com/community/guides/observability/opentelemetry-sdk/
-- https://betterstack.com/community/guides/observability/otel-metrics-python/
-- https://docs.honeycomb.io/send-data
-- https://uptrace.dev/get/opentelemetry-python
+- <https://grafana.com/docs/opentelemetry/docker-lgtm/>
+- <https://grafana.com/events/grafanacon/hands-on-labs/opentelemetry-instrumentation/>
+- <https://signoz.io/opentelemetry/python/>
+- <https://betterstack.com/community/guides/observability/opentelemetry-sdk/>
+- <https://betterstack.com/community/guides/observability/otel-metrics-python/>
+- <https://docs.honeycomb.io/send-data>
+- <https://uptrace.dev/get/opentelemetry-python>
