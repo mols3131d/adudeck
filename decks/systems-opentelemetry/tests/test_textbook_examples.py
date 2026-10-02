@@ -64,13 +64,19 @@ class TextbookExampleTest(unittest.TestCase):
             self.assertTrue(span["attributes"]["inventory.fallback_used"])
             self.assertNotIn("error.type", span["attributes"])
             self.assertNotEqual(span["status"]["status_code"], "ERROR")
+            self.assertEqual(span["events"], [])
 
         payment_spans = [span for span in spans if span["name"] == "charge_payment"]
         failed_payment = next(span for span in payment_spans if "error.type" in span["attributes"])
         successful_payment = next(span for span in payment_spans if "error.type" not in span["attributes"])
         self.assertEqual(failed_payment["status"]["status_code"], "ERROR")
+        self.assertEqual(failed_payment["status"]["description"], "issuer declined payment")
         self.assertEqual(failed_payment["attributes"]["error.type"], "__main__.PaymentDeclined")
+        exception_events = [event for event in failed_payment["events"] if event["name"] == "exception"]
+        self.assertEqual(len(exception_events), 1)
+        self.assertEqual(exception_events[0]["attributes"]["exception.message"], "issuer declined payment")
         self.assertNotEqual(successful_payment["status"]["status_code"], "ERROR")
+        self.assertEqual(successful_payment["events"], [])
 
         checkout_spans = [span for span in spans if span["name"] == "checkout"]
         failed_checkout = next(span for span in checkout_spans if span["attributes"]["checkout.result"] == "failed")
@@ -123,9 +129,11 @@ class TextbookExampleTest(unittest.TestCase):
         self.assertIsNotNone(server.stdout)
         selector = selectors.DefaultSelector()
         selector.register(server.stdout, selectors.EVENT_READ)
+        server_output: list[str] = []
         try:
             self.assertTrue(selector.select(timeout=5), "service B did not announce readiness")
             ready = server.stdout.readline()
+            server_output.append(ready)
             self.assertIn(f"127.0.0.1:{port}", ready)
 
             command = [sys.executable, str(TEXTBOOK / "06-propagation/client.py"), "--port", str(port)]
@@ -142,41 +150,70 @@ class TextbookExampleTest(unittest.TestCase):
             self.assertEqual(client.stderr, "")
             self.assertEqual(re.search(r"response=ok", client.stdout).group(0), "response=ok")
 
-            self.assertTrue(selector.select(timeout=5), "service B did not emit request evidence")
-            service_line = server.stdout.readline()
-            self.assertRegex(service_line, r"service-b trace_id=[0-9a-f]{32} span_id=[0-9a-f]{16}")
-            time.sleep(0.05)
+            deadline = time.monotonic() + 5
+            complete = False
+            while time.monotonic() < deadline:
+                remaining = deadline - time.monotonic()
+                if not selector.select(timeout=max(remaining, 0)):
+                    break
+                line = server.stdout.readline()
+                if not line:
+                    break
+                server_output.append(line)
+                if line.strip() == "service-b request complete":
+                    complete = True
+                    break
+            self.assertTrue(complete, "service B did not finish and export the request span")
         finally:
             selector.close()
             server.terminate()
             try:
-                remaining_out, _ = server.communicate(timeout=3)
+                remaining_out, remaining_err = server.communicate(timeout=3)
             except subprocess.TimeoutExpired:
                 server.kill()
-                remaining_out, _ = server.communicate(timeout=3)
+                remaining_out, remaining_err = server.communicate(timeout=3)
+            server_output.append(remaining_out)
+            self.assertEqual(remaining_err, "")
 
-        return client.stdout, service_line + remaining_out
+        return client.stdout, "".join(server_output)
 
     def test_context_propagation_connects_processes_and_drop_context_breaks_it(self) -> None:
         normal_client, normal_server = self.run_propagation_case(drop_context=False)
         dropped_client, dropped_server = self.run_propagation_case(drop_context=True)
 
         client_pattern = r"service-a trace_id=([0-9a-f]{32}) span_id=([0-9a-f]{16})"
-        server_pattern = r"service-b trace_id=([0-9a-f]{32}) span_id=([0-9a-f]{16})"
+        traceparent_pattern = r"traceparent=00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})"
 
         normal_a = re.search(client_pattern, normal_client)
-        normal_b = re.search(server_pattern, normal_server)
+        normal_traceparent = re.search(traceparent_pattern, normal_client)
         self.assertIsNotNone(normal_a)
-        self.assertIsNotNone(normal_b)
-        self.assertRegex(normal_client, r"traceparent=00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}")
-        self.assertEqual(normal_a.group(1), normal_b.group(1))
+        self.assertIsNotNone(normal_traceparent)
+        self.assertEqual(normal_traceparent.group(1), normal_a.group(1))
+        self.assertEqual(normal_traceparent.group(2), normal_a.group(2))
+
+        normal_server_spans = [
+            value
+            for value in json_objects(normal_server)
+            if value.get("name") == "service_b.handle" and value.get("context")
+        ]
+        self.assertEqual(len(normal_server_spans), 1)
+        normal_b = normal_server_spans[0]
+        self.assertEqual(normal_b["context"]["trace_id"], f"0x{normal_a.group(1)}")
+        self.assertEqual(normal_b["parent_id"], f"0x{normal_a.group(2)}")
 
         dropped_a = re.search(client_pattern, dropped_client)
-        dropped_b = re.search(server_pattern, dropped_server)
         self.assertIsNotNone(dropped_a)
-        self.assertIsNotNone(dropped_b)
         self.assertIn("traceparent=<not injected>", dropped_client)
-        self.assertNotEqual(dropped_a.group(1), dropped_b.group(1))
+
+        dropped_server_spans = [
+            value
+            for value in json_objects(dropped_server)
+            if value.get("name") == "service_b.handle" and value.get("context")
+        ]
+        self.assertEqual(len(dropped_server_spans), 1)
+        dropped_b = dropped_server_spans[0]
+        self.assertNotEqual(dropped_b["context"]["trace_id"], f"0x{dropped_a.group(1)}")
+        self.assertIsNone(dropped_b["parent_id"])
 
 
 if __name__ == "__main__":
