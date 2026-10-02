@@ -93,8 +93,8 @@ Logs와 GenAI telemetry는 core tracing/metrics 경계를 이해한 뒤 별도 e
 
 이 deck의 core Python dependency range는 [`pyproject.toml`](pyproject.toml)이 소유한다.
 
-[`uv.lock`](uv.lock)은 core tracing/metrics 실습의 실제 실행 dependency를 고정한다. Unit 5의 Flask/zero-code 비교와 Unit 7의
-OTLP HTTP exporter는 해당 장에서 version을 명시한 `uv --with` 환경으로 격리한다. 이 보조 환경은 deck lockfile과 같은
+[`uv.lock`](uv.lock)은 core tracing/metrics 실습의 실제 실행 dependency를 고정한다. Unit 5의 Flask/zero-code 비교와 Unit
+7의 OTLP HTTP exporter는 해당 장에서 version을 명시한 `uv --with` 환경으로 격리한다. 이 보조 환경은 deck lockfile과 같은
 validation claim을 갖지 않는다.
 
 Deck directory에서 현재 repository-managed runtime test를 실행할 수 있다.
@@ -114,7 +114,8 @@ uv run --locked python -m unittest discover -s tests -v
   repository lockfile 기준의 정식 acceptance와 CI 확장은 아직 남아 있다.
 - Unit 5의 Flask/zero-code와 Unit 7의 OTLP/Collector는 external dependency/container boundary를 사용하므로 full runtime
   validation을 별도로 수행해야 한다.
-- Unit 9는 앞선 unit의 evidence를 재사용하는 diagnostic synthesis다. Backend UI 자체는 core completion claim에 포함하지 않는다.
+- Unit 9는 앞선 unit의 evidence를 재사용하는 diagnostic synthesis다. Backend UI 자체는 core completion claim에 포함하지
+  않는다.
 - 전체 deck completion은 textbook 존재가 아니라 outcome coverage, runtime validation boundary, integration review가 모두
   충족된 뒤 선언한다.
 
