@@ -33,13 +33,6 @@
         "text-humanize-korean",
         "mols-code-comprehension-refactor"
       ]
-    },
-    {
-      "source": "https://github.com/dreambigou/eli5.git",
-      "transport": "git",
-      "ref": "main",
-      "path": "skills",
-      "skills": ["eli5"]
     }
   ],
   "outputRoots": ["."],
