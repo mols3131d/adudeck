@@ -8,14 +8,19 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, Sp
 
 
 class ScopeSummaryExporter(SpanExporter):
-    """Teaching probe that exposes Instrumentation Scope for each finished span."""
+    """Teaching probe that exposes scope and relationship evidence immediately."""
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         for span in spans:
             scope = span.instrumentation_scope
+            context = span.context
+            parent_id = f"{span.parent.span_id:016x}" if span.parent else "<root>"
             print(
                 "scope-summary",
                 f"span={span.name}",
+                f"trace_id={context.trace_id:032x}",
+                f"span_id={context.span_id:016x}",
+                f"parent_id={parent_id}",
                 f"scope={scope.name if scope else '<none>'}",
                 f"scope.version={scope.version if scope and scope.version else '<none>'}",
                 flush=True,
