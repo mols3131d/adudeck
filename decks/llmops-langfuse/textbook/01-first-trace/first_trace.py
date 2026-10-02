@@ -79,7 +79,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--detach-search",
         action="store_true",
-        help="Run search-policy after the root observation closes, creating a separate trace.",
+        help=(
+            "Run search-policy after the Langfuse root closes. In this standalone "
+            "lab no outer active OpenTelemetry parent is created, so it is expected "
+            "to start a separate trace."
+        ),
     )
     return parser.parse_args()
 
