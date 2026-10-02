@@ -6,7 +6,8 @@
 
 ## 목표
 
-PR #33을 단순히 CI가 통과하는 상태가 아니라, 현재 deck curriculum이 요구하는 핵심 hands-on outcome을 실제 evidence로 검증하고 textbook factual/learning gap과 repository integration gap을 닫은 **merge-ready 상태**로 만든다.
+PR #33을 단순히 CI가 통과하는 상태가 아니라, 현재 deck curriculum이 요구하는 핵심 hands-on outcome을 실제 evidence로
+검증하고 textbook factual/learning gap과 repository integration gap을 닫은 **merge-ready 상태**로 만든다.
 
 Merge-ready 판정은 다음을 모두 만족해야 한다.
 
@@ -18,7 +19,8 @@ Merge-ready 판정은 다음을 모두 만족해야 한다.
 - latest PR head의 `ci/validated`가 success
 - final integration self-review에서 새 merge blocker가 발견되지 않음
 
-Canonical curriculum/build state는 `decks/systems-opentelemetry/README.md`와 `textbook/README.md`가 소유한다. 이 문서는 작업 계획과 완료 evidence만 기록한다.
+Canonical curriculum/build state는 `decks/systems-opentelemetry/README.md`와 `textbook/README.md`가 소유한다. 이 문서는
+작업 계획과 완료 evidence만 기록한다.
 
 ## 원칙
 
@@ -35,7 +37,8 @@ Canonical curriculum/build state는 `decks/systems-opentelemetry/README.md`와 `
 ### A1. Unit 9 trace/metric correlation claim 좁히기
 
 - [ ] metric series/resource/time-window correlation과 trace/span execution identity를 구분한다.
-- [ ] exemplar를 가르치지 않는 현재 curriculum에서는 “trace/metric identity로 같은 logical execution 연결” 표현을 제거한다.
+- [ ] exemplar를 가르치지 않는 현재 curriculum에서는 “trace/metric identity로 같은 logical execution 연결” 표현을
+      제거한다.
 - [ ] competence/assessment 표현도 같은 boundary로 맞춘다.
 
 Acceptance:
@@ -46,7 +49,8 @@ Acceptance:
 ### A2. Unit 3 failure semantics 정밀화
 
 - [ ] `charge_payment` failure의 status description을 실제 exception message와 정렬한다.
-- [ ] Python 1.45 `start_as_current_span()`의 기본 `record_exception=True`, `set_status_on_exception=True` behavior를 learner-visible evidence로 설명한다.
+- [ ] Python 1.45 `start_as_current_span()`의 기본 `record_exception=True`, `set_status_on_exception=True` behavior를
+      learner-visible evidence로 설명한다.
 - [ ] exception event와 operation failure semantics/status를 구분한다.
 - [ ] test가 expected exception event/status relationship을 필요 범위에서 검증한다.
 
@@ -65,8 +69,10 @@ Acceptance:
 
 ### B1. Unit 5 mixed instrumentation + end-to-end validation
 
-- [ ] manual business span과 Flask instrumentation server span을 같은 trace 안에서 관찰할 수 있는 runnable path를 만든다.
-- [ ] framework span과 business span의 parent/trace relationship 및 Instrumentation Scope 차이를 learner-visible evidence로 노출한다.
+- [ ] manual business span과 Flask instrumentation server span을 같은 trace 안에서 관찰할 수 있는 runnable path를
+      만든다.
+- [ ] framework span과 business span의 parent/trace relationship 및 Instrumentation Scope 차이를 learner-visible
+      evidence로 노출한다.
 - [ ] plain Flask baseline과 zero-code/mixed instrumentation path를 실제 HTTP request까지 실행한다.
 - [ ] source 수정 없이 repeatable하게 start/request/observe/cleanup할 수 있게 한다.
 - [ ] current contrib `0.66b0`의 beta-series maturity boundary를 설명한다.
@@ -93,7 +99,8 @@ framework/server span
 - [ ] Docker publish를 `127.0.0.1:4318:4318`로 제한한다.
 - [ ] application에서 trace ID/span ID를 출력한다.
 - [ ] endpoint를 CLI parameter로 받아 source mutation 없이 happy/failure path를 실행한다.
-- [ ] pinned Collector `0.162.0` + OTLP HTTP exporter `1.45.0`로 application → OTLP → receiver → batch → debug exporter를 실제 검증한다.
+- [ ] pinned Collector `0.162.0` + OTLP HTTP exporter `1.45.0`로 application → OTLP → receiver → batch → debug
+      exporter를 실제 검증한다.
 - [ ] wrong endpoint 등 최소 한 failure variant도 실행한다.
 - [ ] cleanup/reset path를 명시하고 검증한다.
 
