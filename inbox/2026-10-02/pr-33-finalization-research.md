@@ -21,10 +21,10 @@ Unit 3–9을 같은 PR에서 계속 구현하는 것은 권장하지 않는다.
 - learner-visible console JSON을 검사하는 runtime test
 - deck-local dependency lock과 repository test integration
 
-여기서 Unit 3부터는 단순한 같은 패턴의 문서 확장이 아니다. error semantics와 Semantic Conventions,
-instrumentation library/zero-code, HTTP propagation, OTLP/Collector, metrics, fault injection처럼 **새로운 runtime boundary와
-version-sensitive behavior**가 연속으로 등장한다. Repository의 `adudeck-deck-build`도 calibration slice를 먼저 end-to-end로
-검토하고 실제 handoff point를 만든 뒤 다음 increment로 진행하도록 요구한다.
+여기서 Unit 3부터는 단순한 같은 패턴의 문서 확장이 아니다. error semantics와 Semantic Conventions, instrumentation
+library/zero-code, HTTP propagation, OTLP/Collector, metrics, fault injection처럼
+**새로운 runtime boundary와 version-sensitive behavior**가 연속으로 등장한다. Repository의 `adudeck-deck-build`도
+calibration slice를 먼저 end-to-end로 검토하고 실제 handoff point를 만든 뒤 다음 increment로 진행하도록 요구한다.
 
 따라서 권장 흐름은 다음과 같다.
 
@@ -50,25 +50,25 @@ Unit 3부터 새 validation mode를 하나씩 확장
 ### 1. Repository build contract와 더 잘 맞는다
 
 `adudeck-deck-build`은 새 덱에서 먼저 하나의 calibration slice를 끝까지 구현하고, explanation depth, terminology,
-practice, assessment evidence, hands-on pattern을 검토한 뒤 확장하도록 한다. Git-backed work도 한 coherent slice 또는 작은
-coupled set을 reviewable change로 유지하는 쪽을 선호한다.
+practice, assessment evidence, hands-on pattern을 검토한 뒤 확장하도록 한다. Git-backed work도 한 coherent slice 또는
+작은 coupled set을 reviewable change로 유지하는 쪽을 선호한다.
 
 PR #33의 Unit 2는 이미 calibration slice로 기능한다. 더 많은 Unit을 추가해야 calibration 목적이 강화되는 것이 아니라,
 오히려 review surface와 실패 원인이 늘어난다.
 
 ### 2. Unit 3부터 factual risk가 크게 달라진다
 
-현재 OpenTelemetry error semantic conventions의 recording-errors 문서는 Development 상태다. Operation failure에는 span status
-`Error`와 `error.type` 사용을 권고하고, handled/retried error를 최종 operation failure로 기록하지 않는 경계를 둔다.
-Exception conventions도 span event에서 log record로 이동하는 transition guidance가 존재한다.
+현재 OpenTelemetry error semantic conventions의 recording-errors 문서는 Development 상태다. Operation failure에는 span
+status `Error`와 `error.type` 사용을 권고하고, handled/retried error를 최종 operation failure로 기록하지 않는 경계를
+둔다. Exception conventions도 span event에서 log record로 이동하는 transition guidance가 존재한다.
 
 즉 Unit 3은 단순히 `record_exception()` 호출법을 추가하는 장이 아니다. “실패란 무엇인가”, span status와 error evidence가
 어떻게 다른가, 현재 transition을 beginner에게 어느 깊이까지 보여 줄 것인가를 새로 calibration해야 한다.
 
 ### 3. Unit 5부터 instrumentation mode가 바뀐다
 
-공식 Python 문서는 manual instrumentation, instrumentation libraries, zero-code instrumentation을 구분한다.
-Python zero-code는 agent + instrumentation libraries를 사용하고 주로 monkey patching으로 library/framework telemetry를 만든다.
+공식 Python 문서는 manual instrumentation, instrumentation libraries, zero-code instrumentation을 구분한다. Python
+zero-code는 agent + instrumentation libraries를 사용하고 주로 monkey patching으로 library/framework telemetry를 만든다.
 반면 application business logic의 의미는 code-based manual instrumentation이 보완한다.
 
 따라서 Unit 5는 Unit 2와 다른 recurring teaching mode다. 현재 foundation PR에 같이 밀어 넣기보다, 처음 등장할 때 별도로
@@ -99,12 +99,14 @@ Foundation PR에 포함할 이유가 약하다.
 
 - [ ] **Unit 2의 `service.name` 설명을 교정한다.**
   - 같은 `service.name`은 같은 Resource object나 같은 process의 충분한 증거가 아니다.
-  - 현재 예제에서 같은 Resource configuration을 보는 이유는 하나의 `TracerProvider(resource=...)` 설정을 공유하기 때문이다.
+  - 현재 예제에서 같은 Resource configuration을 보는 이유는 하나의 `TracerProvider(resource=...)` 설정을 공유하기
+    때문이다.
 - [ ] **context variation 질문을 같은 실행 안의 관계로 바꾼다.**
-  - “이전과 trace_id가 같은가?” 대신 “이번 실행에서 `charge_payment`와 `checkout`이 같은 trace_id를 공유하는가?”를 묻는다.
+  - “이전과 trace_id가 같은가?” 대신 “이번 실행에서 `charge_payment`와 `checkout`이 같은 trace_id를 공유하는가?”를
+    묻는다.
 - [ ] **transfer problem의 context 전제를 명시한다.**
-  - synchronous nested `start_as_current_span()`을 가정하고, “span 종료 직후”가 아니라 `with` block을 빠져나온 뒤 복원되는
-    current context를 묻는다.
+  - synchronous nested `start_as_current_span()`을 가정하고, “span 종료 직후”가 아니라 `with` block을 빠져나온 뒤
+    복원되는 current context를 묻는다.
 - [ ] **PR completion claim을 foundation으로 좁힌다.**
   - PR title/body/README의 build progress가 “전체 deck completion”을 암시하지 않도록 한다.
   - README의 “같은 PR에서 Unit 3–9 추가” 문구를 follow-up increment로 바꾼다.
@@ -155,14 +157,15 @@ Foundation PR에 포함할 이유가 약하다.
 
 ### P0 · ELI5 Agent Asset 변경 분리
 
-현재 PR에는 OpenTelemetry deck 외에 external `dreambigou/eli5` Rulesync dependency와 generated projection 변경이 함께 있다.
-교육 prose 개선에 사용했다는 이유는 이해되지만, repository-wide Agent Asset dependency의 lifecycle은 deck 내용과 독립적이다.
+현재 PR에는 OpenTelemetry deck 외에 external `dreambigou/eli5` Rulesync dependency와 generated projection 변경이 함께
+있다. 교육 prose 개선에 사용했다는 이유는 이해되지만, repository-wide Agent Asset dependency의 lifecycle은 deck 내용과
+독립적이다.
 
 권장:
 
 1. PR #33에서는 ELI5 external dependency / projection 변경을 제거한다.
-2. repository에 지속적으로 필요한 Skill이라면 별도의 Agent Asset PR에서 도입 근거, license, lock, generation validation을
-   독립적으로 검토한다.
+2. repository에 지속적으로 필요한 Skill이라면 별도의 Agent Asset PR에서 도입 근거, license, lock, generation
+   validation을 독립적으로 검토한다.
 
 분리가 어려우면 최소한 PR body에서 왜 OpenTelemetry foundation과 원자적으로 묶여야 하는지 설명해야 하지만,
 현재 evidence로는 별도 PR이 더 단순하다.
@@ -238,12 +241,13 @@ OpenTelemetry specification / Semantic Conventions
 → vendor tutorials and labs
 ```
 
-Vendor material은 onboarding UX, analogy, failure scenario, lab flow의 아이디어에 사용하고 API semantics나 current version의
-권위로 사용하지 않는다.
+Vendor material은 onboarding UX, analogy, failure scenario, lab flow의 아이디어에 사용하고 API semantics나 current
+version의 권위로 사용하지 않는다.
 
-Linux Foundation LFS148은 beginner course에서도 framework overview, instrumentation, manual traces/metrics/logs, Collector를
-hands-on lab으로 분리한다. GrafanaCON 2026 lab은 SDK, instrumentation mode, cross-service, backend까지 한 번에 연결하지만
-3시간 lab 목적이므로 adudeck의 mechanism-first core path를 대체하기보다 후속 실습 UX 참고로 보는 편이 좋다.
+Linux Foundation LFS148은 beginner course에서도 framework overview, instrumentation, manual traces/metrics/logs,
+Collector를 hands-on lab으로 분리한다. GrafanaCON 2026 lab은 SDK, instrumentation mode, cross-service, backend까지 한
+번에 연결하지만 3시간 lab 목적이므로 adudeck의 mechanism-first core path를 대체하기보다 후속 실습 UX 참고로 보는 편이
+좋다.
 
 ## PR #33 종료 체크리스트
 
@@ -293,5 +297,7 @@ Canonical OpenTelemetry:
 
 Comparative learning material:
 
-- Linux Foundation / CNCF LFS148: <https://training.linuxfoundation.org/training/getting-started-with-opentelemetry-lfs148/>
-- GrafanaCON 2026 instrumentation lab: <https://grafana.com/events/grafanacon/hands-on-labs/opentelemetry-instrumentation/>
+- Linux Foundation / CNCF LFS148:
+  <https://training.linuxfoundation.org/training/getting-started-with-opentelemetry-lfs148/>
+- GrafanaCON 2026 instrumentation lab:
+  <https://grafana.com/events/grafanacon/hands-on-labs/opentelemetry-instrumentation/>
