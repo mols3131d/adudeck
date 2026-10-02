@@ -250,27 +250,27 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
         host_port = free_port()
         container_name = f"adudeck-otel-{uuid4().hex[:10]}"
         config = TEXTBOOK / "07-otlp-collector" / "collector-config.yaml"
-        run = subprocess.run(
-            [
-                "docker",
-                "run",
-                "-d",
-                "--rm",
-                "--name",
-                container_name,
-                "-p",
-                f"127.0.0.1:{host_port}:4318",
-                "-v",
-                f"{config.resolve()}:/etc/otelcol/config.yaml:ro",
-                COLLECTOR_IMAGE,
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-
         try:
+            run = subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "-d",
+                    "--rm",
+                    "--name",
+                    container_name,
+                    "-p",
+                    f"127.0.0.1:{host_port}:4318",
+                    "-v",
+                    f"{config.resolve()}:/etc/otelcol/config.yaml:ro",
+                    COLLECTOR_IMAGE,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
             deadline = time.monotonic() + 20
             while True:
                 try:
