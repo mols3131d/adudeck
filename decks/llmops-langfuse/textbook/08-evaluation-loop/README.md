@@ -2,7 +2,8 @@
 
 이제 각각의 Langfuse 기능을 따로 외우는 단계는 끝났다.
 
-마지막 장의 목표는 trace, score, dataset version, experiment, prompt version을 하나의 **evidence-preserving improvement loop**로 연결하는 것이다.
+마지막 장의 목표는 trace, score, dataset version, experiment, prompt version을 하나의
+**evidence-preserving improvement loop**로 연결하는 것이다.
 
 ```text
 production observation
