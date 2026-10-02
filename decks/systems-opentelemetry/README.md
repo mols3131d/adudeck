@@ -25,8 +25,9 @@ process와 service 경계를 하나씩 추가한다.
 - OpenTelemetry API, SDK, instrumentation, exporter의 역할을 구분한다.
 - span과 trace의 관계를 `trace_id`, `span_id`, parent 관계로 설명한다.
 - current context가 child span과 distributed trace 연결에 어떤 역할을 하는지 설명한다.
-- Resource와 `service.name`이 telemetry의 발생 주체를 어떻게 표현하는지 설명한다.
+- Resource와 Instrumentation Scope가 telemetry의 발생 주체와 생성 주체를 어떻게 구분하는지 설명한다.
 - manual instrumentation과 library/zero-code instrumentation의 차이를 비교한다.
+- Semantic Conventions가 서로 다른 instrumentation의 telemetry 의미를 맞추는 이유를 설명한다.
 - OTLP를 통해 application process의 telemetry가 Collector로 이동하는 경계를 추적한다.
 - Counter, UpDownCounter, Histogram 중 목적에 맞는 metric instrument를 선택한다.
 - telemetry가 보이지 않을 때 application → exporter → transport → Collector → backend 순서로 원인을 좁힌다.
@@ -72,20 +73,16 @@ Logs와 GenAI telemetry는 core tracing/metrics 경계를 이해한 뒤 별도 e
 | --- | --- | --- |
 | 0. Intro | 무엇을 관찰하고 어떤 질문에 답할 것인가? | [Intro](textbook/00-intro/README.md) |
 | 1. Setup | 같은 dependency 환경에서 실습을 시작할 수 있는가? | [Setup](textbook/01-setup/README.md) |
-| 2. First trace | 한 process 안에서 span은 어떻게 trace로 연결되는가? | [Bundle](textbook/02-first-trace/README.md) |
-| 3. Span data + failure | span에는 어떤 상태와 실패 evidence를 남겨야 하는가? | planned |
-| 4. Resource + API/SDK | telemetry를 누가 만들고, 누가 실제로 처리하는가? | planned |
-| 5. Instrumentation | manual과 automatic instrumentation은 무엇이 다른가? | planned |
-| 6. Propagation | 두 service의 span은 어떻게 하나의 trace가 되는가? | planned |
-| 7. OTLP + Collector | telemetry가 application process 밖으로 어떻게 이동하는가? | planned |
-| 8. Metrics | 어떤 상태를 어떤 metric instrument로 표현해야 하는가? | planned |
-| 9. Diagnosis | telemetry가 끊겼을 때 어느 boundary부터 확인해야 하는가? | planned |
+| 2. First trace | 한 process 안에서 span은 어떻게 trace로 연결되는가? | [First trace](textbook/02-first-trace/README.md) |
+| 3. Span data + failure | span에는 어떤 상태와 실패 evidence를 남겨야 하는가? | [Span data + failure](textbook/03-span-data-failure/README.md) |
+| 4. Resource + API/SDK | telemetry를 누가 만들고, 누가 실제로 처리하는가? | [Resource + API/SDK](textbook/04-resource-api-sdk/README.md) |
+| 5. Instrumentation | manual과 automatic instrumentation은 무엇이 다른가? | [Instrumentation](textbook/05-instrumentation/README.md) |
+| 6. Propagation | 두 service의 span은 어떻게 하나의 trace가 되는가? | [Propagation](textbook/06-propagation/README.md) |
+| 7. OTLP + Collector | telemetry가 application process 밖으로 어떻게 이동하는가? | [OTLP + Collector](textbook/07-otlp-collector/README.md) |
+| 8. Metrics | 어떤 상태를 어떤 metric instrument로 표현해야 하는가? | [Metrics](textbook/08-metrics/README.md) |
+| 9. Diagnosis | telemetry가 끊겼을 때 어느 boundary부터 확인해야 하는가? | [Diagnosis](textbook/09-diagnosis/README.md) |
 
-Intro는 학습 목적과 기본 관찰 관점을, Setup은 환경 준비와 실행 확인을 담당한다. 그 뒤 First Trace에서 span 관계를
-직접 조사한다. Core 학습 목표와 후속 주제의 의존 순서는 유지한다.
-
-현재는 Intro, Setup과 First Trace calibration slice를 구현했다. 이후 unit은 앞선 slice를 검토한 뒤 같은 PR에서 작은
-increment로 추가한다. 전체 unit이 구현되기 전에는 deck completion을 선언하지 않는다.
+전체 textbook navigation과 outcome coverage는 [textbook index](textbook/README.md)에 정리한다.
 
 ## Start here
 
@@ -94,46 +91,54 @@ increment로 추가한다. 전체 unit이 구현되기 전에는 deck completion
 
 ## Dependency ownership
 
-이 deck의 Python dependency range는 [`pyproject.toml`](pyproject.toml)이 소유한다.
+이 deck의 core Python dependency range는 [`pyproject.toml`](pyproject.toml)이 소유한다.
 
-[`uv.lock`](uv.lock)은 실제 실행 dependency를 고정한다. Dependency를 갱신할 때는 Unit 2의 정상 실행과 current context
-변형을 다시 검증한다. Deck directory에서 다음 명령으로 console evidence의 관계를 검사할 수 있다.
+[`uv.lock`](uv.lock)은 core tracing/metrics 실습의 실제 실행 dependency를 고정한다. Unit 5의 Flask/zero-code 비교와 Unit 7의
+OTLP HTTP exporter는 해당 장에서 version을 명시한 `uv --with` 환경으로 격리한다. 이 보조 환경은 deck lockfile과 같은
+validation claim을 갖지 않는다.
+
+Deck directory에서 현재 repository-managed runtime test를 실행할 수 있다.
 
 ```bash
 uv run --locked python -m unittest discover -s tests -v
 ```
 
-검사는 별도 process에서 실행하며 외부 `OTEL_*` 설정을 제거해 실습의 기본 SDK 환경을 유지한다. 직접 실습할 때도 별도
-instrumentation 없이 실행하고, sampling 등을 바꾸는 `OTEL_*` 설정이 없는 환경을 사용한다.
+검사는 별도 process에서 실행하며 외부 `OTEL_*` 설정을 제거해 실습의 기본 SDK 환경을 유지한다.
 
 ## Build progress
 
 - Curriculum baseline: 이 README의 Goal, Prerequisites, Learning scope, Learning path.
-- Unit 2: 정상 실행과 호출 한 줄을 current span 밖으로 옮기는 변형을 검증했다. 세 span의 identifier 관계, attribute,
-  `service.name`을 실제 `ConsoleSpanExporter` output에서 확인했다.
-- 검증 환경: 2026-10-01, Python 3.14.6, OpenTelemetry API/SDK 1.45.0. Python 3.10+ 전체 matrix는 검증하지 않았다.
-- Unit 2의 설명, 예측, 관찰, 변형, checkpoint를 검토했다. 학습자 평가와 external backend 검증은 수행하지 않았다.
-- 다음 increment: Unit 3의 span data와 failure evidence. Unit 3–9은 미구현이며 deck 전체는 아직 완료되지 않았다.
-- 2026-10-01 curriculum 변경: `00-intro`, `01-setup`을 앞에 분리하고 기존 First Trace를 Unit 2로 옮겼다.
-  Setup의 실행 확인은 trace 해석의 prerequisite이며, identifier 관계의 설명·실습·평가는 Unit 2가 담당한다.
-  Intro와 Setup은 진입 준비를 확인하고, 기존 core 학습 목표의 평가 책임은 Unit 2–9에 유지한다.
+- Textbook: Unit 0–9의 chapter prose와 핵심 hands-on artifact가 작성되어 있다.
+- Unit 2는 정상 실행과 current-context 변형을 Python 3.14.6 / OpenTelemetry API·SDK 1.45.0에서 검증했다.
+- 새 core-only example(Unit 3, 4, 6, 8)은 authoring 과정에서 별도 Python 환경의 runtime smoke를 수행했지만,
+  repository lockfile 기준의 정식 acceptance와 CI 확장은 아직 남아 있다.
+- Unit 5의 Flask/zero-code와 Unit 7의 OTLP/Collector는 external dependency/container boundary를 사용하므로 full runtime
+  validation을 별도로 수행해야 한다.
+- Unit 9는 앞선 unit의 evidence를 재사용하는 diagnostic synthesis다. Backend UI 자체는 core completion claim에 포함하지 않는다.
+- 전체 deck completion은 textbook 존재가 아니라 outcome coverage, runtime validation boundary, integration review가 모두
+  충족된 뒤 선언한다.
 
 ## Version baseline
 
-작성/검토 기준일: **2026-09-29**
+작성/검토 기준일: **2026-10-02**
 
 - Python: 3.10+
-- OpenTelemetry Python SDK reviewed baseline: `1.45.0`
-- dependency range: `opentelemetry-api>=1.45,<2`, `opentelemetry-sdk>=1.45,<2`
+- OpenTelemetry Python API/SDK: `1.45.0`
+- OpenTelemetry Python contrib / zero-code calibration: `0.66b0`
+- OpenTelemetry Collector calibration: `0.162.0`
 - Traces / Metrics: Stable
 - Logs: Development
 
-`1.45.0`은 현재 material을 검토한 calibration version이다. Compatible update를 허용하되 lockfile을 도입한 뒤에는 실제
-학습 실행 환경을 lockfile로 재현한다.
+Version-sensitive behavior는 구현 시점의 official OpenTelemetry source와 실제 runtime evidence를 함께 확인한다.
 
 ## References
 
 - [OpenTelemetry Python](https://opentelemetry.io/docs/languages/python/)
 - [Python manual instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
+- [Python instrumentation libraries](https://opentelemetry.io/docs/languages/python/libraries/)
+- [Python zero-code instrumentation](https://opentelemetry.io/docs/zero-code/python/)
 - [Python exporters](https://opentelemetry.io/docs/languages/python/exporters/)
-- [Python propagation](https://opentelemetry.io/docs/languages/python/propagation/)
+- [Context propagation](https://opentelemetry.io/docs/concepts/context-propagation/)
+- [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/)
+- [Collector configuration](https://opentelemetry.io/docs/collector/configuration/)
+- [Collector troubleshooting](https://opentelemetry.io/docs/collector/troubleshooting/)
