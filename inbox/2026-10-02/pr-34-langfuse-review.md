@@ -8,12 +8,17 @@ Status recommendation: **keep Draft; do not merge yet**.
 
 ## Executive summary
 
-PR #34 has a strong curriculum direction and a good teaching model. The central progression—observation → evaluation → dataset → experiment → improvement—fits the repository's learning principles better than a feature-by-feature Langfuse tutorial. Units 0–2 are especially promising because they separate application truth from observability/evaluation evidence and use prediction, observation, variation, and interpretation instead of simple command transcription.
+PR #34 has a strong curriculum direction and a good teaching model. The central progression—observation → evaluation →
+dataset → experiment → improvement—fits the repository's learning principles better than a feature-by-feature Langfuse
+tutorial. Units 0–2 are especially promising because they separate application truth from observability/evaluation
+evidence and use prediction, observation, variation, and interpretation instead of simple command transcription.
 
 The current branch is not merge-ready because two foundation gaps remain:
 
-1. the deck dependency contract does not include the OpenAI package even though Units 3 and 7 use `langfuse.openai.OpenAI`;
-2. the repository test path validates only local fake-client teaching contracts and does not execute the deck against a locked Langfuse 4.16 runtime.
+1. the deck dependency contract does not include the OpenAI package even though Units 3 and 7 use
+   `langfuse.openai.OpenAI`;
+2. the repository test path validates only local fake-client teaching contracts and does not execute the deck against a
+   locked Langfuse 4.16 runtime.
 
 The next increment should close this runtime foundation before expanding Unit 3 or later units.
 
@@ -30,7 +35,8 @@ The review used the repository's current guidance and deck skills, including:
 - `mols-coding-context` / Python add-on for executable code and tests;
 - `mols-loops` as the outer review loop.
 
-Current Langfuse Python SDK v4.16.0 source/release behavior was cross-checked where version-sensitive claims materially affected the review.
+Current Langfuse Python SDK v4.16.0 source/release behavior was cross-checked where version-sensitive claims materially
+affected the review.
 
 ## What is strong
 
@@ -50,7 +56,8 @@ LLM application
 → production observation
 ```
 
-This is the right abstraction level for a primary learning resource. It teaches why the tool exists and how evidence moves through the workflow.
+This is the right abstraction level for a primary learning resource. It teaches why the tool exists and how evidence
+moves through the workflow.
 
 The deck overview also clearly separates:
 
@@ -77,17 +84,21 @@ Langfuse
 + compares changes
 ```
 
-This prevents a common observability mistake: treating Langfuse as the source of truth for business state or correctness rules.
+This prevents a common observability mistake: treating Langfuse as the source of truth for business state or correctness
+rules.
 
-The same distinction is preserved through scores, datasets, experiments, and prompt management. That conceptual consistency is worth keeping.
+The same distinction is preserved through scores, datasets, experiments, and prompt management. That conceptual
+consistency is worth keeping.
 
 ### 3. Units 1–2 are real learning investigations
 
 The first two units do more than show API syntax.
 
-Unit 1 asks the learner to predict trace topology, compare IDs, inspect current context restoration, then vary one condition with `--detach-search`.
+Unit 1 asks the learner to predict trace topology, compare IDs, inspect current context restoration, then vary one
+condition with `--detach-search`.
 
-Unit 2 keeps application work stable while changing observation naming strategy, making the learner distinguish operation identity from run-specific correlation dimensions such as `user_id`, `session_id`, tags, and metadata.
+Unit 2 keeps application work stable while changing observation naming strategy, making the learner distinguish
+operation identity from run-specific correlation dimensions such as `user_id`, `session_id`, tags, and metadata.
 
 This is aligned with the repository's playground contract:
 
@@ -100,11 +111,14 @@ predict
 → re-observe
 ```
 
-The credential-free tests are also correctly described as teaching-code contract tests, not proof of Langfuse Cloud behavior.
+The credential-free tests are also correctly described as teaching-code contract tests, not proof of Langfuse Cloud
+behavior.
 
 ### 4. Version-sensitive Langfuse direction is mostly sound
 
-The PR's choice to teach Python SDK v4, OpenTelemetry-based observations, `start_as_current_observation()`, `propagate_attributes()`, score APIs, prompt linkage, and OpenAI Responses integration is consistent with the reviewed Langfuse 4.16.0 source.
+The PR's choice to teach Python SDK v4, OpenTelemetry-based observations, `start_as_current_observation()`,
+`propagate_attributes()`, score APIs, prompt linkage, and OpenAI Responses integration is consistent with the reviewed
+Langfuse 4.16.0 source.
 
 The deck also correctly avoids using older v2-style `Langfuse().trace()` tutorials as the default path.
 
@@ -126,15 +140,18 @@ However Units 3 and 7 teach:
 from langfuse.openai import OpenAI
 ```
 
-Langfuse 4.16 does not install `openai` as a required runtime dependency. Its `langfuse.openai` module imports the OpenAI package and raises `ModuleNotFoundError` when it is unavailable.
+Langfuse 4.16 does not install `openai` as a required runtime dependency. Its `langfuse.openai` module imports the
+OpenAI package and raises `ModuleNotFoundError` when it is unavailable.
 
 Therefore a learner following the deck's own `uv sync` setup can reach Unit 3 with a broken environment.
 
-This is a direct contradiction between the declared dependency contract and the textbook execution path, not merely an unverified edge case.
+This is a direct contradiction between the declared dependency contract and the textbook execution path, not merely an
+unverified edge case.
 
 #### Required correction
 
-Add an explicit OpenAI dependency compatible with the examples, preferably using the repository's current OpenAI SDK baseline unless the Langfuse deck has a justified narrower contract.
+Add an explicit OpenAI dependency compatible with the examples, preferably using the repository's current OpenAI SDK
+baseline unless the Langfuse deck has a justified narrower contract.
 
 The dependency decision should be followed by lock generation and an import/API smoke check.
 
@@ -146,11 +163,14 @@ The dependency decision should be followed by lock generation and an import/API 
 - `test_first_trace.py`;
 - `test_trace_design.py`.
 
-Those tests inject fake Langfuse objects. The teaching modules defer real `langfuse` imports until `main()`. As a result, the current suite can pass without proving that the declared deck environment can import or execute the Langfuse APIs used by the textbook.
+Those tests inject fake Langfuse objects. The teaching modules defer real `langfuse` imports until `main()`. As a
+result, the current suite can pass without proving that the declared deck environment can import or execute the Langfuse
+APIs used by the textbook.
 
 The PR already states this validation boundary accurately, which is good, but it remains a merge-readiness gap.
 
-The existing OpenAI SDK deck provides a useful repository precedent: deck-local `uv.lock`, `uv run --project ... --locked`, and direct SDK contract checks.
+The existing OpenAI SDK deck provides a useful repository precedent: deck-local `uv.lock`,
+`uv run --project ... --locked`, and direct SDK contract checks.
 
 #### Required correction
 
@@ -171,7 +191,8 @@ A live Cloud/API smoke may remain outside fast CI, but the local dependency/API 
 
 ### Clarify the OpenTelemetry parent-context boundary in Unit 1
 
-The current standalone `--detach-search` experiment is useful and correct for its setup, but its explanation can be slightly too broad if read as a universal rule:
+The current standalone `--detach-search` experiment is useful and correct for its setup, but its explanation can be
+slightly too broad if read as a universal rule:
 
 ```text
 root closes
@@ -179,11 +200,13 @@ root closes
 → detached search creates a new trace
 ```
 
-Langfuse v4 builds on OpenTelemetry context. In a web server or another already-instrumented runtime, an outer active OpenTelemetry span can still exist after a Langfuse observation closes.
+Langfuse v4 builds on OpenTelemetry context. In a web server or another already-instrumented runtime, an outer active
+OpenTelemetry span can still exist after a Langfuse observation closes.
 
 The teaching statement should therefore be narrowed to the actual experiment:
 
-> In this standalone script, where no outer active OpenTelemetry parent remains, moving `search-policy` outside the root Langfuse observation causes it to start in a separate trace.
+> In this standalone script, where no outer active OpenTelemetry parent remains, moving `search-policy` outside the root
+> Langfuse observation causes it to start in a separate trace.
 
 A stronger mental model is:
 
@@ -199,7 +222,8 @@ This is a refinement, not a reason to redesign the exercise.
 
 ## Units 3–8 status
 
-Units 3–8 have a coherent sequence and mostly sound concepts, but they should remain **draft learning material**, not accepted textbook slices yet.
+Units 3–8 have a coherent sequence and mostly sound concepts, but they should remain **draft learning material**, not
+accepted textbook slices yet.
 
 Compared with Units 1–2, most later units currently look like:
 
@@ -223,7 +247,8 @@ vs
 Langfuse OpenAI auto-instrumentation
 ```
 
-The learner should predict which data is automatic, inspect the resulting generation evidence, and identify which application-level spans/context still require manual ownership.
+The learner should predict which data is automatic, inspect the resulting generation evidence, and identify which
+application-level spans/context still require manual ownership.
 
 ### Unit 4 — Scores
 
@@ -240,7 +265,8 @@ Turn a synthetic production-like failure into a dataset item with an explicit ex
 
 ### Unit 6 — Experiments
 
-Run deterministic baseline and candidate variants on the same data and inspect an item-level regression that is hidden by an aggregate metric.
+Run deterministic baseline and candidate variants on the same data and inspect an item-level regression that is hidden
+by an aggregate metric.
 
 ### Unit 7 — Prompt management
 
@@ -248,7 +274,8 @@ Run prompt version A and B under the same dataset/evaluators and verify the actu
 
 ### Unit 8 — Evaluation loop
 
-Combine one production-like failure, dataset preservation, candidate change, evaluation, regression policy, and release decision into a small cumulative exercise.
+Combine one production-like failure, dataset preservation, candidate change, evaluation, regression policy, and release
+decision into a small cumulative exercise.
 
 ## Recommended next sequence
 
@@ -284,6 +311,9 @@ Do not add more chapter breadth first. Close the runtime foundation, then contin
 
 ## Final assessment
 
-The PR does not need a curriculum rewrite. Its main risk is not bad pedagogy or obsolete Langfuse concepts; it is a gap between a strong instructional design and the reproducible runtime evidence required to trust that design.
+The PR does not need a curriculum rewrite. Its main risk is not bad pedagogy or obsolete Langfuse concepts; it is a gap
+between a strong instructional design and the reproducible runtime evidence required to trust that design.
 
-The highest-value next change is therefore **runtime foundation closure**, not additional prose. Once the dependency and locked-SDK validation boundary is closed, Units 1–2 are close to a strong accepted foundation and Unit 3 is the right next incremental learning slice.
+The highest-value next change is therefore **runtime foundation closure**, not additional prose. Once the dependency and
+locked-SDK validation boundary is closed, Units 1–2 are close to a strong accepted foundation and Unit 3 is the right
+next incremental learning slice.
