@@ -74,9 +74,6 @@ run_langfuse_deck() {
   echo "==> [test:langfuse-deck] Checking locked deck environment and textbook contracts..."
   local project_dir="decks/llmops-langfuse"
 
-  # Bootstrap the first deck-local lock in CI. Remove this line once uv.lock is persisted.
-  env -u VIRTUAL_ENV uv lock --project "$project_dir"
-
   env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
     python -m compileall -q "$project_dir/textbook"
 
@@ -173,7 +170,7 @@ case "$TARGET" in
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator,openai-sdk-deck,langfuse-deck,scripts" >&2
     exit 1
     ;;
 esac
