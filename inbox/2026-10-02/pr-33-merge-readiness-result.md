@@ -10,8 +10,8 @@
 **Merge blocker 0건. PR #33은 Ready 후보 수준에 도달했다.**
 
 엄격 self-review에서 발견한 P0 blocker와 merge 전 material P1 gap을 재검토했고, 현재 learning contract에 필요한 runtime
-boundary는 실제 end-to-end evidence로 닫았다. 기준 revision의 `ci/validated`는 success이며, 이 status는 locked core test뿐
-아니라 Flask zero-code/mixed instrumentation과 실제 OpenTelemetry Collector container acceptance까지 포함한다.
+boundary는 실제 end-to-end evidence로 닫았다. 기준 revision의 `ci/validated`는 success이며, 이 status는 locked core
+test뿐 아니라 Flask zero-code/mixed instrumentation과 실제 OpenTelemetry Collector container acceptance까지 포함한다.
 
 이 결과 보고서 자체가 새 commit을 만들므로, **보고서가 포함된 최신 head에서도 같은 CI gate가 다시 success한 뒤** Draft를
 해제하는 것을 최종 gate로 둔다.
@@ -73,8 +73,8 @@ Python SDK
 → debug exporter
 ```
 
-Unit 7에서는 application-side trace/span ID와 Collector-side ID를 직접 비교한다. Wrong endpoint case에서는 business work가
-완료되더라도 해당 trace가 Collector에 도착하지 않는 것을 확인한다.
+Unit 7에서는 application-side trace/span ID와 Collector-side ID를 직접 비교한다. Wrong endpoint case에서는 business
+work가 완료되더라도 해당 trace가 Collector에 도착하지 않는 것을 확인한다.
 
 기준 revision `99d8918da9b3b3f15d2106d3f64f3ad489d3fb3a`의 `ci/validated`: **success**.
 
@@ -107,8 +107,9 @@ README learning outcomes
 다음은 남아 있지만 현재 PR merge blocker로 보지 않는다.
 
 1. **Unit 5/7 helper dependency transitive lock**  
-   direct dependency version은 exact pin이며 실제 compatibility를 CI E2E에서 검증한다. Core lock과 같은 재현성은 주장하지
-   않는다. 미래에 offline repeatability나 long-term transitive freeze가 필요해지면 별도 lock/group으로 승격할 수 있다.
+   direct dependency version은 exact pin이며 실제 compatibility를 CI E2E에서 검증한다. Core lock과 같은 재현성은
+   주장하지 않는다. 미래에 offline repeatability나 long-term transitive freeze가 필요해지면 별도 lock/group으로 승격할
+   수 있다.
 
 2. **Python support matrix**  
    project contract는 Python 3.10+지만 현재 CI runtime evidence는 Python 3.14.6이다. README가 이 차이를 명시한다.
@@ -117,16 +118,16 @@ README learning outcomes
    vendor backend storage/query/UI는 명시적 out-of-core boundary다. Unit 7은 Collector debug exporter까지를 검증한다.
 
 4. **Learner study evaluation**  
-   automated evidence는 mechanism correctness와 runnable path를 검증하지만 실제 learner cohort의 이해도 평가는 수행하지 않았다.
-   이는 현재 repository merge gate가 아니다.
+   automated evidence는 mechanism correctness와 runnable path를 검증하지만 실제 learner cohort의 이해도 평가는 수행하지
+   않았다. 이는 현재 repository merge gate가 아니다.
 
 ## Historical inbox note
 
 `inbox/2026-10-02/pr-33-finalization-research.md`의 “Unit 0–2 foundation에서 PR을 닫는다”는 당시 권고는 이후 사용자가
 **Unit 0–9 textbook 전체 구현과 merge-ready 수준까지 계속 진행하라고 명시적으로 요청**하면서 superseded되었다.
 
-현재 learning/build state의 authority는 `decks/systems-opentelemetry/README.md`, `textbook/README.md`, runnable artifacts/tests와
-live PR state다. 과거 inbox 보고서를 현재 completion boundary로 사용하지 않는다.
+현재 learning/build state의 authority는 `decks/systems-opentelemetry/README.md`, `textbook/README.md`, runnable
+artifacts/tests와 live PR state다. 과거 inbox 보고서를 현재 completion boundary로 사용하지 않는다.
 
 ## Final gate
 
