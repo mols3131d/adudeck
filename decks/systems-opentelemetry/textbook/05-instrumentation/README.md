@@ -1,6 +1,7 @@
 # 5장 · Instrumentation
 
-지금까지는 직접 `start_as_current_span()`을 호출했다. 실제 애플리케이션에서는 모든 framework route, HTTP client, database call을 직접 감싸는 방식만 사용하지 않는다.
+지금까지는 직접 `start_as_current_span()`을 호출했다. 실제 애플리케이션에서는 모든 framework route, HTTP client,
+database call을 직접 감싸는 방식만 사용하지 않는다.
 
 OpenTelemetry에서는 크게 세 관점을 구분해 두는 것이 유용하다.
 
@@ -10,7 +11,8 @@ instrumentation libraries
 zero-code / automatic instrumentation
 ```
 
-Python zero-code instrumentation은 주로 instrumentation library를 runtime에 로드하고 monkey patching을 이용해 library/framework call을 계측한다.
+Python zero-code instrumentation은 주로 instrumentation library를 runtime에 로드하고 monkey patching을 이용해
+library/framework call을 계측한다.
 
 ## 학습 목표
 
@@ -26,7 +28,8 @@ Python zero-code instrumentation은 주로 instrumentation library를 runtime에
 - “HTTP 요청이 들어오고 나가는 데 얼마나 걸렸는가?”
 - “할인 정책 계산 단계가 왜 느렸는가?”
 
-framework/library instrumentation은 첫 질문에 강하다. 두 번째 질문은 application business context를 알아야 하므로 manual instrumentation이 더 적합하다.
+framework/library instrumentation은 첫 질문에 강하다. 두 번째 질문은 application business context를 알아야 하므로 manual
+instrumentation이 더 적합하다.
 
 즉 다음처럼 역할을 나누는 편이 자연스럽다.
 
@@ -94,11 +97,13 @@ curl http://127.0.0.1:8086/checkout
 
 Instrumentation library는 특정 library/framework를 계측하는 reusable component다.
 
-Zero-code는 이런 instrumentation library와 SDK/exporter configuration을 **source code 수정 없이 runtime에 적용하는 방식**이다.
+Zero-code는 이런 instrumentation library와 SDK/exporter configuration을
+**source code 수정 없이 runtime에 적용하는 방식**이다.
 
 Python에서는 `opentelemetry-instrument`가 instrumentation libraries를 로드하고 monkey patching을 사용한다.
 
-반대로 application code에서 `FlaskInstrumentor().instrument_app(app)`처럼 programmatic하게 instrumentation library를 적용할 수도 있다. 따라서 “library instrumentation = zero-code”로 등치시키지 않는다.
+반대로 application code에서 `FlaskInstrumentor().instrument_app(app)`처럼 programmatic하게 instrumentation library를
+적용할 수도 있다. 따라서 “library instrumentation = zero-code”로 등치시키지 않는다.
 
 ## 5. 비교표
 

@@ -1,6 +1,7 @@
 # 6장 · Process 경계를 넘는 Context Propagation
 
-Unit 2에서는 한 process 안에서 current context가 parent-child 관계를 만들었다. 하지만 다른 process는 Python의 current context를 공유할 수 없다.
+Unit 2에서는 한 process 안에서 current context가 parent-child 관계를 만들었다. 하지만 다른 process는 Python의 current
+context를 공유할 수 없다.
 
 그래서 distributed tracing에는 새로운 단계가 필요하다.
 
@@ -27,7 +28,8 @@ Context는 현재 execution과 연결할 trace/span 정보를 담는다.
 
 Propagation은 그 context를 다른 execution unit으로 이동시키는 과정이다.
 
-한 process 안에서는 runtime context mechanism이 이어 준다. HTTP boundary를 넘을 때는 context를 header 같은 carrier에 직렬화해야 한다.
+한 process 안에서는 runtime context mechanism이 이어 준다. HTTP boundary를 넘을 때는 context를 header 같은 carrier에
+직렬화해야 한다.
 
 ## 2. 실습 구조
 
@@ -69,7 +71,8 @@ Service B는 `http://127.0.0.1:8090/`에서 요청을 기다린다.
 uv run --locked textbook/06-propagation/client.py
 ```
 
-client는 실제로 전송할 `traceparent`를 화면에 출력한다. 두 process의 ConsoleSpanExporter output에서 trace ID와 parent ID를 비교한다.
+client는 실제로 전송할 `traceparent`를 화면에 출력한다. 두 process의 ConsoleSpanExporter output에서 trace ID와 parent
+ID를 비교한다.
 
 관찰해야 할 핵심은 “HTTP 요청이 성공했다”가 아니다.
 
@@ -102,11 +105,13 @@ W3C Trace Context의 `traceparent`는 대략 다음 정보를 담는다.
 version-trace_id-parent_span_id-flags
 ```
 
-learner가 header 문자열을 암기할 필요는 없다. 중요한 것은 Service B가 이 carrier에서 upstream identity를 복원해 새 span의 parent context로 사용한다는 것이다.
+learner가 header 문자열을 암기할 필요는 없다. 중요한 것은 Service B가 이 carrier에서 upstream identity를 복원해 새
+span의 parent context로 사용한다는 것이다.
 
 ## 8. Baggage는 span attribute가 아니다
 
-Baggage는 process/service 경계를 넘어 전달할 수 있는 key-value context다. 하지만 baggage에 값을 넣었다고 모든 span attribute에 자동 복사되는 것은 아니다.
+Baggage는 process/service 경계를 넘어 전달할 수 있는 key-value context다. 하지만 baggage에 값을 넣었다고 모든 span
+attribute에 자동 복사되는 것은 아니다.
 
 또한 baggage는 downstream으로 전달되므로 credential, token, PII 같은 민감 정보를 넣으면 안 된다.
 

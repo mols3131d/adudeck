@@ -2,7 +2,8 @@
 
 Unit 2에서는 span의 **관계**를 읽었다. 이제 같은 span 안에서 “무슨 일이 있었는가”를 읽는다.
 
-한 작업이 실패했다고 해서 단순히 exception text를 남기는 것으로 충분하지 않다. 관찰하는 사람은 최소한 다음을 구분해야 한다.
+한 작업이 실패했다고 해서 단순히 exception text를 남기는 것으로 충분하지 않다. 관찰하는 사람은 최소한 다음을 구분해야
+한다.
 
 - operation 자체가 실패했는가?
 - 실패 유형은 무엇인가?
@@ -29,11 +30,14 @@ checkout
 └─ charge_payment     ← 최종 실패
 ```
 
-`reserve_inventory` 내부에서 한 번 오류가 발생했다는 사실만으로 `checkout` 전체를 실패로 표시하면 잘못된 모델이 된다. 반대로 `charge_payment`가 실패했는데 status를 그대로 두면 operation failure를 숨기게 된다.
+`reserve_inventory` 내부에서 한 번 오류가 발생했다는 사실만으로 `checkout` 전체를 실패로 표시하면 잘못된 모델이 된다.
+반대로 `charge_payment`가 실패했는데 status를 그대로 두면 operation failure를 숨기게 된다.
 
 핵심은 **“exception이 있었는가?”보다 “이 operation은 최종적으로 실패했는가?”**다.
 
-OpenTelemetry Semantic Conventions의 현재 error guidance도 handled/retried error와 최종 operation failure를 구분한다. 실패한 operation은 span status를 `Error`로 두고, `error.type`에는 예측 가능하고 낮은 cardinality의 실패 유형을 기록하는 방향을 권장한다.
+OpenTelemetry Semantic Conventions의 현재 error guidance도 handled/retried error와 최종 operation failure를 구분한다.
+실패한 operation은 span status를 `Error`로 두고, `error.type`에는 예측 가능하고 낮은 cardinality의 실패 유형을 기록하는
+방향을 권장한다.
 
 ## 2. attribute와 status의 역할
 
@@ -45,7 +49,8 @@ OpenTelemetry Semantic Conventions의 현재 error guidance도 handled/retried e
 | attribute | `error.type=__main__.PaymentDeclined` | 어떤 실패 유형인가? |
 | span status | `ERROR` | 이 operation은 최종적으로 실패했는가? |
 
-`error.type`에 exception message 전체를 넣지 않는다. 메시지는 사용자 입력이나 동적 값 때문에 cardinality가 폭발할 수 있다.
+`error.type`에 exception message 전체를 넣지 않는다. 메시지는 사용자 입력이나 동적 값 때문에 cardinality가 폭발할 수
+있다.
 
 ## 3. 실행 전에 예측한다
 
@@ -61,7 +66,8 @@ OpenTelemetry Semantic Conventions의 현재 error guidance도 handled/retried e
 - 실패한 `charge_payment`의 `error.type`은 어떤 종류의 값이어야 하는가?
 - 실패한 child span이 있으면 parent `checkout`도 자동으로 `ERROR`가 될까?
 
-마지막 질문이 중요하다. **child의 status가 parent에 자동 전파된다고 가정하지 않는다.** 각 operation의 의미는 해당 instrumentation이 결정한다.
+마지막 질문이 중요하다. **child의 status가 parent에 자동 전파된다고 가정하지 않는다.** 각 operation의 의미는 해당
+instrumentation이 결정한다.
 
 ## 4. 실행한다
 
@@ -83,15 +89,19 @@ attributes.inventory.fallback_used
 
 ## 5. 관찰하고 해석한다
 
-첫 시나리오에서는 inventory의 첫 시도가 실패하지만 operation은 fallback으로 완료된다. 따라서 “처리된 내부 오류가 있었다”는 사실과 “operation이 실패했다”는 결론을 분리해야 한다.
+첫 시나리오에서는 inventory의 첫 시도가 실패하지만 operation은 fallback으로 완료된다. 따라서 “처리된 내부 오류가
+있었다”는 사실과 “operation이 실패했다”는 결론을 분리해야 한다.
 
 두 번째 시나리오에서는 결제 operation이 최종 실패하므로 `charge_payment` span에 `ERROR`와 `error.type`이 남는다.
 
-여기서 parent `checkout`의 status도 코드가 명시적으로 결정한다. OpenTelemetry가 child status를 보고 비즈니스 의미를 추론해 주지 않는다.
+여기서 parent `checkout`의 status도 코드가 명시적으로 결정한다. OpenTelemetry가 child status를 보고 비즈니스 의미를
+추론해 주지 않는다.
 
 ## 6. `record_exception()`은 무엇인가
 
-Python API에는 exception event를 span에 기록하는 `record_exception()` 기능이 있다. 하지만 **exception event와 span status는 같은 개념이 아니다.** 또한 최신 Semantic Conventions의 error guidance는 exception detail을 log record로 기록하는 방향을 제시하고 있다.
+Python API에는 exception event를 span에 기록하는 `record_exception()` 기능이 있다. 하지만
+**exception event와 span status는 같은 개념이 아니다.** 또한 최신 Semantic Conventions의 error guidance는 exception
+detail을 log record로 기록하는 방향을 제시하고 있다.
 
 따라서 이 덱에서는 다음 순서로 사고한다.
 

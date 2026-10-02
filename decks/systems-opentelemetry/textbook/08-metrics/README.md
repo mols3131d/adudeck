@@ -1,6 +1,7 @@
 # 8장 · Metrics: 어떤 질문을 어떤 Instrument로 측정할까
 
-Trace는 한 execution의 관계를 깊게 본다. 하지만 “지난 10분 동안 요청이 몇 번 왔는가?”, “동시에 처리 중인 요청은 몇 개인가?”, “latency 분포는 어떤가?”는 개별 trace를 하나씩 읽는 방식으로 답하기 어렵다.
+Trace는 한 execution의 관계를 깊게 본다. 하지만 “지난 10분 동안 요청이 몇 번 왔는가?”, “동시에 처리 중인 요청은 몇
+개인가?”, “latency 분포는 어떤가?”는 개별 trace를 하나씩 읽는 방식으로 답하기 어렵다.
 
 그래서 metrics는 **반복되는 measurement를 집계 가능한 형태로 표현**한다.
 
@@ -87,7 +88,8 @@ raw URL with unique ids
 
 ## 5. Semantic Conventions는 왜 필요한가
 
-서로 다른 instrumentation이 같은 HTTP request를 서로 다른 metric name, attribute name, unit으로 표현하면 backend에서 합쳐 분석하기 어렵다.
+서로 다른 instrumentation이 같은 HTTP request를 서로 다른 metric name, attribute name, unit으로 표현하면 backend에서
+합쳐 분석하기 어렵다.
 
 Semantic Conventions는 공통 operation과 signal에 대해 이름과 attribute의 의미를 맞추는 vocabulary를 제공한다.
 
@@ -99,7 +101,8 @@ Semantic Conventions는 공통 operation과 signal에 대해 이름과 attribute
 
 라는 interoperability 목적을 이해하는 것이다.
 
-Semantic Conventions의 개별 영역은 stability가 다를 수 있으므로 version-sensitive field를 textbook의 영구 불변 사실처럼 가정하지 않는다.
+Semantic Conventions의 개별 영역은 stability가 다를 수 있으므로 version-sensitive field를 textbook의 영구 불변 사실처럼
+가정하지 않는다.
 
 ## 6. 변형 실험
 

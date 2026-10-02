@@ -1,8 +1,10 @@
 # OpenTelemetry Textbook
 
-이 textbook은 OpenTelemetry를 “설정법”보다 **telemetry가 어디서 만들어지고, 어떤 상태를 담고, 어떤 경계를 넘어 이동하는지**를 이해하는 순서로 배운다.
+이 textbook은 OpenTelemetry를 “설정법”보다
+**telemetry가 어디서 만들어지고, 어떤 상태를 담고, 어떤 경계를 넘어 이동하는지**를 이해하는 순서로 배운다.
 
-처음에는 한 Python process의 span 관계만 본다. 이후 실패 의미, Resource/API/SDK, instrumentation, process boundary, OTLP/Collector, metrics, diagnosis를 차례로 추가한다.
+처음에는 한 Python process의 span 관계만 본다. 이후 실패 의미, Resource/API/SDK, instrumentation, process boundary,
+OTLP/Collector, metrics, diagnosis를 차례로 추가한다.
 
 ```text
 operation
@@ -49,10 +51,13 @@ operation
 | metric instrument 선택과 cardinality 판단 | 8 | 8, 9 |
 | pipeline failure를 evidence로 좁히기 | 9 | 9 |
 
-Semantic Conventions는 별도 암기 장으로 떼지 않는다. Unit 3의 error 의미, Unit 5의 library instrumentation, Unit 8의 metric naming/attribute 의미에서 반복해서 연결한다.
+Semantic Conventions는 별도 암기 장으로 떼지 않는다. Unit 3의 error 의미, Unit 5의 library instrumentation, Unit 8의
+metric naming/attribute 의미에서 반복해서 연결한다.
 
 ## 읽는 방법
 
-각 장의 실습은 가능한 한 `예측 → 실행 → 관찰 → 해석 → 변형 → 적용` 순서를 따른다. 정답을 외우는 대신, 관찰한 근거를 이용해 시스템 내부의 관계를 복원하는 것이 목표다.
+각 장의 실습은 가능한 한 `예측 → 실행 → 관찰 → 해석 → 변형 → 적용` 순서를 따른다. 정답을 외우는 대신, 관찰한 근거를
+이용해 시스템 내부의 관계를 복원하는 것이 목표다.
 
-후반부로 갈수록 안내를 줄인다. Unit 2에서는 어떤 필드를 볼지 자세히 알려 주지만, Unit 9에서는 learner가 스스로 확인할 boundary와 evidence를 선택해야 한다.
+후반부로 갈수록 안내를 줄인다. Unit 2에서는 어떤 필드를 볼지 자세히 알려 주지만, Unit 9에서는 learner가 스스로 확인할
+boundary와 evidence를 선택해야 한다.

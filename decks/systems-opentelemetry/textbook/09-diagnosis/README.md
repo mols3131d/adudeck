@@ -17,7 +17,8 @@ business operation
 → query / UI
 ```
 
-좋은 diagnosis는 모든 설정을 한꺼번에 바꾸는 것이 아니라 **마지막으로 확인된 evidence와 첫 번째로 사라진 evidence 사이**를 좁힌다.
+좋은 diagnosis는 모든 설정을 한꺼번에 바꾸는 것이 아니라
+**마지막으로 확인된 evidence와 첫 번째로 사라진 evidence 사이**를 좁힌다.
 
 ## 학습 목표
 
@@ -42,7 +43,8 @@ ConsoleSpanExporter span 있음
 Collector debug output 없음
 ```
 
-이라면 business code와 span creation까지는 이미 지나왔다. 조사 범위는 exporter/transport/Collector receiver 쪽으로 좁아진다.
+이라면 business code와 span creation까지는 이미 지나왔다. 조사 범위는 exporter/transport/Collector receiver 쪽으로
+좁아진다.
 
 ## 2. Failure matrix
 
@@ -93,7 +95,8 @@ Receiver/exporter component를 선언해 두고 `service.pipelines` 연결을 �
 
 ## 4. Debug exporter를 tee처럼 활용한다
 
-실전 diagnosis에서는 backend exporter와 함께 debug exporter를 임시로 붙여 Collector가 어느 단계까지 데이터를 받았는지 확인할 수 있다.
+실전 diagnosis에서는 backend exporter와 함께 debug exporter를 임시로 붙여 Collector가 어느 단계까지 데이터를 받았는지
+확인할 수 있다.
 
 ```text
 receiver
@@ -109,7 +112,8 @@ debug exporter에는 보이는데 backend에는 없다면 instrumentation이나 
 
 Telemetry가 보이지 않는 이유가 항상 failure는 아니다.
 
-예를 들면 sampling이 일부 trace를 의도적으로 기록하지 않을 수 있다. filter/processor가 데이터를 제거할 수도 있다. query time range나 resource filter가 틀렸을 수도 있다.
+예를 들면 sampling이 일부 trace를 의도적으로 기록하지 않을 수 있다. filter/processor가 데이터를 제거할 수도 있다. query
+time range나 resource filter가 틀렸을 수도 있다.
 
 따라서 absence를 해석할 때는 다음을 묻는다.
 
@@ -124,7 +128,8 @@ Telemetry가 보이지 않는 이유가 항상 failure는 아니다.
 
 다음 상황을 해결한다.
 
-> checkout 요청은 정상 응답한다. Service A의 local console에는 client span이 있다. Service B에도 server span이 있다. 두 span의 trace ID는 다르다. Collector에는 두 span 모두 도착한다.
+> checkout 요청은 정상 응답한다. Service A의 local console에는 client span이 있다. Service B에도 server span이 있다. 두
+> span의 trace ID는 다르다. Collector에는 두 span 모두 도착한다.
 
 다음 순서로 답한다.
 
@@ -156,7 +161,8 @@ operation
 
 각 화살표마다 한 가지 failure mode와 한 가지 observable evidence를 붙여 보자.
 
-이 작업을 할 수 있다면 OpenTelemetry를 “몇 개의 설정 키”가 아니라 **state와 data flow를 가진 telemetry system**으로 이해한 것이다.
+이 작업을 할 수 있다면 OpenTelemetry를 “몇 개의 설정 키”가 아니라 **state와 data flow를 가진 telemetry system**으로
+이해한 것이다.
 
 ## 완료 평가 기준
 

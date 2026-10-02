@@ -1,6 +1,7 @@
 # 4장 · Resource와 API/SDK
 
-앞 장까지는 span 안의 관계와 의미를 읽었다. 이제 한 단계 뒤로 물러나 **누가 telemetry를 만들고 누가 실제로 처리하는지**를 본다.
+앞 장까지는 span 안의 관계와 의미를 읽었다. 이제 한 단계 뒤로 물러나
+**누가 telemetry를 만들고 누가 실제로 처리하는지**를 본다.
 
 이번 장의 핵심 구분은 두 개다.
 
@@ -24,7 +25,8 @@ API → Provider/SDK → Processor → Exporter
 
 ## 1. API는 “무엇을 기록할지” 말한다
 
-애플리케이션 코드가 호출하는 `trace.get_tracer()`와 `start_as_current_span()`은 API 표면이다. library code는 가능하면 이 API에 의존하고, telemetry를 어디로 보낼지까지 결정하지 않는다.
+애플리케이션 코드가 호출하는 `trace.get_tracer()`와 `start_as_current_span()`은 API 표면이다. library code는 가능하면 이
+API에 의존하고, telemetry를 어디로 보낼지까지 결정하지 않는다.
 
 SDK는 실제 Provider, sampling, processing, export 같은 runtime behavior를 제공한다.
 
@@ -80,13 +82,15 @@ same Resource
 uv run --locked textbook/04-resource-api-sdk/sdk_boundaries.py
 ```
 
-스크립트가 먼저 `boundary-summary` 한 줄로 `service.name`, scope name, scope version을 출력한다. 이어지는 ConsoleSpanExporter JSON에서 Resource를 다시 확인할 수 있다.
+스크립트가 먼저 `boundary-summary` 한 줄로 `service.name`, scope name, scope version을 출력한다. 이어지는
+ConsoleSpanExporter JSON에서 Resource를 다시 확인할 수 있다.
 
 ```text
 boundary-summary span=charge_payment service.name=... scope=adudeck.payment scope.version=1.0.0
 ```
 
-이 summary exporter는 학습용 probe다. **안정적인 contract는 Resource와 Instrumentation Scope 개념 자체**이고, console JSON formatting이나 이 teaching probe를 외부 protocol contract처럼 취급하지 않는다.
+이 summary exporter는 학습용 probe다. **안정적인 contract는 Resource와 Instrumentation Scope 개념 자체**이고, console
+JSON formatting이나 이 teaching probe를 외부 protocol contract처럼 취급하지 않는다.
 
 ## 6. Processor와 Exporter
 
@@ -102,7 +106,8 @@ ConsoleSpanExporter
 stdout
 ```
 
-`SimpleSpanProcessor`는 span이 끝날 때 바로 exporter를 호출해 학습하기 쉽다. 네트워크 export에서는 보통 batch processing이 더 적합하다.
+`SimpleSpanProcessor`는 span이 끝날 때 바로 exporter를 호출해 학습하기 쉽다. 네트워크 export에서는 보통 batch
+processing이 더 적합하다.
 
 여기서 중요한 것은 **Processor와 Exporter를 같은 것으로 보지 않는 것**이다.
 

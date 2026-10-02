@@ -1,6 +1,7 @@
 # 7장 · OTLP와 Collector
 
-지금까지 span은 application process의 `ConsoleSpanExporter`에서 바로 stdout으로 갔다. 이제 처음으로 **telemetry를 application process 밖으로 보낸다.**
+지금까지 span은 application process의 `ConsoleSpanExporter`에서 바로 stdout으로 갔다. 이제 처음으로
+**telemetry를 application process 밖으로 보낸다.**
 
 ```text
 Python app
@@ -30,7 +31,8 @@ OTLP exporter는 OpenTelemetry data model을 다른 process로 보내기 위해 
 http://127.0.0.1:4318/v1/traces
 ```
 
-4318은 OTLP/HTTP의 기본 port다. gRPC 4317도 널리 사용되지만 이번 장에서는 protocol 자체가 학습 노이즈가 되지 않도록 HTTP 하나만 사용한다.
+4318은 OTLP/HTTP의 기본 port다. gRPC 4317도 널리 사용되지만 이번 장에서는 protocol 자체가 학습 노이즈가 되지 않도록 HTTP
+하나만 사용한다.
 
 ## 2. Collector는 pipeline을 조립한다
 
@@ -44,7 +46,8 @@ processor: batch
 exporter: debug
 ```
 
-Collector config의 핵심 함정은 **component를 선언했다고 자동으로 실행되는 것이 아니라는 점**이다. `service.pipelines.traces`에 연결되어야 해당 signal pipeline에서 사용된다.
+Collector config의 핵심 함정은 **component를 선언했다고 자동으로 실행되는 것이 아니라는 점**이다.
+`service.pipelines.traces`에 연결되어야 해당 signal pipeline에서 사용된다.
 
 ## 3. Collector를 실행한다
 
@@ -107,9 +110,13 @@ telemetry export 실패가 business operation을 반드시 실패시키는 것�
 
 ## 7. 실패 실험 2 · pipeline에서 receiver를 뺀다
 
-`collector-config.yaml`을 복사한 뒤 `service.pipelines.traces`에서 `otlp` receiver를 참조하지 않는 변형을 만든다. OpenTelemetry Collector에서는 receiver를 `receivers:`에 **configure**하는 것과 `service.pipelines`에 넣어 **enable**하는 것이 별개다.
+`collector-config.yaml`을 복사한 뒤 `service.pipelines.traces`에서 `otlp` receiver를 참조하지 않는 변형을 만든다.
+OpenTelemetry Collector에서는 receiver를 `receivers:`에 **configure**하는 것과 `service.pipelines`에 넣어 **enable**하는
+것이 별개다.
 
-가장 단순한 관찰 방법은 traces pipeline 자체를 제거한 변형 config로 Collector를 시작한 뒤 4318 listener가 생기는지 확인하는 것이다. Collector version과 validation rule에 따라 “활성 pipeline이 없음”을 startup에서 거부한다면 그 오류도 configuration boundary evidence다.
+가장 단순한 관찰 방법은 traces pipeline 자체를 제거한 변형 config로 Collector를 시작한 뒤 4318 listener가 생기는지
+확인하는 것이다. Collector version과 validation rule에 따라 “활성 pipeline이 없음”을 startup에서 거부한다면 그 오류도
+configuration boundary evidence다.
 
 핵심 질문은 이것이다.
 
