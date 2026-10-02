@@ -109,8 +109,8 @@ uv run --locked python -m unittest discover -s tests -v
 
 - Curriculum baseline: 이 README의 Goal, Prerequisites, Learning scope, Learning path.
 - Textbook: Unit 0–9의 chapter prose와 핵심 hands-on artifact가 작성되어 있다.
-- Repository CI는 Python 3.14.6 / OpenTelemetry API·SDK 1.45.0 lock 환경에서 Unit 2의 trace/context 변형과 Unit 3·4·6·8의
-  learner-visible evidence를 검증한다.
+- Repository CI는 Python 3.14.6 / OpenTelemetry API·SDK 1.45.0 lock 환경에서 Unit 2의 trace/context 변형과 Unit
+  3·4·6·8의 learner-visible evidence를 검증한다.
 - 검증된 core evidence에는 handled error와 final failure의 차이, Resource와 Instrumentation Scope 분리, 실제 두 process
   사이 context propagation과 의도적 단절, Counter/UpDownCounter/Histogram measurement semantics가 포함된다.
 - Unit 5의 Flask/zero-code와 Unit 7의 OTLP/Collector는 external dependency/container boundary를 사용하므로 full runtime
