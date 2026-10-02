@@ -6,6 +6,16 @@ from typing import Any
 
 
 PROMPT_NAME = "support/refund-answer"
+LAB_PROMPT = [
+    {
+        "role": "system",
+        "content": "정책상 환불 기간은 {{policy_days}}일입니다.",
+    },
+    {
+        "role": "user",
+        "content": "{{question}}",
+    },
+]
 
 
 def generate_with_prompt(
@@ -60,6 +70,37 @@ def fetch_prompt(
     )
 
 
+def ensure_lab_prompt(
+    langfuse: Any,
+    *,
+    label: str,
+    not_found_error: type[Exception],
+) -> tuple[Any, bool]:
+    """Reuse the expected lab prompt or create it once; never overwrite different state."""
+    try:
+        existing = langfuse.get_prompt(
+            PROMPT_NAME,
+            type="chat",
+            label=label,
+        )
+    except not_found_error:
+        created = langfuse.create_prompt(
+            name=PROMPT_NAME,
+            type="chat",
+            prompt=LAB_PROMPT,
+            labels=[label],
+            commit_message="adudeck Unit 7 synthetic prompt bootstrap",
+        )
+        return created, True
+
+    if existing.prompt != LAB_PROMPT:
+        raise RuntimeError(
+            f"{PROMPT_NAME!r} label {label!r} already exists with different content; "
+            "choose another Langfuse project/label instead of overwriting it."
+        )
+    return existing, False
+
+
 def require_live_environment() -> str:
     required = (
         "LANGFUSE_PUBLIC_KEY",
@@ -97,24 +138,46 @@ def parse_args() -> argparse.Namespace:
         type=int,
         help="Exact immutable prompt version to fetch for reproducible historical runs.",
     )
+    parser.add_argument(
+        "--bootstrap",
+        action="store_true",
+        help=(
+            "Create the synthetic lab prompt if the selected label does not exist. "
+            "Bootstrap cannot be combined with --version."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.bootstrap and args.version is not None:
+        raise SystemExit("--bootstrap requires label-based selection, not --version")
+
     model = require_live_environment()
 
     from langfuse import get_client
+    from langfuse.api import NotFoundError
     from langfuse.openai import OpenAI
 
     langfuse = get_client()
     openai_client = OpenAI()
 
-    prompt = fetch_prompt(
-        langfuse,
-        label=args.label,
-        version=args.version,
-    )
+    selected_label = args.label or ("staging" if args.bootstrap else "production")
+    if args.bootstrap:
+        prompt, created = ensure_lab_prompt(
+            langfuse,
+            label=selected_label,
+            not_found_error=NotFoundError,
+        )
+        print(f"prompt_bootstrap={'created' if created else 'reused'}")
+    else:
+        prompt = fetch_prompt(
+            langfuse,
+            label=args.label,
+            version=args.version,
+        )
+
     evidence = generate_with_prompt(
         openai_client,
         prompt,
@@ -126,7 +189,7 @@ def main() -> None:
     selection = (
         f"version={args.version}"
         if args.version is not None
-        else f"label={args.label or 'production'}"
+        else f"label={selected_label}"
     )
     print(f"prompt_selection={selection}")
     for key, value in evidence.items():
