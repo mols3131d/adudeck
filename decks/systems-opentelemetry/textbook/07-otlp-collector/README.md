@@ -177,13 +177,27 @@ cp textbook/07-otlp-collector/collector-config.yaml /tmp/adudeck-otel-collector.
 OpenTelemetry Collector에서는 receiver를 `receivers:`에 **configure**하는 것과 `service.pipelines`에 넣어 **enable**하는
 것이 별개다.
 
+이제 baseline Collector가 실행 중이라면 먼저 종료하고, **수정한 disposable copy를 실제로 mount해서** fault-injection
+Collector를 실행한다.
+
+```bash
+docker rm -f adudeck-otel-collector 2>/dev/null || true
+
+docker run --rm \
+  --name adudeck-otel-collector-fault \
+  -p 127.0.0.1:4318:4318 \
+  -v "/tmp/adudeck-otel-collector.yaml:/etc/otelcol/config.yaml:ro" \
+  otel/opentelemetry-collector:0.162.0
+```
+
 Collector version과 validation rule에 따라 active pipeline이 없는 config를 startup 단계에서 거부할 수 있다. 그 경우
 startup error 자체가 configuration boundary evidence다. 시작은 되지만 listener/data path가 없어진다면 그것도 별개의
 evidence다.
 
-실험이 끝나면 `/tmp/adudeck-otel-collector.yaml`만 삭제한다.
+Collector가 계속 실행된다면 `Ctrl-C`로 종료한다. 다른 terminal에서 정리해야 한다면 fault-injection container만 제거한다.
 
 ```bash
+docker rm -f adudeck-otel-collector-fault 2>/dev/null || true
 rm -f /tmp/adudeck-otel-collector.yaml
 ```
 
