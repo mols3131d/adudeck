@@ -1,3 +1,5 @@
+import argparse
+
 from flask import Flask
 
 
@@ -10,4 +12,7 @@ def checkout() -> dict[str, int]:
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8086, debug=False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8086)
+    args = parser.parse_args()
+    app.run(host="127.0.0.1", port=args.port, debug=False, use_reloader=False)
