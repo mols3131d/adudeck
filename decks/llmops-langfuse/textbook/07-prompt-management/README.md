@@ -339,7 +339,8 @@ Fallback은 remote prompt를 얻지 못해도 application이 계속 실행되게
 
 하지만 중요한 차이가 있다.
 
-Langfuse Python SDK는 fallback prompt client를 `is_fallback=True`로 표시하고, prompt name/version tracing context를 만들 때 fallback이면 remote prompt identity를 기록하지 않는다.
+Langfuse Python SDK는 fallback prompt client를 `is_fallback=True`로 표시하고, prompt name/version tracing context를 만들
+때 fallback이면 remote prompt identity를 기록하지 않는다.
 
 따라서:
 
@@ -381,7 +382,8 @@ Langfuse version B
 
 하면 incident/debugging에서 어느 artifact를 복원해야 하는지 모호해진다.
 
-이 deck은 하나의 universal policy를 강제하지 않는다. 대신 **owner와 synchronization responsibility를 명시하라**고 요구한다.
+이 deck은 하나의 universal policy를 강제하지 않는다. 대신 **owner와 synchronization responsibility를 명시하라**고
+요구한다.
 
 ## 11. Prompt version을 experiment condition으로 만든다
 
@@ -416,7 +418,8 @@ aggregate
 
 ## 12. `propagate_attributes(prompt=...)`와 direct linkage
 
-여러 auto-instrumented generation이 같은 prompt context를 공유해야 할 때는 `propagate_attributes(prompt=prompt)` 같은 context propagation이 유용할 수 있다.
+여러 auto-instrumented generation이 같은 prompt context를 공유해야 할 때는 `propagate_attributes(prompt=prompt)` 같은
+context propagation이 유용할 수 있다.
 
 반대로 특정 generation 하나에 정확한 prompt object를 연결할 수 있으면 direct linkage가 더 좁고 읽기 쉽다.
 
@@ -490,7 +493,8 @@ latest version  → version 22
 
 ## 다음 장
 
-마지막 장에서는 trace, score, dataset version, experiment, prompt version을 하나의 evidence-preserving improvement loop로 묶고 **release decision**까지 만든다.
+마지막 장에서는 trace, score, dataset version, experiment, prompt version을 하나의 evidence-preserving improvement
+loop로 묶고 **release decision**까지 만든다.
 
 ## References
 
