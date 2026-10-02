@@ -1,6 +1,8 @@
 # 2장 · 첫 트레이스
 
-첫 실습에서는 **한 프로세스 안에서 세 작업이 스팬으로 기록되고, current context를 통해 부모·자식 관계로 연결되는 과정**을 직접 확인한다.
+첫 실습에서는
+**한 프로세스 안에서 세 작업이 스팬으로 기록되고, current context를 통해 부모·자식 관계로 연결되는 과정**을 직접
+확인한다.
 
 ```text
 checkout
@@ -18,7 +20,8 @@ checkout
 - `start_as_current_span()`이 current context를 바꾸고 복원하는 과정을 설명한다.
 - 함수 호출 관계와 telemetry 관계가 같은 것이 아님을 설명한다.
 
-`Resource`, processor, exporter의 세부 책임은 아직 외우지 않는다. 이번 장에서는 span 관계를 관찰할 수 있을 만큼만 사용하고, [4장](../04-resource-api-sdk/README.md)에서 다시 분해한다.
+`Resource`, processor, exporter의 세부 책임은 아직 외우지 않는다. 이번 장에서는 span 관계를 관찰할 수 있을 만큼만
+사용하고, [4장](../04-resource-api-sdk/README.md)에서 다시 분해한다.
 
 ## 1. 코드를 실행하기 전에 구조를 읽는다
 
@@ -30,11 +33,13 @@ checkout()
   └─ charge_payment()
 ```
 
-함수 호출 구조만 보고 span tree가 반드시 같다고 결론 내리지는 않는다. **함수는 실행 단위이고, span은 instrumentation이 선택한 관찰 단위**이기 때문이다.
+함수 호출 구조만 보고 span tree가 반드시 같다고 결론 내리지는 않는다.
+**함수는 실행 단위이고, span은 instrumentation이 선택한 관찰 단위**이기 때문이다.
 
 ## 2. 스팬과 트레이스
 
-가게에서 주문 한 건을 처리한다고 생각해 보자. 장바구니를 확인하고 결제를 마친다. 나중에 어느 작업이 오래 걸렸는지 알고 싶다면 각 작업의 시작과 끝, 그리고 작업 사이의 관계를 기록해야 한다.
+가게에서 주문 한 건을 처리한다고 생각해 보자. 장바구니를 확인하고 결제를 마친다. 나중에 어느 작업이 오래 걸렸는지 알고
+싶다면 각 작업의 시작과 끝, 그리고 작업 사이의 관계를 기록해야 한다.
 
 **스팬(span)은 instrumented operation 하나를 시간 범위와 함께 표현하는 기록**이라고 생각하면 된다.
 
@@ -64,7 +69,8 @@ with tracer.start_as_current_span("checkout"):
     charge_payment()
 ```
 
-`checkout` 블록에 들어가면 `checkout` span이 current span이 된다. 그 상태에서 `validate_cart` span을 시작하면 SDK는 current context를 부모 context로 사용한다.
+`checkout` 블록에 들어가면 `checkout` span이 current span이 된다. 그 상태에서 `validate_cart` span을 시작하면 SDK는
+current context를 부모 context로 사용한다.
 
 ```text
 before checkout block     current: none
@@ -76,13 +82,15 @@ leave payment block       current: checkout
 leave checkout block      current: none
 ```
 
-`validate_cart` 블록을 빠져나오면 이전 context인 `checkout`이 복원된다. 그래서 다음 `charge_payment`는 `validate_cart`의 자식이 아니라 `checkout`의 또 다른 자식이 된다.
+`validate_cart` 블록을 빠져나오면 이전 context인 `checkout`이 복원된다. 그래서 다음 `charge_payment`는 `validate_cart`의
+자식이 아니라 `checkout`의 또 다른 자식이 된다.
 
 여기서 중요한 불변식은 이것이다.
 
 > **새 span의 부모 관계는 Python 함수의 호출자 이름이 아니라 span을 시작하는 순간의 context에 의해 결정된다.**
 
-함수 호출만으로 span이 자동 생성되는 것도 아니다. 함수 하나에 span이 없을 수도 있고, 함수 하나가 여러 span을 만들 수도 있다.
+함수 호출만으로 span이 자동 생성되는 것도 아니다. 함수 하나에 span이 없을 수도 있고, 함수 하나가 여러 span을 만들 수도
+있다.
 
 ## 4. 이번 실습의 export 경로
 
@@ -98,7 +106,8 @@ ConsoleSpanExporter
 stdout
 ```
 
-`SimpleSpanProcessor`는 span이 끝날 때 exporter를 즉시 호출한다. 네트워크 전송에서는 batching이 더 적합한 경우가 많지만, 이번 장의 목표는 processor 성능이 아니라 span 관계를 눈으로 확인하는 것이다.
+`SimpleSpanProcessor`는 span이 끝날 때 exporter를 즉시 호출한다. 네트워크 전송에서는 batching이 더 적합한 경우가 많지만,
+이번 장의 목표는 processor 성능이 아니라 span 관계를 눈으로 확인하는 것이다.
 
 ## 5. 실행 결과를 예측한다
 
@@ -155,7 +164,10 @@ resource.attributes.service.name
 - 두 child의 `parent_id`가 `checkout.span_id`와 같다.
 - 세 span에서 `service.name=adudeck-otel-first-trace`가 관찰된다.
 
-마지막 항목을 과도하게 해석하지 않는다. **같은 `service.name` 값만으로 같은 process나 같은 Resource object라고 증명할 수는 없다.** 이 예제에서 세 span이 같은 Resource configuration을 갖는 직접적인 이유는 하나의 `TracerProvider(resource=...)`를 공유하기 때문이다. Resource의 의미는 4장에서 다룬다.
+마지막 항목을 과도하게 해석하지 않는다.
+**같은 `service.name` 값만으로 같은 process나 같은 Resource object라고 증명할 수는 없다.** 이 예제에서 세 span이 같은
+Resource configuration을 갖는 직접적인 이유는 하나의 `TracerProvider(resource=...)`를 공유하기 때문이다. Resource의
+의미는 4장에서 다룬다.
 
 ## 7. 출력 순서에서 tree를 추측하지 않는다
 
@@ -174,11 +186,13 @@ validate_cart.parent_id = C
 charge_payment.parent_id = C
 ```
 
-이라면 V와 P는 형제다. 반대로 `charge_payment.parent_id=V`라면 payment는 validation의 자식이다. 같은 `trace_id`만 확인해서는 이 두 tree를 구분할 수 없다.
+이라면 V와 P는 형제다. 반대로 `charge_payment.parent_id=V`라면 payment는 validation의 자식이다. 같은 `trace_id`만
+확인해서는 이 두 tree를 구분할 수 없다.
 
 ## 8. 변형 실험 · current context를 끊는다
 
-[`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` span의 `with` 블록 밖으로 옮긴다. 다른 코드는 바꾸지 않는다.
+[`first_trace.py`](first_trace.py)에서 **`charge_payment()` 호출 한 줄만** `checkout` span의 `with` 블록 밖으로 옮긴다.
+다른 코드는 바꾸지 않는다.
 
 실행 전에 예측한다.
 
@@ -190,9 +204,11 @@ charge_payment.parent_id = C
 
 이번 실험에서는 들여쓰기 자체보다 `charge_payment()`가 실행되는 순간 **활성 current span이 있는가**를 본다.
 
-`checkout`의 `with` 블록을 이미 빠져나왔다면 이전 context가 복원되어 활성 parent span이 없다. 그러면 `charge_payment`는 새 root span이 되고 새 trace를 시작한다.
+`checkout`의 `with` 블록을 이미 빠져나왔다면 이전 context가 복원되어 활성 parent span이 없다. 그러면 `charge_payment`는
+새 root span이 되고 새 trace를 시작한다.
 
-서로 다른 실행에서 생성된 임의의 ID 값을 직접 비교하지 않는다. **변형 실행 하나 안에서** `charge_payment`와 `checkout`의 관계를 비교한다.
+서로 다른 실행에서 생성된 임의의 ID 값을 직접 비교하지 않는다. **변형 실행 하나 안에서** `charge_payment`와 `checkout`의
+관계를 비교한다.
 
 실험이 끝나면 파일을 원래 상태로 되돌린다.
 
@@ -226,8 +242,10 @@ charge_payment.parent_id = C
 과제를 수행한다.
 
 1. 함수 이름이나 출력 순서에 기대지 않고 span tree를 그린다. 각 연결선을 어떤 식별자로 판단했는지 설명한다.
-2. `parse_file` 블록 안에서 `read_file`을 시작했다고 하자. `read_file`의 `with` 블록을 빠져나온 직후 current span과 `parse_file` 블록을 빠져나온 직후 current span을 각각 예측한다.
-3. `save_result`만 `import_job`의 `with` 블록 밖에서 시작하도록 옮기면 어떤 관계가 바뀌는가? `read_file`과 `parse_file` 사이에서 유지되어야 할 관계도 설명한다.
+2. `parse_file` 블록 안에서 `read_file`을 시작했다고 하자. `read_file`의 `with` 블록을 빠져나온 직후 current span과
+   `parse_file` 블록을 빠져나온 직후 current span을 각각 예측한다.
+3. `save_result`만 `import_job`의 `with` 블록 밖에서 시작하도록 옮기면 어떤 관계가 바뀌는가? `read_file`과 `parse_file`
+   사이에서 유지되어야 할 관계도 설명한다.
 
 스스로 점검할 기준은 세 가지다.
 
