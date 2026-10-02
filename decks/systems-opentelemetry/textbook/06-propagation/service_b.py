@@ -1,3 +1,4 @@
+import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from opentelemetry import trace
@@ -34,5 +35,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print("service-b listening on http://127.0.0.1:8090")
-    HTTPServer(("127.0.0.1", 8090), Handler).serve_forever()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8090)
+    args = parser.parse_args()
+    print(f"service-b listening on http://127.0.0.1:{args.port}")
+    HTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
