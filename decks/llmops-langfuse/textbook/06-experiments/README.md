@@ -1,104 +1,76 @@
 # 6장 · Experiment: 같은 Cases에서 변경 전후를 비교하기
 
-Dataset은 같은 문제를 다시 낼 수 있게 한다. 그러나 dataset만으로는 변경이 좋아졌는지 알 수 없다.
+Dataset은 같은 문제를 다시 낼 수 있게 한다. 하지만 같은 문제를 가지고 있다는 것만으로는 변경이 좋아졌는지 알 수 없다.
 
-Experiment는 다음 질문을 구조화한다.
+Experiment가 답하려는 질문은 더 구체적이다.
 
-> **같은 test cases와 같은 evaluation contract 아래에서 application condition 하나를 바꾸었을 때 무엇이 달라졌는가?**
+> **같은 cases와 같은 evaluation contract 아래에서, 의도한 condition을 바꾸었을 때 어떤 behavior가 달라졌는가?**
 
-Langfuse Academy가 강조하는 핵심도 cause/effect를 이해할 수 있도록 baseline을 고정하고 comparison condition을 통제하는
-것이다.
+이 장에서는 먼저 Langfuse 없이 comparison mechanics를 확인한 뒤, 같은 원리를 Langfuse Experiment Runner와 **고정된 hosted dataset snapshot**에 적용한다.
 
 ## 학습 목표
 
+이 장을 마치면 다음을 할 수 있어야 한다.
+
 - dataset, task, evaluator, experiment run의 역할을 구분한다.
-- baseline과 candidate가 같은 dataset/evaluator를 사용해야 하는 이유를 설명한다.
-- local data experiment와 hosted dataset experiment의 차이를 설명한다.
+- baseline과 candidate가 같은 case population을 사용해야 하는 이유를 설명한다.
 - aggregate metric과 item-level regression을 함께 읽는다.
-- task error, evaluator error, valid low score를 구분한다.
-- experiment가 보여 주는 evidence와 causal claim의 한계를 구분한다.
+- 같은 aggregate score가 서로 다른 regression pattern을 숨길 수 있음을 설명한다.
+- local data와 hosted dataset experiment의 차이를 설명한다.
+- Langfuse dataset의 timestamp version을 baseline/candidate에 고정한다.
+- application/task error, evaluator error, valid low score를 서로 다른 evidence로 취급한다.
+- experiment evidence가 강하게 말할 수 있는 것과 causal claim의 한계를 구분한다.
 
-## 1. Experiment의 네 요소
+## 1. Experiment의 네 책임
 
-가장 작은 모델은 다음과 같다.
+가장 작은 data flow는 다음과 같다.
 
 ```text
 Dataset
-   ↓
+   ↓ input + expected output
 Task
-   ↓
-Output
-   ↓
+   ↓ application output
 Evaluator
-   ↓
-Score
-```
-
-비교할 때는 여기에 condition이 추가된다.
-
-```text
-same dataset
-same evaluator
-same surrounding conditions
-
-baseline application
-        vs
-candidate application
+   ↓ score / evaluation result
+Experiment
+   ↓ repeated comparison evidence
 ```
 
 각 책임을 섞지 않는다.
 
 ```text
-dataset expected_output
-= 비교할 reference
+dataset
+= 다시 시험할 cases와 reference
 
 task
-= 시험할 application behavior
+= 실제로 시험할 application behavior
 
 evaluator
-= output과 reference를 판정하는 rule
+= output을 판정하는 rule
 
 experiment
-= 같은 cases에서 condition을 반복 실행해 비교할 evidence
+= cases × task × evaluator를 실행하고 비교할 evidence
 ```
 
-## 2. 가장 위험한 leakage: task가 정답을 읽는 것
-
-다음 task는 test가 아니다.
+특히 task가 `expected_output`을 그대로 읽어서 정답을 반환하면 experiment가 아니다.
 
 ```python
 def bad_task(*, item, **kwargs):
     return item["expected_output"]
 ```
 
-Application이 정답을 그대로 읽어 반환하기 때문이다.
+이 코드는 높은 score를 만들 수 있지만 production application이 문제를 해결했다는 evidence는 만들지 못한다.
+
+## 2. 먼저 prediction한다
+
+[`experiment_compare.py`](experiment_compare.py)의 local dataset에는 두 category가 있다.
 
 ```text
-expected_output
-→ evaluator가 참고해야 할 reference
-
-task
-→ expected_output을 모르는 production-like application
+electronics: 14일까지 환불 가능
+perishable:   7일까지 환불 가능
 ```
 
-이 경계를 어기면 score가 높아도 application quality에 대한 evidence가 되지 않는다.
-
-## 3. 먼저 Langfuse 없이 comparison mechanics를 본다
-
-[`experiment_compare.py`](experiment_compare.py)는 API key 없이 실행할 수 있는 deterministic lab을 제공한다.
-
-```bash
-python textbook/06-experiments/experiment_compare.py
-```
-
-Dataset에는 두 product category가 있다.
-
-```text
-electronics policy: 14-day window
-perishable policy: 7-day window
-```
-
-그런데 teaching application은 의도적으로 **global refund window 하나만** 사용한다.
+Teaching application은 일부러 category를 무시하고 하나의 global refund window만 사용한다.
 
 Baseline:
 
@@ -112,191 +84,62 @@ Candidate:
 refund_window_days = 7
 ```
 
-이 candidate는 perishable case 하나를 고치지만 electronics의 critical boundary case를 깨뜨린다.
+실행하기 전에 예측한다.
 
-예상 출력의 핵심:
+1. baseline accuracy는 얼마일까?
+2. candidate accuracy는 얼마일까?
+3. candidate가 고치는 case는 무엇인가?
+4. candidate가 새로 깨뜨리는 case는 무엇인가?
+5. aggregate accuracy가 같다면 두 variant가 동등하다고 말할 수 있을까?
 
-```text
-baseline_accuracy=0.75
-candidate_accuracy=0.75
-
-regression
-electronics-day-14
-```
-
-## 4. 평균이 같아도 system behavior는 같지 않다
-
-Baseline과 candidate가 모두 75%라고 하자.
-
-```text
-baseline
-electronics-day-14   PASS   critical
-perishable-day-10    FAIL
-
-candidate
-electronics-day-14   FAIL   critical
-perishable-day-10    PASS
-```
-
-Aggregate만 보면 동일하다.
-
-하지만 regression 관점에서는 완전히 다르다.
-
-```text
-candidate가 고친 case
-≠
-candidate가 새로 깨뜨린 case
-```
-
-Release decision에는 다음 순서가 더 유용하다.
-
-```text
-aggregate trend 확인
-→ changed items 찾기
-→ critical regression 식별
-→ 해당 item trace 조사
-→ failure mechanism 설명
-```
-
-[`test_experiment_compare.py`](test_experiment_compare.py)는 **같은 aggregate가 critical regression을 숨길 수 있음**을
-contract로 고정한다.
-
-## 5. 이 lab은 causal claim의 한계도 보여 준다
-
-Candidate에서 global window를 14 → 7로 바꿨다.
-
-이 한 parameter change로 여러 dataset segment의 behavior가 바뀐다.
-
-Experiment는 다음을 강하게 말할 수 있다.
-
-```text
-이 condition에서 이 case가 고쳐졌다.
-이 condition에서 저 case가 회귀했다.
-```
-
-하지만 다음을 자동으로 증명하지는 않는다.
-
-```text
-production 전체에서도 반드시 개선된다.
-관찰된 모든 변화의 내부 원인을 완전히 설명했다.
-```
-
-그래서 experiment는 controlled evidence이지 "원인에 대한 마법 같은 증명"이 아니다.
-
-## 6. Langfuse Experiment Runner로 같은 구조를 실행한다
-
-현재 Langfuse Python SDK v4의 Experiment Runner는 local data와 hosted dataset을 모두 지원한다. Runner는 item execution을
-자동으로 trace하고 evaluator result를 연결하며, 개별 failure를 격리해 전체 run을 조사할 수 있게 한다.
-
-`experiment_compare.py`에는 같은 deterministic task를 Langfuse runner로 실행하는 함수가 있다.
-
-```python
-return langfuse.run_experiment(
-    name=name,
-    data=LOCAL_DATA,
-    task=task,
-    evaluators=[correctness_evaluator],
-    metadata={"refund_window_days": refund_window_days},
-)
-```
-
-Evaluator:
-
-```python
-from langfuse import Evaluation
-
-return Evaluation(
-    name="correctness",
-    value=1.0 if output == expected_output else 0.0,
-)
-```
-
-이 evaluator는 experiment process 안에서 실행된다.
-
-## 7. Live lab: baseline과 candidate를 별도 run으로 만든다
-
-Langfuse credential을 설정한 뒤:
+그 다음 실행한다.
 
 ```bash
-export RUN_LANGFUSE_EXPERIMENT=1
-
+cd decks/llmops-langfuse
 uv run python textbook/06-experiments/experiment_compare.py
 ```
 
-두 experiment run을 비교한다.
+핵심 결과는 다음 관계다.
 
 ```text
-refund-window-baseline
-refund_window_days=14
+baseline accuracy  = 0.75
+candidate accuracy = 0.75
 
-refund-window-candidate
-refund_window_days=7
+candidate fixes
+perishable-day-10
+
+candidate regression
+electronics-day-14   critical
 ```
 
-UI에서 다음 순서로 관찰한다.
+## 3. 평균이 같아도 behavior는 같지 않다
 
-1. aggregate correctness는 같은가?
-2. candidate에서 score가 오른 item은 무엇인가?
-3. candidate에서 새로 실패한 item은 무엇인가?
-4. `electronics-day-14`가 critical이라는 metadata를 확인할 수 있는가?
-5. 해당 experiment item의 trace로 내려가 실제 input/output을 확인할 수 있는가?
-
-## 8. Hosted dataset으로 이동하면 무엇이 달라지는가?
-
-Local data:
-
-```python
-langfuse.run_experiment(
-    data=[...],
-    ...
-)
-```
-
-Hosted dataset:
-
-```python
-dataset = langfuse.get_dataset("support/refund-policy")
-
-dataset.run_experiment(
-    name="candidate",
-    task=my_task,
-    evaluators=[my_evaluator],
-)
-```
-
-핵심 mechanism은 같다.
-
-차이는 hosted dataset이 다음을 더 잘 지원한다는 점이다.
-
-- 팀이 같은 cases를 공유한다.
-- source trace linkage를 함께 관리할 수 있다.
-- historical dataset version을 기준으로 run을 재현할 수 있다.
-- 같은 dataset의 여러 experiment를 UI에서 비교하기 쉽다.
-
-Hosted dataset을 쓴다고 evaluator/app contract가 자동으로 좋아지는 것은 아니다.
-
-## 9. 비교 condition을 기록한다
-
-Experiment 이름 하나만으로는 나중에 원인을 재현하기 어렵다.
-
-가능하면 다음을 metadata나 명확한 run identity에 남긴다.
+두 variant의 평균이 모두 75%여도 item transition은 다르다.
 
 ```text
-application revision
-prompt version
-model/config
-dataset version
-retrieval configuration
-feature flag
+case                  baseline   candidate
+------------------------------------------------
+electronics-day-14     PASS       FAIL   critical
+perishable-day-10      FAIL       PASS
 ```
 
-단, metadata를 많이 남기는 것이 목적은 아니다.
+Aggregate는 전체 방향을 보는 데 유용하지만 어떤 case가 바뀌었는지는 알려 주지 않는다.
 
-> 결과 차이를 해석하거나 재현하는 데 필요한 **material condition**을 남긴다.
+그래서 comparison은 최소한 다음 순서로 읽는다.
 
-## 10. 한 번에 하나의 중요한 variable을 바꾼다
+```text
+aggregate
+→ changed items
+→ regressions
+→ critical regressions
+→ 해당 item의 execution evidence
+```
 
-좋은 비교:
+[`test_experiment_compare.py`](test_experiment_compare.py)는 이 invariant를 deterministic contract로 고정한다.
+
+## 4. 한 번에 무엇을 바꿨는지 말할 수 있어야 한다
+
+해석하기 쉬운 comparison:
 
 ```text
 baseline
@@ -312,7 +155,7 @@ retriever R
 code C
 ```
 
-해석하기 어려운 비교:
+해석하기 어려운 comparison:
 
 ```text
 baseline
@@ -327,68 +170,252 @@ retriever R2
 parser rewrite
 ```
 
-두 번째 comparison은 candidate package 전체가 좋았는지는 볼 수 있어도 **무엇이 효과를 만들었는지** 설명하기 어렵다.
+두 번째 실험도 release package 전체의 결과를 비교하는 데는 의미가 있을 수 있다. 하지만 어느 change가 차이를 만들었는지 분리하기 어렵다.
 
-Product release comparison과 causal experiment가 같은 목적이 아닐 수 있다는 점도 구분한다.
+따라서 먼저 질문한다.
 
-## 11. Failure state를 숫자 하나로 뭉개지 않는다
+```text
+이 run은 product package comparison인가?
+아니면 특정 change의 effect를 이해하려는 controlled experiment인가?
+```
+
+둘을 같은 causal claim으로 취급하지 않는다.
+
+## 5. Langfuse local-data Experiment Runner
+
+Credential을 설정하고 다음을 켜면 local data를 Langfuse runner에서도 실행할 수 있다.
+
+```bash
+export LANGFUSE_PUBLIC_KEY="..."
+export LANGFUSE_SECRET_KEY="..."
+export RUN_LANGFUSE_EXPERIMENT=1
+
+uv run python textbook/06-experiments/experiment_compare.py
+```
+
+`LANGFUSE_DATASET_VERSION`을 설정하지 않으면 script는 `LOCAL_DATA`를 사용해 두 run을 만든다.
+
+```text
+refund-window-baseline
+refund-window-candidate
+```
+
+Task는 production-like input만 읽는다.
+
+```python
+def task(*, item, **kwargs):
+    return support_application(
+        item=item,
+        refund_window_days=refund_window_days,
+    )
+```
+
+Evaluator는 output과 expected output을 비교한다.
+
+```python
+return Evaluation(
+    name="correctness",
+    value=1.0 if output == expected_output else 0.0,
+)
+```
+
+여기서 중요한 것은 API 호출 성공이 아니라 역할 분리다.
+
+```text
+task
+≠ evaluator
+
+evaluator
+≠ expected output owner
+
+experiment runner
+≠ correctness rule owner
+```
+
+## 6. Hosted dataset에서는 version도 condition이다
+
+Production failure를 Unit 5에서 hosted dataset item으로 올렸다고 하자.
+
+Dataset은 시간이 지나면서 변할 수 있다.
+
+```text
+09:00  cases A, B, C
+10:00  case D 추가
+11:00  case B 수정
+```
+
+Baseline은 09:30 snapshot을 쓰고 candidate는 11:30 snapshot을 쓰면 결과 차이가 application change 때문인지 dataset change 때문인지 섞인다.
+
+그래서 비교 contract에 dataset identity뿐 아니라 **dataset version**이 필요하다.
+
+현재 Langfuse Python SDK v4에서는 다음처럼 timestamp를 전달할 수 있다.
+
+```python
+dataset = langfuse.get_dataset(
+    "support/refund-policy",
+    version=dataset_version,
+)
+```
+
+`version`은 그 timestamp 기준의 dataset item state를 읽기 위한 condition이다.
+
+이 deck에서는 schema migration 같은 별도 변화까지 이 한 값으로 설명한다고 가정하지 않는다. 여기서 version은 **experiment case population을 고정하는 snapshot boundary**로 사용한다.
+
+## 7. Hands-on: snapshot timestamp를 하나 고정한다
+
+Unit 5에서 필요한 dataset items를 만든 뒤, 그 상태를 이번 comparison에서 고정한다고 결정한다.
+
+예를 들어 현재 UTC 시간을 snapshot boundary로 기록한다.
+
+```bash
+export LANGFUSE_DATASET="support/refund-policy"
+export LANGFUSE_DATASET_VERSION="$(python - <<'PY'
+from datetime import datetime, timezone
+print(datetime.now(timezone.utc).isoformat())
+PY
+)"
+```
+
+중요한 것은 timestamp 값 자체가 아니다.
+
+> **baseline과 candidate가 정확히 같은 timestamp를 사용한다는 것**이 중요하다.
+
+실행 전에 적는다.
+
+```text
+dataset name = ?
+dataset version = ?
+evaluator = ?
+
+baseline condition = refund_window_days 14
+candidate condition = refund_window_days 7
+```
+
+그 다음 실행한다.
+
+```bash
+export RUN_LANGFUSE_EXPERIMENT=1
+uv run python textbook/06-experiments/experiment_compare.py
+```
+
+Script는 다음 형태를 stdout에 남긴다.
+
+```text
+hosted_dataset=support/refund-policy dataset_version=2026-...
+```
+
+그리고 내부에서는 **한 번 fetch한 동일 DatasetClient**를 baseline/candidate가 재사용한다.
+
+```text
+get_dataset(name, version=T)
+        ↓
+    snapshot T
+     ↙      ↘
+baseline   candidate
+```
+
+이 구조가 중요한 이유는 두 run 사이에 label이나 current dataset이 바뀌더라도 이번 comparison의 case population은 이미 고정되어 있기 때문이다.
+
+## 8. UI에서는 세 level을 왕복한다
+
+Hosted experiment를 실행한 뒤 다음 순서로 본다.
+
+### Level 1 · Aggregate
+
+```text
+baseline correctness
+candidate correctness
+```
+
+방향을 빠르게 확인한다.
+
+### Level 2 · Item transition
+
+```text
+pass → fail
+fail → pass
+unchanged fail
+unchanged pass
+```
+
+특히 critical metadata가 붙은 `pass → fail`을 먼저 본다.
+
+### Level 3 · Trace
+
+Regression item을 열고 묻는다.
+
+```text
+input이 같은가?
+expected output이 같은가?
+실제 application output은 어떻게 달라졌는가?
+어느 condition만 바뀌었는가?
+evaluator가 같은 rule을 사용했는가?
+```
+
+이때 trace는 dashboard 장식이 아니라 comparison 결과를 설명하는 diagnostic evidence가 된다.
+
+## 9. Failure state를 숫자 하나로 뭉개지 않는다
 
 Experiment에는 최소한 다음 상태가 있다.
 
 ```text
-task/application error
+application/task error
 evaluator error
-valid output + score 0
-valid output + score 1
 score missing
+valid output + low score
+valid output + high score
 ```
 
-Runner가 item failure를 격리해 계속 실행할 수 있다고 해서 failure를 정상 score로 변환해야 한다는 뜻은 아니다.
-
-진단에서는 **어디에서 실패했는가**가 중요하다.
-
-## 12. Evaluator를 여러 개 둘 때
-
-예를 들어 candidate를 다음 dimension으로 볼 수 있다.
+다음 두 사건은 다르다.
 
 ```text
-correctness      goal metric
-safety           guardrail
-latency          operational metric
-cost             operational metric
+output을 평가했고 틀림
+→ valid score 0
+
+evaluator가 timeout
+→ evaluator error
 ```
 
-Metric이 많을수록 좋다는 뜻은 아니다. Langfuse Academy와 일반적인 eval practice 모두 실제 failure mode와 product
-goal에서 metric을 선택할 것을 강조한다.
+Evaluator error를 0으로 바꾸면 quality failure처럼 보인다. 반대로 실패 row를 평균에서 조용히 제외하면 coverage가 좋아 보일 수 있다.
 
-측정할 이유를 설명할 수 없는 metric은 noise가 된다.
+Unit 8에서는 baseline/candidate의 이런 상태를 독립적으로 보존한 release gate를 만든다.
 
-## 13. 연습: 결과를 해석한다
+## 10. Experiment가 증명하지 않는 것
 
-다음 결과가 있다.
+Controlled experiment는 다음을 강하게 말할 수 있다.
 
 ```text
-baseline accuracy  0.86
-candidate accuracy 0.90
+이 고정된 case population과 evaluator에서
+candidate가 case X를 고쳤다.
 
-critical case A    pass → fail
-minor case B       fail → pass
-minor case C       fail → pass
-
-latency p95        1.1s → 1.4s
+같은 조건에서
+candidate가 case Y를 새로 깨뜨렸다.
 ```
 
-답한다.
+하지만 다음까지 자동으로 증명하지 않는다.
 
-1. candidate가 "더 좋다"고 한 문장으로 결론 내려도 되는가?
-2. 가장 먼저 열어 볼 item trace는 무엇인가?
-3. critical case의 evaluator가 틀렸을 가능성은 어떻게 확인할까?
-4. latency 증가는 prompt change 때문이라고 바로 말할 수 있는가?
-5. release criterion이 사전에 정의되어 있지 않다면 어떤 문제가 생기는가?
+```text
+production 전체 distribution에서도 반드시 개선됨
+관찰된 모든 차이의 내부 원인을 완전히 증명함
+future traffic에서도 같은 metric 유지
+```
 
-## 14. Assessment: 작은 experiment 설계
+Offline experiment는 production uncertainty의 일부를 줄이는 도구다. Production observation을 대체하지 않는다.
 
-다음 중 하나를 선택한다.
+## 11. Checkpoint
+
+코드를 보지 않고 답한다.
+
+1. Task가 `expected_output`을 읽으면 왜 leakage인가?
+2. Baseline/candidate 평균이 같아도 release decision이 달라질 수 있는 이유는 무엇인가?
+3. Dataset name이 같아도 version을 고정해야 할 수 있는 이유는 무엇인가?
+4. Hosted dataset snapshot을 한 번 fetch해서 두 variant가 재사용하면 어떤 confounder를 제거하는가?
+5. `score=0`과 evaluator error는 왜 다른 evidence인가?
+6. Product package comparison과 single-variable experiment의 목적은 어떻게 다른가?
+
+## 12. Assessment: 작은 controlled comparison을 설계한다
+
+다음 change 중 하나를 고른다.
 
 ```text
 prompt version
@@ -397,25 +424,24 @@ retrieval top-k
 parser rule
 ```
 
-그리고 다음을 작성한다.
+다음을 작성한다.
 
 ```text
-baseline
-candidate
-고정할 conditions
-dataset identity/version
-item-level evaluator
-guardrail
-어떤 regression이 release를 막는가
-어떤 trace evidence를 조사할 것인가
+baseline condition
+candidate condition
+고정할 dataset name + version
+고정할 evaluator contract
+고정할 model/retrieval/app condition
+critical cases
+release를 막는 regression
+먼저 열 trace와 그 이유
 ```
 
-단순히 "두 번 실행해 평균을 비교한다"면 부족하다.
+좋은 답은 단순히 "두 번 실행해서 평균을 비교한다"로 끝나지 않는다.
 
 ## 다음 장
 
-지금까지 application variant를 metadata로만 표현했다. 다음 장에서는 prompt 자체를 versioned artifact로 관리하고,
-**실제로 사용한 prompt version을 generation evidence에 연결**한다.
+지금까지 application condition은 metadata로 표현할 수 있었다. 다음 장에서는 prompt 자체를 versioned artifact로 다루고, **실제 generation이 어느 immutable prompt version을 사용했는지** 연결한다.
 
 ## References
 
@@ -424,4 +450,4 @@ guardrail
 - [Experiments Data Model](https://langfuse.com/docs/evaluation/experiments/data-model)
 - [Compare Experiments](https://langfuse.com/docs/evaluation/experiments/compare-experiments)
 - [Evaluate with Datasets](https://langfuse.com/docs/evaluation/get-started/offline)
-- [Langfuse Workshop](https://github.com/langfuse/langfuse-workshop)
+- [Langfuse Python SDK v4.16.0 · DatasetClient](https://github.com/langfuse/langfuse-python/blob/v4.16.0/langfuse/_client/datasets.py)
