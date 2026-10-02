@@ -6,7 +6,8 @@ Branch: `feat/langfuse-textbook-draft`
 
 Date: 2026-10-02
 
-Goal: move PR #34 from a strong Draft to a merge-recommended Langfuse textbook deck without overstating live/cloud validation.
+Goal: move PR #34 from a strong Draft to a merge-recommended Langfuse textbook deck without overstating live/cloud
+validation.
 
 ## Acceptance gate
 
@@ -15,13 +16,16 @@ PR #34 is merge-ready only when all of the following are true:
 1. The Langfuse deck is tested inside its own declared dependency environment, not the repository root environment.
 2. A real deck-local `uv.lock` exists and deterministic tests run with `--project ... --locked`.
 3. Credential-free installed-SDK smoke checks exercise the public Langfuse/OpenAI surfaces used by the textbook.
-4. Unit 8 represents baseline and candidate evidence independently, preserves failure meaning, compares a well-defined paired population, and distinguishes critical failure from regression.
+4. Unit 8 represents baseline and candidate evidence independently, preserves failure meaning, compares a well-defined
+   paired population, and distinguishes critical failure from regression.
 5. Unit 6 gives the learner a concrete path for pinning the same hosted dataset version across baseline/candidate runs.
-6. Unit 7 provides bounded prompt bootstrap state, lets the learner compare label lookup with exact-version lookup, and explains fallback provenance loss.
+6. Unit 7 provides bounded prompt bootstrap state, lets the learner compare label lookup with exact-version lookup, and
+   explains fallback provenance loss.
 7. The textbook/README and PR completion wording match the actual validation boundary.
 8. Repository deterministic CI is green on the final head.
 
-Live Langfuse Cloud ingestion and paid OpenAI calls are useful Level-3 evidence but are not required for merge if the textbook clearly labels them as unperformed live validation.
+Live Langfuse Cloud ingestion and paid OpenAI calls are useful Level-3 evidence but are not required for merge if the
+textbook clearly labels them as unperformed live validation.
 
 ## Workstream A — deck-local runtime contract
 
@@ -48,7 +52,8 @@ for compile, contract tests, and SDK smoke.
 
 ### A3. Add actual installed-SDK smoke
 
-Credential-free smoke should import and inspect only public surfaces used by the learning path. It must not require Cloud credentials or make provider calls.
+Credential-free smoke should import and inspect only public surfaces used by the learning path. It must not require
+Cloud credentials or make provider calls.
 
 Minimum contract surface:
 
@@ -124,7 +129,8 @@ Do not introduce general experiment infrastructure.
 
 ### D1. Bootstrap
 
-Provide one minimal, synthetic prompt setup path for `support/refund-answer` with the variables used by the lab and a clear label. Prefer a small idempotent helper or exact bounded UI setup instructions.
+Provide one minimal, synthetic prompt setup path for `support/refund-answer` with the variables used by the lab and a
+clear label. Prefer a small idempotent helper or exact bounded UI setup instructions.
 
 ### D2. Exact-version CLI
 
@@ -144,7 +150,8 @@ version -> historical reproducibility / immutable identity
 
 ### D3. Fallback provenance
 
-State explicitly that a local fallback can preserve application availability but does not provide the same remote Langfuse prompt-version provenance/linkage as a fetched Langfuse prompt object.
+State explicitly that a local fallback can preserve application availability but does not provide the same remote
+Langfuse prompt-version provenance/linkage as a fetched Langfuse prompt object.
 
 Add contract tests for label and exact-version lookup selection where practical without credentials.
 
@@ -152,8 +159,10 @@ Add contract tests for label and exact-version lookup selection where practical 
 
 Only take changes that directly strengthen the same merge gate:
 
-- strengthen Unit 5 synthetic privacy test by asserting the exact allowed payload structure rather than pretending to perform generic PII detection;
-- add a Unit 3 runnable context-detach variation only if it remains small and does not distract from the runtime/dependency blockers.
+- strengthen Unit 5 synthetic privacy test by asserting the exact allowed payload structure rather than pretending to
+  perform generic PII detection;
+- add a Unit 3 runnable context-detach variation only if it remains small and does not distract from the
+  runtime/dependency blockers.
 
 A second full domain/capstone scenario is not required for this PR.
 
@@ -175,4 +184,5 @@ Before this plan is accepted, wording remains:
 
 After all mandatory gates pass, wording may become:
 
-> The defined 0–8 textbook scope passes the repository's strict textbook quality gate and locked local runtime contract. Live Langfuse Cloud/OpenAI evidence remains an explicitly separate validation tier.
+> The defined 0–8 textbook scope passes the repository's strict textbook quality gate and locked local runtime contract.
+> Live Langfuse Cloud/OpenAI evidence remains an explicitly separate validation tier.
