@@ -1,0 +1,10 @@
+[project]
+name = "adudeck-llmops-langfuse"
+version = "0.1.0"
+description = "Hands-on Langfuse learning deck."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "langfuse>=4.16,<5",
+  "openai>=3.19.2,<4",
+]
