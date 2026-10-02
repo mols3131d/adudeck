@@ -106,21 +106,39 @@ status description은 실제 `PaymentDeclined` message와 맞는다.
 OpenTelemetry Python 1.45.0의 `start_as_current_span()`은 context manager를 빠져나가는 uncaught `Exception`에 대해 기본적으로
 `record_exception=True`, `set_status_on_exception=True` 동작을 사용한다.
 
-따라서 `charge_payment`에서 `PaymentDeclined`가 `with` 블록 밖으로 전달될 때 Python runtime은 exception event를 span에
-기록한다. 이번 예제는 이미 status를 수동으로 설정했으므로 operation status의 의미는 코드가 결정하고, runtime은 그와 별도로
-exception detail event를 남긴다.
+그런데 이번 `charge_payment` 예제는 두 책임을 일부러 분리한다.
+
+```python
+with tracer.start_as_current_span(
+    "charge_payment",
+    set_status_on_exception=False,
+) as span:
+    ...
+```
+
+`record_exception`은 기본값 `True`로 남기므로 `PaymentDeclined`가 `with` 블록 밖으로 전달될 때 Python runtime이 exception
+event를 기록한다. 반면 자동 status 설정만 끄고, operation의 최종 의미는 코드가 `ERROR`, `error.type`, exception message를
+명시적으로 설정한다.
+
+왜 이렇게 했을까? 기본 `set_status_on_exception=True`를 그대로 두면 Python 1.45.0은 uncaught exception에 대해
+`PaymentDeclined: issuer declined payment`처럼 exception type까지 포함한 description으로 status를 자동 설정한다. 이 장은
+현재 Semantic Conventions의 operation-failure guidance를 직접 관찰하는 것이 목적이므로, **exception detail event는 runtime에
+맡기고 operation status는 명시적으로 통제**한다.
 
 이 둘을 다음처럼 구분한다.
 
 ```text
 operation semantics
 → 이 operation이 최종 실패했는가?
-→ status + error.type
+→ explicit status + error.type
 
 Python context-manager runtime behavior
 → exception이 with block 밖으로 나갔는가?
-→ 현재 기본 설정에서는 exception event 기록
+→ record_exception=True이므로 exception event 기록
 ```
+
+이 설정은 Python의 기본값을 숨기는 것이 아니다. 오히려 어떤 부분을 runtime default에 맡기고 어떤 부분을 학습용으로
+명시적으로 통제했는지 드러낸다.
 
 ## 6. `record_exception()`은 무엇인가
 
@@ -131,8 +149,8 @@ status는 같은 개념이 아니다.**
 transition guidance가 있다. Python 1.45.0의 기본 runtime behavior가 당장 사라졌다는 뜻은 아니다. 이 덱에서는 다음을
 분리해서 읽는다.
 
-- **현재 실행에서 실제로 보이는 것**: Python 1.45.0 context manager가 만든 exception event
-- **operation failure 의미**: `ERROR` status와 `error.type`
+- **현재 실행에서 실제로 보이는 것**: `record_exception=True`에 의해 기록된 exception event
+- **operation failure 의미**: 코드가 명시한 `ERROR` status와 `error.type`
 - **장기 convention 방향**: exception detail signal의 migration guidance
 
 따라서 `record_exception()`을 “OpenTelemetry에서 실패를 기록하는 유일한 정답”으로 외우지 않는다.
@@ -156,6 +174,7 @@ transition guidance가 있다. Python 1.45.0의 기본 runtime behavior가 당�
 3. `error.type`에 사용자 메시지 전체를 넣지 않는 이유는 무엇인가?
 4. child span의 실패가 parent span의 실패를 자동으로 결정하지 않는 이유는 무엇인가?
 5. 현재 예제에서 exception event와 `ERROR` status가 각각 어떤 이유로 나타나는가?
+6. `set_status_on_exception=False`를 이번 예제에서만 사용하는 이유는 무엇인가?
 
 ## 다른 사례에 적용하기
 
