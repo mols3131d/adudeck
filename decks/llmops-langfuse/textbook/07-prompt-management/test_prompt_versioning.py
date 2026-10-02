@@ -3,13 +3,20 @@ from __future__ import annotations
 import unittest
 from types import SimpleNamespace
 
-from prompt_versioning import fetch_prompt, generate_with_prompt, prompt_lookup_kwargs
+from prompt_versioning import (
+    LAB_PROMPT,
+    ensure_lab_prompt,
+    fetch_prompt,
+    generate_with_prompt,
+    prompt_lookup_kwargs,
+)
 
 
 class FakePrompt:
     name = "support/refund-answer"
     version = 21
     labels = ["staging"]
+    prompt = LAB_PROMPT
 
     def compile(self, **variables):
         return [
@@ -38,14 +45,30 @@ class FakeOpenAI:
         self.responses = FakeResponses()
 
 
+class FakeNotFoundError(Exception):
+    pass
+
+
 class FakeLangfuse:
-    def __init__(self) -> None:
+    def __init__(self, *, prompt: object | None = None) -> None:
         self.calls: list[tuple[str, dict[str, object]]] = []
-        self.prompt = FakePrompt()
+        self.create_calls: list[dict[str, object]] = []
+        self.prompt = FakePrompt() if prompt is None else prompt
 
     def get_prompt(self, name: str, **kwargs):
         self.calls.append((name, kwargs))
+        if self.prompt is MISSING:
+            raise FakeNotFoundError("prompt missing")
         return self.prompt
+
+    def create_prompt(self, **kwargs):
+        self.create_calls.append(kwargs)
+        created = FakePrompt()
+        created.labels = list(kwargs["labels"])
+        return created
+
+
+MISSING = object()
 
 
 class PromptVersioningContractTest(unittest.TestCase):
@@ -116,6 +139,57 @@ class PromptVersioningContractTest(unittest.TestCase):
     def test_label_and_version_cannot_be_selected_together(self) -> None:
         with self.assertRaisesRegex(ValueError, "not both"):
             prompt_lookup_kwargs(label="staging", version=21)
+
+    def test_bootstrap_reuses_matching_prompt_without_creating_version(self) -> None:
+        langfuse = FakeLangfuse()
+
+        prompt, created = ensure_lab_prompt(
+            langfuse,
+            label="staging",
+            not_found_error=FakeNotFoundError,
+        )
+
+        self.assertIs(prompt, langfuse.prompt)
+        self.assertFalse(created)
+        self.assertEqual(langfuse.create_calls, [])
+
+    def test_bootstrap_creates_missing_synthetic_prompt(self) -> None:
+        langfuse = FakeLangfuse(prompt=MISSING)
+
+        prompt, created = ensure_lab_prompt(
+            langfuse,
+            label="staging",
+            not_found_error=FakeNotFoundError,
+        )
+
+        self.assertTrue(created)
+        self.assertEqual(prompt.labels, ["staging"])
+        self.assertEqual(
+            langfuse.create_calls,
+            [
+                {
+                    "name": "support/refund-answer",
+                    "type": "chat",
+                    "prompt": LAB_PROMPT,
+                    "labels": ["staging"],
+                    "commit_message": "adudeck Unit 7 synthetic prompt bootstrap",
+                }
+            ],
+        )
+
+    def test_bootstrap_refuses_to_overwrite_different_prompt_content(self) -> None:
+        conflicting = FakePrompt()
+        conflicting.prompt = [{"role": "system", "content": "different"}]
+        langfuse = FakeLangfuse(prompt=conflicting)
+
+        with self.assertRaisesRegex(RuntimeError, "different content"):
+            ensure_lab_prompt(
+                langfuse,
+                label="staging",
+                not_found_error=FakeNotFoundError,
+            )
+
+        self.assertEqual(langfuse.create_calls, [])
 
 
 if __name__ == "__main__":
