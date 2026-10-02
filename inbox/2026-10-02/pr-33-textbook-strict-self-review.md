@@ -2,7 +2,8 @@
 
 작성일: 2026-10-02  
 검토 revision: `2c557ae984d699b0e42da75b752eb4de4e213098`  
-대상: `decks/systems-opentelemetry/textbook/`과 이를 직접 소유·검증하는 deck README, tests, dependency/runtime integration
+대상: `decks/systems-opentelemetry/textbook/`과 이를 직접 소유·검증하는 deck README, tests, dependency/runtime
+integration
 
 ## 결론
 
@@ -33,10 +34,12 @@ Unit 3·4·6·8의 learner-visible evidence test, Unit 9의 hop-by-hop diagnosis
 이번 리뷰는 한 관점으로 읽고 끝내지 않고 다음 순서로 수행했다.
 
 1. **Quality pass** — curriculum outcome, textbook contract, 개념 의존성, explanation/practice/assessment를 검토했다.
-2. **Adversarial pass** — hidden prerequisite, partial failure, network exposure, mutation/reset, CI blind spot, version drift를 검토했다.
+2. **Adversarial pass** — hidden prerequisite, partial failure, network exposure, mutation/reset, CI blind spot, version
+   drift를 검토했다.
 3. **Consistency pass** — deck README ↔ textbook ↔ runnable artifacts ↔ tests ↔ repository lifecycle을 대조했다.
 4. **External correctness pass** — version-sensitive 항목은 현재 OpenTelemetry/Docker primary source와 다시 대조했다.
-5. **Reconciliation** — 단순 취향이나 외부 best practice는 finding에서 제외하고, 현재 deck contract나 실제 학습 경로에 영향을 주는 항목만 남겼다.
+5. **Reconciliation** — 단순 취향이나 외부 best practice는 finding에서 제외하고, 현재 deck contract나 실제 학습 경로에
+   영향을 주는 항목만 남겼다.
 
 현재 head의 repository CI `ci/validated`는 success다. 다만 현재 CI가 Unit 5 Flask zero-code와 Unit 7 Collector container
 경로를 실행하지 않는다는 사실 자체가 아래 P0 finding에 포함된다.
@@ -46,11 +49,11 @@ Unit 3·4·6·8의 learner-visible evidence test, Unit 9의 hop-by-hop diagnosis
 
 ---
 
-# P0 · completion blocker
+## P0 · completion blocker
 
-## P0-01 · Unit 5와 Unit 7은 core outcome인데 end-to-end runtime evidence가 없다
+### P0-01 · Unit 5와 Unit 7은 core outcome인데 end-to-end runtime evidence가 없다
 
-### Evidence
+#### Evidence
 
 Deck curriculum은 다음을 substantial outcome으로 둔다.
 
@@ -75,26 +78,28 @@ Unit 7은 다음을 추가한다.
 - OTLP/HTTP transport
 - receiver → processor → exporter pipeline
 
-### Impact
+#### Impact
 
-이 두 unit은 textbook에서 가장 version/environment-sensitive한 부분이다. prose와 config가 그럴듯해 보여도 실제 learner path가
-깨질 가능성이 가장 높다. `adudeck-deck-build` contract상 hands-on outcome에 필요한 runtime boundary가 미검증이면 completion을
-선언할 수 없다.
+이 두 unit은 textbook에서 가장 version/environment-sensitive한 부분이다. prose와 config가 그럴듯해 보여도 실제 learner
+path가 깨질 가능성이 가장 높다. `adudeck-deck-build` contract상 hands-on outcome에 필요한 runtime boundary가 미검증이면
+completion을 선언할 수 없다.
 
-### Required action
+#### Required action
 
 Ready 전 최소 validation:
 
 - Unit 5: clean environment에서 plain Flask → zero-code Flask를 실제 요청까지 실행하고 span evidence를 비교한다.
-- Unit 7: pinned Collector image를 pull/run하고 Python span이 OTLP/HTTP → Collector → debug exporter까지 도달하는 것을 확인한다.
+- Unit 7: pinned Collector image를 pull/run하고 Python span이 OTLP/HTTP → Collector → debug exporter까지 도달하는 것을
+  확인한다.
 - 실패 변형도 최소 한 개씩 실행해 happy path만 검증하지 않는다.
-- 실행 결과를 CI에 넣을지 manual acceptance로 둘지는 별도 판단 가능하지만, validation boundary는 deck README에 정확히 남긴다.
+- 실행 결과를 CI에 넣을지 manual acceptance로 둘지는 별도 판단 가능하지만, validation boundary는 deck README에 정확히
+  남긴다.
 
 ---
 
-## P0-02 · Unit 9의 “trace/metric identity로 같은 logical execution 연결”은 현재 curriculum/material로 증명할 수 없다
+### P0-02 · Unit 9의 “trace/metric identity로 같은 logical execution 연결”은 현재 curriculum/material로 증명할 수 없다
 
-### Evidence
+#### Evidence
 
 `09-diagnosis/README.md` 학습 목표에는 다음 취지의 항목이 있다.
 
@@ -103,17 +108,17 @@ Ready 전 최소 validation:
 하지만 Unit 8 metrics 예제는 active span 없이 metric만 기록한다. trace ID/span ID와 연결되는 exemplar를 생성하거나
 관찰하지 않는다. 일반 metric time-series identity는 개별 request execution의 identity가 아니다.
 
-OpenTelemetry Metrics SDK에서 개별 metric measurement와 trace/span context를 직접 연결하는 대표 mechanism은 **Exemplar**다.
-Exemplar는 aggregated metric 안의 특정 measurement에 trace ID/span ID를 보존할 수 있다.
+OpenTelemetry Metrics SDK에서 개별 metric measurement와 trace/span context를 직접 연결하는 대표 mechanism은
+**Exemplar**다. Exemplar는 aggregated metric 안의 특정 measurement에 trace ID/span ID를 보존할 수 있다.
 
 현재 accepted deck outcomes에는 exemplar 학습이 없다.
 
-### Impact
+#### Impact
 
-현재 문구는 learner가 `trace_id`처럼 metric에도 개별 logical execution을 식별하는 일반적인 identity가 있다고 오해하게 만들
-수 있다. 또한 downstream authoring이 curriculum baseline을 조용히 확장한 상태다.
+현재 문구는 learner가 `trace_id`처럼 metric에도 개별 logical execution을 식별하는 일반적인 identity가 있다고 오해하게
+만들 수 있다. 또한 downstream authoring이 curriculum baseline을 조용히 확장한 상태다.
 
-### Required action
+#### Required action
 
 가장 작은 수정은 **goal을 좁히는 것**이다.
 
@@ -132,21 +137,21 @@ Official references:
 
 ---
 
-# P1 · Ready 전에 수정 권장
+## P1 · Ready 전에 수정 권장
 
-## P1-01 · Unit 3의 failure example은 current error guidance와 Python 1.45 default behavior를 완전히 설명하지 않는다
+### P1-01 · Unit 3의 failure example은 current error guidance와 Python 1.45 default behavior를 완전히 설명하지 않는다
 
 두 문제가 한 예제에 겹쳐 있다.
 
-### A. status description
+#### A. status description
 
 `span_failure.py`에서 `PaymentDeclined("issuer declined payment")`로 끝나는 `charge_payment` span은 status description을
 `"payment declined"`로 수동 설정한다.
 
-현재 Recording Errors guidance는 operation이 exception으로 실패할 때 status description에 exception message를 쓰는 방향을
-권장한다. 현재 예제는 바로 그 guidance를 가르치는 장이므로 `str(exc)`와 맞추는 편이 더 정확하다.
+현재 Recording Errors guidance는 operation이 exception으로 실패할 때 status description에 exception message를 쓰는
+방향을 권장한다. 현재 예제는 바로 그 guidance를 가르치는 장이므로 `str(exc)`와 맞추는 편이 더 정확하다.
 
-### B. learner가 실제로 보는 exception event가 설명에서 빠졌다
+#### B. learner가 실제로 보는 exception event가 설명에서 빠졌다
 
 OpenTelemetry Python 1.45.0의 `start_as_current_span()`은 기본적으로:
 
@@ -155,17 +160,20 @@ OpenTelemetry Python 1.45.0의 `start_as_current_span()`은 기본적으로:
 
 이고, span context manager 밖으로 exception이 빠져나오면 exception event를 기록한다.
 
-따라서 현재 `charge_payment`의 ConsoleSpanExporter JSON에는 learner가 별도로 호출하지 않은 exception event가 나타날 수 있다.
-본문은 `record_exception()`을 설명하지만 **현재 예제가 이미 implicit하게 exception event를 생성한다는 사실**을 연결하지 않는다.
+따라서 현재 `charge_payment`의 ConsoleSpanExporter JSON에는 learner가 별도로 호출하지 않은 exception event가 나타날 수
+있다. 본문은 `record_exception()`을 설명하지만 **현재 예제가 이미 implicit하게 exception event를 생성한다는 사실**을
+연결하지 않는다.
 
 이 gap은 learner가 “코드에는 `record_exception()`이 없는데 왜 event가 생겼지?”라고 보는 지점이다.
 
-### Required action
+#### Required action
 
 둘 중 하나를 의도적으로 선택한다.
 
-1. 현재 Python 1.45 default를 학습 evidence로 사용하고 `events`를 관찰하게 한 뒤 semantic-convention transition과 구분한다.
-2. 이번 unit의 목표를 status/`error.type`에 좁히고 싶다면 `record_exception=False` 등으로 noise를 의도적으로 제거한 이유를 설명한다.
+1. 현재 Python 1.45 default를 학습 evidence로 사용하고 `events`를 관찰하게 한 뒤 semantic-convention transition과
+   구분한다.
+2. 이번 unit의 목표를 status/`error.type`에 좁히고 싶다면 `record_exception=False` 등으로 noise를 의도적으로 제거한
+   이유를 설명한다.
 
 첫 번째가 현재 material의 “실제 SDK behavior를 관찰한다”는 방향과 더 잘 맞는다.
 
@@ -177,9 +185,9 @@ Official references:
 
 ---
 
-## P1-02 · Resource를 “telemetry를 발생시키는 주체”로 정의하면 current spec의 observed-entity model을 놓친다
+### P1-02 · Resource를 “telemetry를 발생시키는 주체”로 정의하면 current spec의 observed-entity model을 놓친다
 
-### Evidence
+#### Evidence
 
 Unit 4에는 Resource를 “telemetry를 발생시키는 entity”로 설명하는 문장이 있고 deck Goal도 “telemetry의 발생 주체”라는
 표현을 사용한다.
@@ -189,7 +197,7 @@ telemetry를 emit하는 agent와 Resource가 설명하는 workload가 다를 수
 
 Instrumentation Scope와 Resource를 구분하는 장에서 이 차이는 작은 용어 문제가 아니라 mental model의 핵심이다.
 
-### Required action
+#### Required action
 
 Resource를 다음에 가깝게 통일한다.
 
@@ -203,9 +211,9 @@ Official reference:
 
 ---
 
-## P1-03 · Unit 5가 “mixed instrumentation”을 outcome으로 말하지만 learner-visible evidence는 제공하지 않는다
+### P1-03 · Unit 5가 “mixed instrumentation”을 outcome으로 말하지만 learner-visible evidence는 제공하지 않는다
 
-### Evidence
+#### Evidence
 
 Unit 5는 다음을 가르치려 한다.
 
@@ -221,12 +229,12 @@ Unit 5는 다음을 가르치려 한다.
 
 둘을 **같은 trace 안에서 framework span + business span**으로 연결해 보는 실습은 없다.
 
-### Impact
+#### Impact
 
 가장 중요한 synthesis인 “auto/library는 edge/framework를 보고 manual은 business 의미를 보강한다”가 prose comparison에
 머문다. Unit 4에서 배운 Instrumentation Scope가 실제 mixed trace에서 어떻게 도움 되는지도 관찰하지 않는다.
 
-### Required action
+#### Required action
 
 작은 mixed example을 하나 추가하거나 기존 예제를 재구성해 다음 evidence를 직접 보게 한다.
 
@@ -241,9 +249,9 @@ framework/server span
 
 ---
 
-## P1-04 · Unit 6 runtime test는 핵심 parent 관계를 검증하지 않고 readiness signal도 race가 있다
+### P1-04 · Unit 6 runtime test는 핵심 parent 관계를 검증하지 않고 readiness signal도 race가 있다
 
-### Evidence
+#### Evidence
 
 Unit 6 본문은 정상 propagation의 핵심 불변 조건을 다음으로 둔다.
 
@@ -264,7 +272,7 @@ B parent_id == A span_id
 또 `service_b.py`는 실제 `HTTPServer(...)` bind 전에 `listening` 문구를 출력한다. Test는 그 문구를 readiness signal로
 사용한 즉시 client를 실행한다. 따라서 아주 짧지만 bind 이전 race가 존재한다.
 
-### Required action
+#### Required action
 
 - server ConsoleSpanExporter JSON에서 `parent_id`를 읽어 A span ID와 비교한다.
 - `traceparent`의 trace ID/parent span ID도 A의 값과 직접 비교한다.
@@ -273,9 +281,9 @@ B parent_id == A span_id
 
 ---
 
-## P1-05 · Unit 7 Docker command가 OTLP receiver를 host의 모든 network interface에 publish한다
+### P1-05 · Unit 7 Docker command가 OTLP receiver를 host의 모든 network interface에 publish한다
 
-### Evidence
+#### Evidence
 
 현재 명령:
 
@@ -288,12 +296,12 @@ docker run --rm \
 Docker는 host IP를 생략한 published port를 기본적으로 모든 host interface에 bind한다. 학습 material의 application은
 `127.0.0.1:4318`만 사용할 필요가 있으므로 외부 interface에 열 이유가 없다.
 
-### Impact
+#### Impact
 
 학습자의 laptop/LAN 환경에서 인증 없는 OTLP receiver가 불필요하게 노출될 수 있다. 안전한 disposable local playground라는
 repository 방향에도 맞지 않는다.
 
-### Required action
+#### Required action
 
 host publish를 loopback으로 제한한다.
 
@@ -311,9 +319,9 @@ Official Docker reference:
 
 ---
 
-## P1-06 · Unit 7은 application → Collector를 “같은 execution”으로 triangulate할 identity evidence가 약하다
+### P1-06 · Unit 7은 application → Collector를 “같은 execution”으로 triangulate할 identity evidence가 약하다
 
-### Evidence
+#### Evidence
 
 `otlp_trace.py`의 application-side visible output은 현재:
 
@@ -321,13 +329,13 @@ Official Docker reference:
 checkout: business work completed
 ```
 
-뿐이다. trace/span ID를 출력하지 않는다. Collector debug output에서 `checkout` span을 발견하더라도 learner는 이름과 isolated
-lab assumption으로 대응시키게 된다.
+뿐이다. trace/span ID를 출력하지 않는다. Collector debug output에서 `checkout` span을 발견하더라도 learner는 이름과
+isolated lab assumption으로 대응시키게 된다.
 
-`adudeck-playground` contract는 같은 logical execution/object를 여러 surface에서 비교할 때 identity evidence를 충분히 제공하는
-방향을 선호한다.
+`adudeck-playground` contract는 같은 logical execution/object를 여러 surface에서 비교할 때 identity evidence를 충분히
+제공하는 방향을 선호한다.
 
-### Required action
+#### Required action
 
 application에서 현재 span의 trace ID/span ID를 출력하고 Collector debug output의 동일 ID와 비교하게 한다.
 
@@ -341,9 +349,9 @@ Collector received trace_id/span_id
 
 ---
 
-## P1-07 · Core textbook의 reproducibility contract가 Unit 5/7에서 약해진다
+### P1-07 · Core textbook의 reproducibility contract가 Unit 5/7에서 약해진다
 
-### Evidence
+#### Evidence
 
 Unit 1은 비교 가능한 학습 결과를 위해 deck-local `uv.lock`과 `uv run --locked`를 사용한다.
 
@@ -352,12 +360,12 @@ Deck README도 이 환경이 lockfile과 같은 validation claim을 갖지 않�
 
 이 honesty는 좋지만, **두 unit 모두 optional side quest가 아니라 core path**다.
 
-### Impact
+#### Impact
 
-시간이 지나면 direct version은 같아도 transitive dependency resolution이 달라질 수 있다. 재현성과 future maintenance 비용이
-커진다.
+시간이 지나면 direct version은 같아도 transitive dependency resolution이 달라질 수 있다. 재현성과 future maintenance
+비용이 커진다.
 
-### Required action
+#### Required action
 
 가능하면 현재 deck lock의 dependency group/optional group으로 Unit 5와 Unit 7 runtime을 함께 소유한다. 구조가 불필요하게
 복잡해진다면 별도 minimal subproject lock도 가능하지만, “core path인데 unlocked” 상태를 장기 owner로 만들지는 않는 편이
@@ -365,21 +373,21 @@ Deck README도 이 환경이 lockfile과 같은 validation claim을 갖지 않�
 
 ---
 
-## P1-08 · Unit 7/9의 fault injection은 source mutation 후 baseline 복원 경계가 약하다
+### P1-08 · Unit 7/9의 fault injection은 source mutation 후 baseline 복원 경계가 약하다
 
-### Evidence
+#### Evidence
 
-Unit 7은 learner에게 `otlp_trace.py`의 port를 4319로 직접 바꾸게 한다. 그 뒤 원래 상태로 복원하라는 명시적인 reset step이
-없다. Unit 9는 다시 Unit 7 baseline을 재사용한다.
+Unit 7은 learner에게 `otlp_trace.py`의 port를 4319로 직접 바꾸게 한다. 그 뒤 원래 상태로 복원하라는 명시적인 reset
+step이 없다. Unit 9는 다시 Unit 7 baseline을 재사용한다.
 
 Unit 3/5에도 source modification exercise가 있지만 Unit 7은 특히 후속 diagnosis에 직접 영향을 준다.
 
-### Impact
+#### Impact
 
-이전 실습에서 남은 잘못된 endpoint가 Unit 9의 fault injection과 섞이면 learner는 의도하지 않은 stale state를 diagnosis하게
-된다. controlled failure의 전제인 “한 조건만 바꾼다”가 깨진다.
+이전 실습에서 남은 잘못된 endpoint가 Unit 9의 fault injection과 섞이면 learner는 의도하지 않은 stale state를
+diagnosis하게 된다. controlled failure의 전제인 “한 조건만 바꾼다”가 깨진다.
 
-### Required action
+#### Required action
 
 가장 좋은 방법은 source edit 대신 runtime parameter를 두는 것이다.
 
@@ -393,12 +401,12 @@ Unit 3/5에도 source modification exercise가 있지만 Unit 7은 특히 후속
 
 ---
 
-# P2 · 품질/유지보수 개선
+## P2 · 품질/유지보수 개선
 
-## P2-01 · Docker와 `curl` 같은 tool prerequisite가 학습 경로에서 늦게 암묵적으로 등장한다
+### P2-01 · Docker와 `curl` 같은 tool prerequisite가 학습 경로에서 늦게 암묵적으로 등장한다
 
-Root prerequisites는 Python/terminal/process/HTTP knowledge를 설명하지만 Unit 5는 `curl`, Unit 7은 Docker runtime을 요구한다.
-특히 Docker는 단순 개념 prerequisite가 아니라 실습 수행에 필요한 external tool이다.
+Root prerequisites는 Python/terminal/process/HTTP knowledge를 설명하지만 Unit 5는 `curl`, Unit 7은 Docker runtime을
+요구한다. 특히 Docker는 단순 개념 prerequisite가 아니라 실습 수행에 필요한 external tool이다.
 
 권장:
 
@@ -408,7 +416,7 @@ Root prerequisites는 Python/terminal/process/HTTP knowledge를 설명하지만 
 
 ---
 
-## P2-02 · Semantic Conventions outcome이 competence map의 명시적 row에서 빠져 있다
+### P2-02 · Semantic Conventions outcome이 competence map의 명시적 row에서 빠져 있다
 
 Deck Goal에는 Semantic Conventions 역할을 설명하는 outcome이 추가됐다. Textbook index 본문은 Unit 3/5/8에 분산한다고
 설명하지만 competence map 표에는 이 substantial outcome이 독립적으로 보이지 않는다.
@@ -421,7 +429,7 @@ Semantic Conventions의 interoperability 역할 | 3, 5, 8 | 8, 9
 
 ---
 
-## P2-03 · Unit 9에서 sampling을 diagnosis 원인으로 처음 꺼내지만 최소 mental model이 없다
+### P2-03 · Unit 9에서 sampling을 diagnosis 원인으로 처음 꺼내지만 최소 mental model이 없다
 
 Sampling은 valid diagnosis consideration이지만 앞 unit에서 설명하지 않는다. Advanced/tail sampling은 명시적으로 out of
 scope이므로 별도 장을 만들 필요는 없다.
@@ -431,16 +439,16 @@ scope이므로 별도 장을 만들 필요는 없다.
 
 ---
 
-## P2-04 · repository test task 설명이 현재 coverage보다 오래된 상태다
+### P2-04 · repository test task 설명이 현재 coverage보다 오래된 상태다
 
-`mise.toml`의 `test:opentelemetry-deck` description과 `scripts/test.sh`의 출력은 여전히 “first trace/current-context” 중심으로
-표현한다. 실제 suite는 Unit 3, 4, 6, 8까지 검증한다.
+`mise.toml`의 `test:opentelemetry-deck` description과 `scripts/test.sh`의 출력은 여전히 “first trace/current-context”
+중심으로 표현한다. 실제 suite는 Unit 3, 4, 6, 8까지 검증한다.
 
 동작 오류는 아니지만 CI log를 읽는 maintainer에게 현재 validation surface를 축소해 보이게 한다.
 
 ---
 
-## P2-05 · OpenTelemetry Python contrib `0.66b0`이 current이지만 pre-release라는 boundary를 learner-facing text에 명확히 둘 가치가 있다
+### P2-05 · OpenTelemetry Python contrib `0.66b0`이 current이지만 pre-release라는 boundary를 learner-facing text에 명확히 둘 가치가 있다
 
 2026-10-02 기준:
 
@@ -459,11 +467,11 @@ References:
 
 ---
 
-# Repository / PR integration finding
+## Repository / PR integration finding
 
 아래 항목은 textbook prose 자체의 품질과 별개지만 PR Ready 판단에는 중요하다.
 
-## R-01 · OpenTelemetry deck project가 repository `setup` / `update` lifecycle에 아직 연결되지 않았다
+### R-01 · OpenTelemetry deck project가 repository `setup` / `update` lifecycle에 아직 연결되지 않았다
 
 Current repository scripts는:
 
@@ -492,10 +500,10 @@ repository update lifecycle   ❌
 
 ---
 
-## R-02 · ELI5 Agent Asset dependency는 여전히 OpenTelemetry PR과 원자적으로 묶여 있다
+### R-02 · ELI5 Agent Asset dependency는 여전히 OpenTelemetry PR과 원자적으로 묶여 있다
 
-PR changed files에는 textbook뿐 아니라 repository-wide `dreambigou/eli5` Rulesync dependency/lock/route 변경이 남아 있다.
-이 변경은 textbook을 작성할 때 사용한 방법과 repository dependency lifecycle을 결합한다.
+PR changed files에는 textbook뿐 아니라 repository-wide `dreambigou/eli5` Rulesync dependency/lock/route 변경이 남아
+있다. 이 변경은 textbook을 작성할 때 사용한 방법과 repository dependency lifecycle을 결합한다.
 
 이전 finalization report의 판단과 동일하게, repository가 ELI5를 지속적으로 소유할 이유가 별도로 있다면 Agent Asset PR로
 분리하는 편이 rollback/review boundary가 더 명확하다.
@@ -505,11 +513,11 @@ PR changed files에는 textbook뿐 아니라 repository-wide `dreambigou/eli5` R
 
 ---
 
-# 잘된 부분 · 유지해야 할 것
+## 잘된 부분 · 유지해야 할 것
 
 엄격 리뷰에서도 아래는 오히려 보호해야 한다.
 
-## 1. Mechanism-first progression
+### 1. Mechanism-first progression
 
 ```text
 single-process context
@@ -524,39 +532,39 @@ single-process context
 
 Dashboard-first tutorial보다 state/data flow 이해에 훨씬 적합하다.
 
-## 2. Unit 2 calibration pattern
+### 2. Unit 2 calibration pattern
 
 `predict → run → observe → interpret → vary → transfer`가 실제 textbook pattern으로 기능한다.
 후속 unit이 이를 기계적으로 복제하지 않고 scaffolding을 줄인 점도 좋다.
 
-## 3. Unit 3의 handled error vs final failure framing
+### 3. Unit 3의 handled error vs final failure framing
 
-세부 gap은 있지만 **“exception 발생 = operation failure”가 아니다**라는 중심 모델은 current Recording Errors guidance와 잘
-맞는다. 이 framing은 유지해야 한다.
+세부 gap은 있지만 **“exception 발생 = operation failure”가 아니다**라는 중심 모델은 current Recording Errors guidance와
+잘 맞는다. 이 framing은 유지해야 한다.
 
-## 4. Unit 4의 Resource vs Instrumentation Scope 분리
+### 4. Unit 4의 Resource vs Instrumentation Scope 분리
 
 Resource wording만 보정하면, service identity와 telemetry producer software scope를 별도 축으로 보는 장의 위치와 실습은
 좋다.
 
-## 5. Unit 6의 deliberate propagation break
+### 5. Unit 6의 deliberate propagation break
 
-HTTP business request는 성공하지만 correlation만 끊기는 실험은 좋은 causal contrast다. 첫 CI에서 실제 header casing bug를
-잡은 것도 hands-on evidence의 가치가 컸다.
+HTTP business request는 성공하지만 correlation만 끊기는 실험은 좋은 causal contrast다. 첫 CI에서 실제 header casing
+bug를 잡은 것도 hands-on evidence의 가치가 컸다.
 
-## 6. Unit 8의 instrument-by-question framing
+### 6. Unit 8의 instrument-by-question framing
 
 Instrument 이름부터 외우지 않고 measurement semantics에서 Counter/UpDownCounter/Histogram을 선택하게 한 것은 좋다.
 High-cardinality ID를 metric에 넣지 않는 transfer question도 실전적인 reasoning task다.
 
-## 7. Unit 9의 boundary diagnosis framing
+### 7. Unit 9의 boundary diagnosis framing
 
 “마지막 확인 evidence와 첫 사라진 evidence 사이를 좁힌다”는 mental model은 이 덱 전체를 묶는 강한 synthesis다.
 P0-02의 cross-signal identity 문구를 고쳐도 이 diagnosis structure는 그대로 유지할 수 있다.
 
 ---
 
-# Ready 전 권장 순서
+## Ready 전 권장 순서
 
 수정 비용과 risk reduction을 기준으로 다음 순서를 권장한다.
 
@@ -575,7 +583,7 @@ P0-02의 cross-signal identity 문구를 고쳐도 이 diagnosis structure는 �
 
 ---
 
-# 최종 판정
+## 최종 판정
 
 현재 상태:
 
@@ -595,7 +603,7 @@ Deck completion            NO
 
 수정 후 목표는 “파일 0–9가 존재한다”가 아니라 다음 상태여야 한다.
 
-> **각 substantial outcome이 정확한 explanation, observable evidence, reasoning practice, assessment path와 검증된 runtime
-> boundary를 가지고 있으며, learner가 실습 상태를 오염시키지 않고 처음부터 끝까지 재현할 수 있다.**
+> **각 substantial outcome이 정확한 explanation, observable evidence, reasoning practice, assessment path와 검증된
+> runtime boundary를 가지고 있으며, learner가 실습 상태를 오염시키지 않고 처음부터 끝까지 재현할 수 있다.**
 
 그 상태가 되면 이 textbook은 OpenTelemetry beginner material로 상당히 강한 수준까지 올라갈 수 있다.
