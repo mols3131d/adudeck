@@ -11,15 +11,31 @@ instrumentation libraries
 zero-code / automatic instrumentation
 ```
 
-Python zero-code instrumentation은 주로 instrumentation library를 runtime에 로드하고 monkey patching을 이용해
+Python zero-code instrumentation은 agent가 instrumentation library를 runtime에 로드하고, 주로 monkey patching으로
 library/framework call을 계측한다.
+
+이번 장에서는 각각을 따로 실행한 뒤 **같은 request 안에서 framework span과 manual business span을 함께 관찰**한다.
 
 ## 학습 목표
 
 - manual instrumentation과 instrumentation library의 책임 차이를 설명한다.
 - zero-code가 “애플리케이션의 모든 business 의미를 자동으로 이해한다”는 오해를 피한다.
 - edge/dependency telemetry와 business-specific telemetry를 구분한다.
-- 같은 application에 여러 instrumentation 방식이 함께 존재할 수 있음을 설명한다.
+- 같은 application에 여러 instrumentation 방식이 함께 존재할 수 있음을 실제 trace에서 설명한다.
+- framework span과 business span이 서로 다른 Instrumentation Scope를 가질 수 있음을 관찰한다.
+
+## 준비할 것
+
+이 장은 core lock 외에 다음 runtime dependency를 사용한다.
+
+- Flask `3.1.3`
+- OpenTelemetry Python contrib / distro `0.66b0`
+
+`0.66b0`은 2026-10-02 calibration 시점의 current contrib release이지만 **beta-series version**이다. Stable API/SDK
+`1.45.0`과 maturity를 같은 것으로 읽지 않는다.
+
+HTTP request는 `curl` 예시를 사용하지만, 사용할 수 없다면 browser나 Python `urllib` 등으로 같은 localhost endpoint를
+호출해도 된다.
 
 ## 1. 무엇을 보고 싶은가가 먼저다
 
@@ -40,12 +56,14 @@ business operation           → manual instrumentation
 
 ## 2. Manual instrumentation
 
-[`flask_manual.py`](flask_manual.py)는 Flask route 안에서 business span을 직접 만든다.
+[`flask_manual.py`](flask_manual.py)는 Flask route 안에서 business span을 직접 만든다. SDK와 exporter도 application code가
+직접 구성한다.
 
 실행:
 
 ```bash
-uv run --with 'flask==3.1.3' textbook/05-instrumentation/flask_manual.py
+uv run --locked --with 'flask==3.1.3' \
+  textbook/05-instrumentation/flask_manual.py
 ```
 
 다른 terminal에서:
@@ -54,7 +72,8 @@ uv run --with 'flask==3.1.3' textbook/05-instrumentation/flask_manual.py
 curl http://127.0.0.1:8085/checkout
 ```
 
-이 예제는 `checkout.calculate_total` 같은 **business 의미를 코드가 직접 선택**한다.
+이 예제는 `checkout.calculate_total` 같은 **business 의미를 코드가 직접 선택**한다. 반면 Flask request boundary를 자동으로
+설명하는 server span은 만들지 않는다.
 
 ## 3. Zero-code instrumentation
 
@@ -63,7 +82,8 @@ curl http://127.0.0.1:8085/checkout
 먼저 그냥 실행하면 application 응답은 오지만 OTel span은 생성되지 않는다.
 
 ```bash
-uv run --with 'flask==3.1.3' textbook/05-instrumentation/flask_zero_code.py
+uv run --locked --with 'flask==3.1.3' \
+  textbook/05-instrumentation/flask_zero_code.py
 ```
 
 이번에는 Python agent를 붙인다.
@@ -73,7 +93,7 @@ OTEL_SERVICE_NAME=adudeck-otel-zero-code \
 OTEL_TRACES_EXPORTER=console \
 OTEL_METRICS_EXPORTER=none \
 OTEL_LOGS_EXPORTER=none \
-uv run \
+uv run --locked \
   --with 'flask==3.1.3' \
   --with 'opentelemetry-distro==0.66b0' \
   --with 'opentelemetry-instrumentation-flask==0.66b0' \
@@ -105,26 +125,95 @@ Python에서는 `opentelemetry-instrument`가 instrumentation libraries를 로�
 반대로 application code에서 `FlaskInstrumentor().instrument_app(app)`처럼 programmatic하게 instrumentation library를
 적용할 수도 있다. 따라서 “library instrumentation = zero-code”로 등치시키지 않는다.
 
-## 5. 비교표
+## 5. 둘을 같은 trace에서 본다
+
+[`flask_mixed.py`](flask_mixed.py)는 business operation만 manual API로 표현하고, Flask request boundary와 SDK/exporter
+configuration은 zero-code agent에 맡긴다.
+
+application source 안에는 `TracerProvider`를 새로 만들거나 Flask instrumentor를 직접 호출하는 코드가 없다. 다만 Unit 4에서
+배운 Instrumentation Scope를 learner가 볼 수 있도록 `ScopeSummaryExporter`라는 **teaching probe**를 runtime provider에
+추가한다. 이 probe는 framework를 계측하는 것이 아니라 이미 끝난 span의 scope metadata를 출력한다.
+
+실행:
+
+```bash
+OTEL_SERVICE_NAME=adudeck-otel-mixed \
+OTEL_TRACES_EXPORTER=console \
+OTEL_METRICS_EXPORTER=none \
+OTEL_LOGS_EXPORTER=none \
+uv run --locked \
+  --with 'flask==3.1.3' \
+  --with 'opentelemetry-distro==0.66b0' \
+  --with 'opentelemetry-instrumentation-flask==0.66b0' \
+  opentelemetry-instrument \
+  python textbook/05-instrumentation/flask_mixed.py
+```
+
+다른 terminal에서:
+
+```bash
+curl http://127.0.0.1:8087/checkout
+```
+
+### 실행 전에 예측한다
+
+한 request에 대해 다음 관계를 먼저 그려 보자.
+
+```text
+Flask server span
+└─ checkout.calculate_total
+```
+
+예측할 것:
+
+- 두 span의 `trace_id`는 같은가?
+- manual business span의 `parent_id`는 어떤 span을 가리킬까?
+- 두 span의 Instrumentation Scope는 같은가?
+
+### 관찰한다
+
+ConsoleSpanExporter JSON에서 server span과 `checkout.calculate_total`의 `trace_id`, `span_id`, `parent_id`를 비교한다.
+
+그리고 `scope-summary` 줄을 찾는다.
+
+```text
+scope-summary span=checkout.calculate_total scope=adudeck.checkout.business ...
+scope-summary span=... scope=opentelemetry.instrumentation.flask ...
+```
+
+핵심 evidence는 다음이다.
+
+```text
+same trace_id
+business.parent_id == server.span_id
+business scope != framework scope
+```
+
+이제 Unit 4에서 배운 Resource/Scope 구분이 실제 mixed instrumentation 안에서 쓰인다.
+
+## 6. 비교표
 
 | 방식 | 장점 | 한계 |
 | --- | --- | --- |
 | Manual | business 의미를 가장 정확히 표현 | 코드 수정과 설계가 필요 |
 | Instrumentation library | framework/library 공통 동작을 재사용 가능 | library가 아는 의미까지만 표현 |
-| Zero-code | source 수정 없이 빠르게 telemetry 확보 | application 내부 business 의미는 제한적 |
+| Zero-code | source 수정 없이 빠르게 framework/library telemetry 확보 | application 내부 business 의미는 제한적 |
+| Mixed | framework boundary와 business 의미를 한 trace에서 결합 | operation boundary와 중복 instrumentation을 의도적으로 설계해야 함 |
 
-## 6. 변형 실험
+## 7. 변형 실험
 
-`flask_zero_code.py`의 route 내부에 계산 단계 두 개를 추가한다.
+`flask_mixed.py`의 route 내부에 계산 단계 하나를 더 만든다고 가정한다.
 
 ```text
-load_cart
-calculate_discount
+checkout.calculate_total
+└─ calculate_discount
 ```
 
-zero-code 실행만으로 두 단계가 별도 span으로 나타나는지 확인한다.
+먼저 질문한다.
 
-그 다음 “이 두 단계의 latency를 구분해서 보고 싶다”면 어떤 instrumentation을 추가해야 하는지 설명한다.
+- zero-code만으로 `calculate_discount`라는 business operation을 알 수 있는가?
+- 별도 span으로 만들 가치가 있다면 어떤 API instrumentation이 필요한가?
+- framework server span의 Instrumentation Scope까지 바뀌어야 하는가?
 
 핵심은 “auto가 부족하다”가 아니라 **관찰하려는 operation boundary를 누가 알고 있는가**다.
 
@@ -133,7 +222,8 @@ zero-code 실행만으로 두 단계가 별도 span으로 나타나는지 확인
 1. zero-code가 잘 관찰하는 영역과 manual instrumentation이 필요한 영역을 각각 예로 들어 보자.
 2. instrumentation library와 zero-code의 관계를 설명해 보자.
 3. 모든 함수에 manual span을 넣는 것이 좋은 instrumentation이 아닌 이유는 무엇인가?
-4. framework span과 business span을 함께 사용할 때 Unit 4의 Instrumentation Scope가 왜 유용한가?
+4. mixed example에서 framework span과 business span이 한 trace로 연결되는 이유는 무엇인가?
+5. 두 span의 Instrumentation Scope가 다른 것이 분석에 어떤 도움을 주는가?
 
 ## 다른 사례에 적용하기
 
@@ -141,7 +231,8 @@ zero-code 실행만으로 두 단계가 별도 span으로 나타나는지 확인
 
 - HTTP/DB telemetry는 어떤 방식으로 시작하는 것이 효율적인가?
 - ranking algorithm의 주요 단계는 어떤 방식으로 보강하는 것이 좋은가?
-- 두 방식이 만든 span이 한 trace 안에서 연결되려면 Unit 2의 어떤 mechanism이 계속 중요할까?
+- 여러 방식이 만든 span이 한 trace 안에서 연결되려면 Unit 2의 어떤 mechanism이 계속 중요할까?
+- framework, DB library, business ranking span을 어떤 scope 축으로 구분할 수 있을까?
 
 ### 참고 기준
 
