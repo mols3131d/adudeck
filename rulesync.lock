@@ -73,19 +73,6 @@
         "technical-document-fidelity",
         "text-humanize-korean"
       ]
-    },
-    "dreambigou/eli5": {
-      "requestedRef": "main",
-      "resolvedRef": "a766623b062331fdde53467001379b4ddf3acc2f",
-      "resolvedAt": "2026-10-01T12:35:07.783Z",
-      "skills": {
-        "eli5": {
-          "integrity": "sha256-9bda84c3a322554c8b93f2ccc681eff868a734a9bd35fa26c1c9ae096f795758"
-        }
-      },
-      "skillSelection": [
-        "eli5"
-      ]
     }
   }
 }
