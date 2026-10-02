@@ -26,7 +26,8 @@ business operation
 - data absence를 곧바로 “instrumentation bug”나 “backend bug”로 단정하지 않는다.
 - controlled failure를 사용해 hypothesis를 검증한다.
 - sampling처럼 “데이터가 없어도 pipeline 고장이 아닐 수 있는 이유”를 고려한다.
-- trace/metric identity를 이용해 같은 logical execution을 여러 surface에서 연결한다.
+- trace에서는 trace/span ID로 같은 execution을 연결하고, metric에서는 Resource·attributes·time window를 이용해 관련 관찰 범위를 좁힌다.
+- 서로 다른 signal의 correlation과 개별 execution identity를 같은 것으로 취급하지 않는다.
 
 ## 1. Diagnosis의 기본 질문
 
@@ -52,7 +53,7 @@ Collector debug output 없음
 | --- | --- | --- | --- | --- |
 | instrumentation 제거 | 성공 가능 | 없음 | 없음 | 없음 |
 | propagation 제거 | 성공 가능 | 양쪽 span은 있음 | 있음 | trace가 분리될 수 있음 |
-| wrong OTLP port | 성공 가능 | SDK 내부에는 span 생성 | 없음 | 없음 |
+| wrong OTLP endpoint | 성공 가능 | SDK 내부에는 span 생성 | 없음 | 없음 |
 | Collector 중지 | 성공 가능 | span 생성 | 없음 | 없음 |
 | Collector backend exporter 오류 | 성공 가능 | 있음 | debug branch가 있으면 확인 가능 | 없음 |
 
@@ -75,7 +76,14 @@ uv run --locked textbook/06-propagation/client.py --drop-context
 
 ### B. OTLP endpoint 오류
 
-Unit 7의 endpoint를 4319로 바꾼다.
+Unit 7의 script는 endpoint를 command-line option으로 바꿀 수 있다. baseline source를 수정하지 않고 실패를 만든다.
+
+```bash
+uv run \
+  --with 'opentelemetry-exporter-otlp-proto-http==1.45.0' \
+  textbook/07-otlp-collector/otlp_trace.py \
+  --endpoint http://127.0.0.1:4319/v1/traces
+```
 
 질문:
 
@@ -83,9 +91,11 @@ Unit 7의 endpoint를 4319로 바꾼다.
 - Collector가 받을 수 있는가?
 - 어느 boundary까지 정상이라고 말할 수 있는가?
 
+실험이 끝나면 별도 reset 없이 기본 endpoint 명령으로 돌아갈 수 있다. source file을 직접 수정하지 않았기 때문이다.
+
 ### C. Collector pipeline 오류
 
-Receiver/exporter component를 선언해 두고 `service.pipelines` 연결을 잘못 구성한다.
+Receiver/exporter component를 선언해 두고 `service.pipelines` 연결을 잘못 구성한 disposable config copy를 사용한다.
 
 질문:
 
@@ -112,8 +122,11 @@ debug exporter에는 보이는데 backend에는 없다면 instrumentation이나 
 
 Telemetry가 보이지 않는 이유가 항상 failure는 아니다.
 
-예를 들면 sampling이 일부 trace를 의도적으로 기록하지 않을 수 있다. filter/processor가 데이터를 제거할 수도 있다. query
-time range나 resource filter가 틀렸을 수도 있다.
+예를 들어 **sampling**은 모든 trace candidate를 반드시 record/export하지 않고 일부를 의도적으로 선택할 수 있다. 이 장에서는
+sampling algorithm 자체를 설계하지 않는다. 중요한 것은 “관찰 결과가 없음”이 곧바로 pipeline failure를 뜻하지 않을 수
+있다는 점이다.
+
+filter/processor가 데이터를 제거할 수도 있고, query time range나 Resource filter가 틀렸을 수도 있다.
 
 따라서 absence를 해석할 때는 다음을 묻는다.
 
@@ -121,8 +134,25 @@ time range나 resource filter가 틀렸을 수도 있다.
 이 데이터는 원래 생성되어야 했는가?
 생성되었다면 어느 boundary까지 확인했는가?
 중간 단계가 의도적으로 drop할 수 있는가?
-내 query가 같은 identity/resource를 찾고 있는가?
+내 query가 같은 Resource / attribute / time window를 찾고 있는가?
 ```
+
+### Trace identity와 metric correlation은 다르다
+
+Trace 안에서는 `trace_id`, `span_id`, `parent_id`로 개별 execution의 관계를 직접 연결할 수 있다.
+
+Metric은 반복 measurement를 집계하므로 일반 metric series 자체에 “이 한 요청의 trace ID”와 같은 execution identity가 있는
+것은 아니다. 이번 덱에서는 metric과 trace를 연결할 때 다음 정도까지만 주장한다.
+
+```text
+same observed Resource
++ compatible attributes
++ overlapping time window
+→ 같은 workload 현상을 조사할 후보 범위를 좁힌다
+```
+
+특정 metric measurement와 특정 trace/span을 직접 연결하는 **Exemplar** 같은 mechanism은 현재 core scope가 아니다.
+따라서 cross-signal correlation을 per-request identity와 혼동하지 않는다.
 
 ## 6. 독립 진단 과제
 
@@ -175,10 +205,13 @@ operation
 - `inject → carrier → extract`로 cross-process trace 연결을 설명한다.
 - OTLP와 Collector pipeline boundary를 추적한다.
 - Counter/UpDownCounter/Histogram을 measurement semantics로 선택한다.
+- trace execution identity와 metric aggregation/correlation의 차이를 설명한다.
 - telemetry가 사라졌을 때 마지막 확인 evidence부터 다음 hop을 조사한다.
 
 ### 참고 기준
 
 - [OpenTelemetry Collector troubleshooting](https://opentelemetry.io/docs/collector/troubleshooting/)
 - [OpenTelemetry Collector configuration](https://opentelemetry.io/docs/collector/configuration/)
+- [OpenTelemetry Resource specification](https://opentelemetry.io/docs/specs/otel/resource/)
+- [OpenTelemetry Metrics exemplars](https://opentelemetry.io/docs/specs/otel/metrics/sdk/#exemplar)
 - [OpenTelemetry Demo feature flags](https://opentelemetry.io/docs/demo/feature-flags/)
