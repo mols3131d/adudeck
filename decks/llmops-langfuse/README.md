@@ -19,6 +19,9 @@ LLM application
 `Langfuse().trace()`, `start_span()`, `start_generation()` 중심 예제는 historical context로만 보고 core learning path로
 사용하지 않는다.
 
+교본을 처음 시작한다면 먼저 [Textbook Guide](textbook/README.md)를 읽는다. 이 guide는 장별 순서뿐 아니라 prediction,
+observation, validation level, 누적 checkpoint와 final assessment 기준을 설명한다.
+
 ## Goal
 
 이 deck을 마치면 다음을 할 수 있어야 한다.
@@ -212,12 +215,19 @@ Live API key와 customer data는 repository에 기록하지 않는다.
 
 2026-10-02 기준으로 **0–8장 textbook learning path와 Units 1–8의 hands-on teaching artifacts는 작성되어 있다.**
 
-현재 local validation에서 확인한 것:
+현재 branch에 기록된 deterministic validation evidence:
 
-- Units 3–8의 새 credential-free contract tests는 Python 3.13에서 통과했다.
-- 새 Python files는 syntax compile을 통과했다.
+- Units 3–8의 credential-free contract tests는 Python 3.13에서 통과한 것으로 기록되어 있다.
+- 새 Python files는 syntax compile을 통과한 것으로 기록되어 있다.
 - Unit 6 local demo는 baseline/candidate aggregate가 같아도 critical regression이 존재하는 evidence를 출력한다.
 - Unit 8 release gate는 critical regression과 evaluator error가 있는 candidate를 block한다.
+
+이번 textbook review에서 추가로 확인한 것:
+
+- Langfuse Python SDK latest release는 `v4.16.0`이며 current v4/OpenTelemetry path와 일치한다.
+- Unit 3의 `answer-generation`은 wrapped OpenAI provider call 자체를 표현하는 generation으로 설명을 보정했다.
+- Unit 8은 failure-driven eval design, evaluation coverage, human-reference calibration, release policy를 포함하도록 심화했다.
+- `textbook/README.md`에 validation level, 누적 checkpoint, final assessment rubric을 추가했다.
 
 아직 end-to-end acceptance로 주장하지 않는 것:
 
@@ -227,10 +237,9 @@ Live API key와 customer data는 repository에 기록하지 않는다.
 - Langfuse Cloud ingestion/UI behavior
 - OpenAI live provider calls
 
-현재 작업 환경에서 `uv lock`을 다시 시도했지만 `pypi.org` DNS resolution이 불가능해 dependency resolution을 완료하지
-못했다. 따라서 lockfile을 추측해서 만들지 않는다.
+현재 작업 환경에서 external package resolution이 보장되지 않으므로 lockfile을 추측해서 만들지 않는다.
 
-Textbook content와 deterministic learning contracts가 완성되었다는 것과
+Textbook content와 deterministic learning contracts가 작성되었다는 것과
 **locked/live runtime acceptance가 완료되었다는 것**은 분리해서 기록한다.
 
 ## Dependency contract
