@@ -8,12 +8,13 @@ Review anchor: `5a301b40b5b5401b87e67beebe7337cd10fd584e`
 
 Review date: 2026-10-02
 
-Verdict: **keep Draft. The 0–8 authoring surface is complete, but the deck does not yet pass a strict textbook completion gate.**
+Verdict:
+**keep Draft. The 0–8 authoring surface is complete, but the deck does not yet pass a strict textbook completion gate.**
 
 ## Executive verdict
 
-The strongest part of PR #34 is no longer breadth. The deck now has a coherent learning model that connects tracing, evaluation, datasets,
-experiments, prompt identity, and release decisions into one evidence-preserving engineering loop.
+The strongest part of PR #34 is no longer breadth. The deck now has a coherent learning model that connects tracing,
+evaluation, datasets, experiments, prompt identity, and release decisions into one evidence-preserving engineering loop.
 
 ```text
 Observe
@@ -26,27 +27,29 @@ Observe
 → Observe again
 ```
 
-The curriculum and prose are substantially stronger than a typical product tutorial. Units 1–7 generally teach mechanisms and evidence
-ownership rather than API transcription, and Unit 8 introduces a useful production-to-evaluation synthesis.
+The curriculum and prose are substantially stronger than a typical product tutorial. Units 1–7 generally teach
+mechanisms and evidence ownership rather than API transcription, and Unit 8 introduces a useful production-to-evaluation
+synthesis.
 
 However, a strict review found two high-severity gaps that prevent a full textbook quality-pass:
 
-1. the repository's green Langfuse test path does **not run inside the deck dependency environment**, so it cannot detect Langfuse/OpenAI
-   SDK incompatibility or API drift;
-2. Unit 8's release-gate data model cannot correctly represent asymmetric baseline/candidate evaluation failures and can therefore compare
-   different evidence populations while appearing valid.
+1. the repository's green Langfuse test path does **not run inside the deck dependency environment**, so it cannot
+   detect Langfuse/OpenAI SDK incompatibility or API drift;
+2. Unit 8's release-gate data model cannot correctly represent asymmetric baseline/candidate evaluation failures and can
+   therefore compare different evidence populations while appearing valid.
 
-Several medium-severity gaps also remain in the hands-on path around prompt bootstrap/version pinning and hosted dataset-version experiments.
+Several medium-severity gaps also remain in the hands-on path around prompt bootstrap/version pinning and hosted
+dataset-version experiments.
 
 The correct completion statement is therefore:
 
-> **The planned 0–8 textbook coverage and first full authoring pass are complete. Strict quality-pass and runtime/live acceptance are not yet
-> complete.**
+> **The planned 0–8 textbook coverage and first full authoring pass are complete. Strict quality-pass and runtime/live
+> acceptance are not yet complete.**
 
 ## Review method
 
-This was a sequential multi-vantage review. The lenses were intentionally separated so one strong aspect would not mask another weak one.
-No claim is made that these passes were independently executed by separate agents.
+This was a sequential multi-vantage review. The lenses were intentionally separated so one strong aspect would not mask
+another weak one. No claim is made that these passes were independently executed by separate agents.
 
 ### Lens A — Curriculum coherence
 
@@ -130,13 +133,13 @@ Checked:
 
 ---
 
-# Findings
+## Findings
 
-## High 1 — Green CI does not validate the Langfuse deck dependency contract
+### High 1 — Green CI does not validate the Langfuse deck dependency contract
 
 **Severity: High**
 
-### Evidence
+#### Evidence
 
 The deck correctly declares the dependencies used by the core learning path:
 
@@ -165,10 +168,10 @@ There is no:
 --locked
 ```
 
-The repository root `pyproject.toml` has no runtime dependencies. Most teaching modules also defer real Langfuse imports to `main()` and the
-credential-free tests use fake objects.
+The repository root `pyproject.toml` has no runtime dependencies. Most teaching modules also defer real Langfuse imports
+to `main()` and the credential-free tests use fake objects.
 
-### Why this matters
+#### Why this matters
 
 A green test can therefore coexist with all of the following:
 
@@ -185,7 +188,7 @@ The current tests are useful **teaching-code contract tests**, but they are not 
 
 This matters more here than in ordinary prose because the deck explicitly teaches version-sensitive executable APIs.
 
-### Required change
+#### Required change
 
 Before strict completion:
 
@@ -213,21 +216,21 @@ Before strict completion:
 
 4. keep Cloud ingestion and paid provider calls as a separate live validation tier.
 
-### CI nuance
+#### CI nuance
 
-The repository **does have real green CI evidence** for the current branch. The `ci/validated` status is successful and comes from CI run
-`36974738408`; its deterministic validation and auto-fix workflow completed successfully.
+The repository **does have real green CI evidence** for the current branch. The `ci/validated` status is successful and
+comes from CI run `36974738408`; its deterministic validation and auto-fix workflow completed successfully.
 
-That evidence is valid for what the workflow actually executes. It does **not** close this finding because the Langfuse test target itself
-runs from the root environment instead of the deck project.
+That evidence is valid for what the workflow actually executes. It does **not** close this finding because the Langfuse
+test target itself runs from the root environment instead of the deck project.
 
 ---
 
-## High 2 — Unit 8 cannot faithfully represent baseline/candidate failure states
+### High 2 — Unit 8 cannot faithfully represent baseline/candidate failure states
 
 **Severity: High**
 
-### Evidence
+#### Evidence
 
 Unit 8 models an evidence row as:
 
@@ -259,8 +262,8 @@ candidate = scored
 
 The current model cannot express these states.
 
-More importantly, `_average_scored()` chooses non-`None` scores separately for baseline and candidate. A row marked `status="scored"` is not
-required to have both scores.
+More importantly, `_average_scored()` chooses non-`None` scores separately for baseline and candidate. A row marked
+`status="scored"` is not required to have both scores.
 
 This means the model can compare different populations.
 
@@ -287,7 +290,7 @@ candidate average = 1
 
 without an evaluation-gap reason, even though there is no case with paired valid evidence.
 
-### Why this matters
+#### Why this matters
 
 This is not just a code bug. It conflicts with one of the strongest lessons in the chapter:
 
@@ -301,7 +304,7 @@ evaluator error
 
 The capstone code should be the cleanest embodiment of that invariant.
 
-### Additional semantic issue
+#### Additional semantic issue
 
 The current code emits:
 
@@ -320,7 +323,7 @@ baseline pass
 
 If both baseline and candidate already fail, that is a **critical failure**, not a newly introduced regression.
 
-### Required change
+#### Required change
 
 Model variant evidence independently. For example:
 
@@ -363,11 +366,11 @@ critical fail → pass
 
 ---
 
-## Medium 1 — Unit 7 live lab assumes prompt state that the textbook does not create
+### Medium 1 — Unit 7 live lab assumes prompt state that the textbook does not create
 
 **Severity: Medium**
 
-### Evidence
+#### Evidence
 
 The chapter asks the learner to run:
 
@@ -382,12 +385,13 @@ support/refund-answer
 label = staging
 ```
 
-But the deck does not currently provide a bounded setup step that creates that chat prompt with the required variables and label.
+But the deck does not currently provide a bounded setup step that creates that chat prompt with the required variables
+and label.
 
-The chapter explains version and label semantics well, but the live path depends on external project state that is not established by the
-learning material.
+The chapter explains version and label semantics well, but the live path depends on external project state that is not
+established by the learning material.
 
-### Why this matters
+#### Why this matters
 
 A learner can fail before reaching the target mechanism:
 
@@ -400,7 +404,7 @@ missing variables
 
 That makes environment state a confounder in an otherwise strong experiment.
 
-### Required change
+#### Required change
 
 Add a minimal prompt bootstrap step, either:
 
@@ -411,7 +415,7 @@ Do not build a broad provisioning framework.
 
 ---
 
-## Medium 2 — Unit 7 teaches exact version pinning but the runnable CLI only supports labels
+### Medium 2 — Unit 7 teaches exact version pinning but the runnable CLI only supports labels
 
 **Severity: Medium**
 
@@ -433,7 +437,7 @@ vs
 exact-version lookup
 ```
 
-### Recommended change
+#### Recommended change
 
 Support mutually exclusive input such as:
 
@@ -442,18 +446,19 @@ Support mutually exclusive input such as:
 --version 21
 ```
 
-Then ask the learner to explain which one is appropriate for production routing versus historical experiment reproducibility.
+Then ask the learner to explain which one is appropriate for production routing versus historical experiment
+reproducibility.
 
 ---
 
-## Medium 3 — Prompt fallback has a material provenance consequence that is not stated
+### Medium 3 — Prompt fallback has a material provenance consequence that is not stated
 
 **Severity: Medium**
 
 The chapter correctly explains empty-cache failure and explicit fallback support.
 
-Current Langfuse Prompt Management behavior has an important consequence: when an explicit fallback prompt is used, that fallback is not a
-remote Langfuse prompt version, so **no Langfuse prompt-version link is created for the generation**.
+Current Langfuse Prompt Management behavior has an important consequence: when an explicit fallback prompt is used, that
+fallback is not a remote Langfuse prompt version, so **no Langfuse prompt-version link is created for the generation**.
 
 This matters directly to the chapter's central chain:
 
@@ -464,7 +469,7 @@ prompt identity
 → evaluation evidence
 ```
 
-### Required change
+#### Required change
 
 State this explicitly:
 
@@ -481,12 +486,12 @@ This is a good opportunity to teach a real availability-versus-provenance trade-
 
 ---
 
-## Medium 4 — Unit 6 explains dataset-version control but does not exercise it
+### Medium 4 — Unit 6 explains dataset-version control but does not exercise it
 
 **Severity: Medium**
 
-The chapter correctly explains that baseline and candidate should use the same dataset version and that Langfuse can retrieve historical
-dataset versions.
+The chapter correctly explains that baseline and candidate should use the same dataset version and that Langfuse can
+retrieve historical dataset versions.
 
 But the runnable live path uses local data, while the hosted example is effectively:
 
@@ -499,9 +504,10 @@ It does not pin a historical version.
 
 The deck-level learning outcome explicitly includes controlling dataset version, evaluator, and application condition.
 
-### Required change
+#### Required change
 
-Add one small hosted-dataset experiment that obtains a concrete version/timestamp once and uses the same version for baseline and candidate.
+Add one small hosted-dataset experiment that obtains a concrete version/timestamp once and uses the same version for
+baseline and candidate.
 
 The learner should be able to observe and explain:
 
@@ -515,7 +521,7 @@ Without this, the version-control outcome is explained but not fully practiced.
 
 ---
 
-## Medium 5 — Completion wording is ahead of the strict quality gate
+### Medium 5 — Completion wording is ahead of the strict quality gate
 
 **Severity: Medium**
 
@@ -534,7 +540,7 @@ strict textbook completion / quality-pass complete
 
 because High 1 and High 2 remain open and some declared outcomes still lack their strongest hands-on evidence.
 
-### Required change
+#### Required change
 
 Until the blockers are repaired, prefer:
 
@@ -544,7 +550,7 @@ Keep the PR Draft.
 
 ---
 
-## Low 1 — Unit 3's most important variation is prose-driven rather than runnable
+### Low 1 — Unit 3's most important variation is prose-driven rather than runnable
 
 **Severity: Low**
 
@@ -558,24 +564,24 @@ OpenAI call after support-turn context closes
 
 Unlike Units 1–2, the chapter does not expose this as a repeatable CLI flag or small deterministic variation.
 
-A `--detach-provider`-style variation would make the causal comparison easier to repeat and would better mirror the pedagogical strength of
-Unit 1.
+A `--detach-provider`-style variation would make the causal comparison easier to repeat and would better mirror the
+pedagogical strength of Unit 1.
 
 This is not required to understand the chapter, but it would improve experimental symmetry.
 
 ---
 
-## Low 2 — The cumulative scenario is too concentrated in the refund/support domain
+### Low 2 — The cumulative scenario is too concentrated in the refund/support domain
 
 **Severity: Low**
 
-The support/refund scenario is excellent for conceptual continuity. It reduces incidental complexity and lets the learner see the evidence
-chain grow across chapters.
+The support/refund scenario is excellent for conceptual continuity. It reduces incidental complexity and lets the
+learner see the evidence chain grow across chapters.
 
 The downside is that the learner can become fluent in the scenario rather than in the transferable reasoning.
 
-The deck already contains transfer questions, so this is not a coverage blocker. A second compact capstone scenario would strengthen evidence
-of transfer, for example:
+The deck already contains transfer questions, so this is not a coverage blocker. A second compact capstone scenario
+would strengthen evidence of transfer, for example:
 
 ```text
 RAG groundedness
@@ -587,12 +593,12 @@ The second scenario should be smaller, not another full parallel textbook.
 
 ---
 
-## Low 3 — Unit 5's privacy test is weaker than its prose
+### Low 3 — Unit 5's privacy test is weaker than its prose
 
 **Severity: Low**
 
-The dataset builder itself is intentionally narrow, which is good. The test for "does not copy a raw customer transcript" mainly asserts
-that serialized output does not contain the strings:
+The dataset builder itself is intentionally narrow, which is good. The test for "does not copy a raw customer
+transcript" mainly asserts that serialized output does not contain the strings:
 
 ```text
 email
@@ -601,7 +607,8 @@ customer_name
 
 That test is illustrative rather than a strong privacy guarantee.
 
-Prefer asserting the exact allowed payload structure for the synthetic case. This keeps the test aligned with the teaching invariant:
+Prefer asserting the exact allowed payload structure for the synthetic case. This keeps the test aligned with the
+teaching invariant:
 
 ```text
 preserve only reproducible domain facts + provenance
@@ -611,12 +618,12 @@ Do not present the test as general PII detection.
 
 ---
 
-# Prior-review correction
+## Prior-review correction
 
 An earlier review stated that there was no workflow/CI evidence on the PR head. That statement was incomplete.
 
-The repository workflow is triggered by `push`, not by `pull_request`. A query restricted to pull-request-triggered runs therefore missed the
-actual workflow.
+The repository workflow is triggered by `push`, not by `pull_request`. A query restricted to pull-request-triggered runs
+therefore missed the actual workflow.
 
 Strict re-check found:
 
@@ -626,19 +633,19 @@ state: success
 workflow run: 36974738408
 ```
 
-The run executed the repository's cheap deterministic validation, persisted the formatter-generated patch, and published success for the
-latest head.
+The run executed the repository's cheap deterministic validation, persisted the formatter-generated patch, and published
+success for the latest head.
 
 So the corrected statement is:
 
-> **Current repository deterministic CI is green. It does not, however, validate the Langfuse deck inside its declared dependency
-> environment.**
+> **Current repository deterministic CI is green. It does not, however, validate the Langfuse deck inside its declared
+> dependency environment.**
 
 That distinction is important and should replace the earlier "no CI evidence" assessment.
 
 ---
 
-# Lens-by-lens assessment
+## Lens-by-lens assessment
 
 | Lens | Verdict | Notes |
 | --- | --- | --- |
@@ -655,9 +662,9 @@ That distinction is important and should replace the earlier "no CI evidence" as
 
 ---
 
-# What is especially strong
+## What is especially strong
 
-## 1. The deck has a real engineering mental model
+### 1. The deck has a real engineering mental model
 
 The central distinction is consistently preserved:
 
@@ -671,17 +678,18 @@ Langfuse
 
 That prevents a common observability mistake: turning a telemetry system into the owner of business truth.
 
-## 2. Unit 1 is an excellent mechanism-first introduction
+### 2. Unit 1 is an excellent mechanism-first introduction
 
-Teaching explicit current-context parentage before decorators/integrations is a strong choice. The OpenTelemetry outer-context caveat is now
-included, avoiding the false rule that "outside one Langfuse block always means a new distributed trace."
+Teaching explicit current-context parentage before decorators/integrations is a strong choice. The OpenTelemetry
+outer-context caveat is now included, avoiding the false rule that "outside one Langfuse block always means a new
+distributed trace."
 
-## 3. Unit 2 teaches queryable observability rather than span proliferation
+### 3. Unit 2 teaches queryable observability rather than span proliferation
 
-Stable operation names versus user/session/tags/metadata is practical and conceptually clean. It prepares the learner for later dataset and
-evaluation work rather than treating trace design as decoration.
+Stable operation names versus user/session/tags/metadata is practical and conceptually clean. It prepares the learner
+for later dataset and evaluation work rather than treating trace design as decoration.
 
-## 4. Unit 3 now has the right provider/application boundary
+### 4. Unit 3 now has the right provider/application boundary
 
 The corrected model:
 
@@ -690,9 +698,10 @@ support-turn
 └─ answer-generation
 ```
 
-correctly treats `answer-generation` as the wrapped OpenAI provider call itself rather than inventing an extra automatic child call.
+correctly treats `answer-generation` as the wrapped OpenAI provider call itself rather than inventing an extra automatic
+child call.
 
-## 5. Unit 4's score semantics are unusually good for an introductory resource
+### 5. Unit 4's score semantics are unusually good for an introductory resource
 
 The distinction among:
 
@@ -705,43 +714,48 @@ application error
 
 is foundational for trustworthy evaluation systems and is explained clearly.
 
-## 6. Unit 5 avoids the "copy production logs into a dataset" anti-pattern
+### 6. Unit 5 avoids the "copy production logs into a dataset" anti-pattern
 
-The deck teaches extracting a minimal, privacy-aware, evaluator-friendly case while preserving source provenance. This is a strong bridge
-between observability and regression testing.
+The deck teaches extracting a minimal, privacy-aware, evaluator-friendly case while preserving source provenance. This
+is a strong bridge between observability and regression testing.
 
-## 7. Unit 6's equal-average regression experiment is pedagogically excellent
+### 7. Unit 6's equal-average regression experiment is pedagogically excellent
 
-The example where baseline and candidate both score 0.75 while a critical case regresses makes the limitation of aggregate metrics concrete.
-It is one of the strongest exercises in the deck.
+The example where baseline and candidate both score 0.75 while a critical case regresses makes the limitation of
+aggregate metrics concrete. It is one of the strongest exercises in the deck.
 
-## 8. Unit 7 correctly separates prompt version, label, compiled input, and generation linkage
+### 8. Unit 7 correctly separates prompt version, label, compiled input, and generation linkage
 
-This is a better mental model than teaching Prompt Management as a UI feature. Cache/availability discussion also adds real operational depth.
+This is a better mental model than teaching Prompt Management as a UI feature. Cache/availability discussion also adds
+real operational depth.
 
-## 9. Unit 8's prose is strong even though its state model needs repair
+### 9. Unit 8's prose is strong even though its state model needs repair
 
-Failure-driven eval design, human-reference calibration, evaluation coverage, predeclared release criteria, and re-observation in production
-are exactly the right capstone themes.
+Failure-driven eval design, human-reference calibration, evaluation coverage, predeclared release criteria, and
+re-observation in production are exactly the right capstone themes.
 
 The code should now be raised to the level of the prose.
 
 ---
 
-# Current authoritative verification snapshot
+## Current authoritative verification snapshot
 
 Review-time verification used current primary sources where version-sensitive behavior mattered.
 
 - Langfuse Python SDK latest verified release: **v4.16.0**, published 2026-09-30.
 - Python SDK v4 remains OpenTelemetry-based and observations-first.
-- Langfuse scores can target Trace, Observation, Session, and Dataset Run, with current score forms including Numeric, Boolean,
-  Categorical, and Text.
-- Experiment Runner supports local data and hosted datasets with evaluator functions and per-item tracing/error investigation.
-- Dataset versioning tracks item changes as timestamp-based dataset versions; schema changes are not the same item-version snapshot.
-- Prompt cache behavior distinguishes fresh, stale/revalidated, and cache-miss states; default cache TTL is currently 60 seconds.
-- OpenAI prompt linkage uses the Langfuse prompt object; a local fallback prompt does not provide the same remote prompt-version link.
-- The current OpenAI Python SDK latest release observed during review is 3.20.0; the deck range `>=3.19.2,<4` includes it, but without a
-  lock this is a moving environment rather than a reproducible baseline.
+- Langfuse scores can target Trace, Observation, Session, and Dataset Run, with current score forms including Numeric,
+  Boolean, Categorical, and Text.
+- Experiment Runner supports local data and hosted datasets with evaluator functions and per-item tracing/error
+  investigation.
+- Dataset versioning tracks item changes as timestamp-based dataset versions; schema changes are not the same
+  item-version snapshot.
+- Prompt cache behavior distinguishes fresh, stale/revalidated, and cache-miss states; default cache TTL is currently 60
+  seconds.
+- OpenAI prompt linkage uses the Langfuse prompt object; a local fallback prompt does not provide the same remote
+  prompt-version link.
+- The current OpenAI Python SDK latest release observed during review is 3.20.0; the deck range `>=3.19.2,<4` includes
+  it, but without a lock this is a moving environment rather than a reproducible baseline.
 
 Primary references:
 
@@ -753,7 +767,7 @@ Primary references:
 
 ---
 
-# Required sequence before calling the textbook complete
+## Required sequence before calling the textbook complete
 
 Recommended order is based on dependency and information gain, not cosmetic polish.
 
@@ -795,10 +809,11 @@ Recommended order is based on dependency and information gain, not cosmetic poli
 
 ---
 
-# Final assessment
+## Final assessment
 
-PR #34 has evolved from a promising tutorial draft into a strong textbook candidate. Its **curriculum architecture, evidence model, and prose
-quality are already strong enough to preserve**; a rewrite is not warranted.
+PR #34 has evolved from a promising tutorial draft into a strong textbook candidate. Its
+**curriculum architecture, evidence model, and prose quality are already strong enough to preserve**; a rewrite is not
+warranted.
 
 The remaining work is narrower and more important than adding more content:
 
