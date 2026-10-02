@@ -56,8 +56,8 @@ business operation           → manual instrumentation
 
 ## 2. Manual instrumentation
 
-[`flask_manual.py`](flask_manual.py)는 Flask route 안에서 business span을 직접 만든다. SDK와 exporter도 application code가
-직접 구성한다.
+[`flask_manual.py`](flask_manual.py)는 Flask route 안에서 business span을 직접 만든다. SDK와 exporter도 application
+code가 직접 구성한다.
 
 실행:
 
@@ -72,8 +72,8 @@ uv run --locked --with 'flask==3.1.3' \
 curl http://127.0.0.1:8085/checkout
 ```
 
-이 예제는 `checkout.calculate_total` 같은 **business 의미를 코드가 직접 선택**한다. 반면 Flask request boundary를 자동으로
-설명하는 server span은 만들지 않는다.
+이 예제는 `checkout.calculate_total` 같은 **business 의미를 코드가 직접 선택**한다. 반면 Flask request boundary를
+자동으로 설명하는 server span은 만들지 않는다.
 
 ## 3. Zero-code instrumentation
 
@@ -130,9 +130,9 @@ Python에서는 `opentelemetry-instrument`가 instrumentation libraries를 로�
 [`flask_mixed.py`](flask_mixed.py)는 business operation만 manual API로 표현하고, Flask request boundary와 SDK/exporter
 configuration은 zero-code agent에 맡긴다.
 
-application source 안에는 `TracerProvider`를 새로 만들거나 Flask instrumentor를 직접 호출하는 코드가 없다. 다만 Unit 4에서
-배운 Instrumentation Scope를 learner가 볼 수 있도록 `ScopeSummaryExporter`라는 **teaching probe**를 runtime provider에
-추가한다. 이 probe는 framework를 계측하는 것이 아니라 이미 끝난 span의 scope metadata를 출력한다.
+application source 안에는 `TracerProvider`를 새로 만들거나 Flask instrumentor를 직접 호출하는 코드가 없다. 다만 Unit
+4에서 배운 Instrumentation Scope를 learner가 볼 수 있도록 `ScopeSummaryExporter`라는 **teaching probe**를 runtime
+provider에 추가한다. 이 probe는 framework를 계측하는 것이 아니라 이미 끝난 span의 scope metadata를 출력한다.
 
 실행:
 

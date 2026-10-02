@@ -103,8 +103,8 @@ status description은 실제 `PaymentDeclined` message와 맞는다.
 
 ### 왜 exception event도 보이는가
 
-OpenTelemetry Python 1.45.0의 `start_as_current_span()`은 context manager를 빠져나가는 uncaught `Exception`에 대해 기본적으로
-`record_exception=True`, `set_status_on_exception=True` 동작을 사용한다.
+OpenTelemetry Python 1.45.0의 `start_as_current_span()`은 context manager를 빠져나가는 uncaught `Exception`에 대해
+기본적으로 `record_exception=True`, `set_status_on_exception=True` 동작을 사용한다.
 
 그런데 이번 `charge_payment` 예제는 두 책임을 일부러 분리한다.
 
@@ -116,14 +116,14 @@ with tracer.start_as_current_span(
     ...
 ```
 
-`record_exception`은 기본값 `True`로 남기므로 `PaymentDeclined`가 `with` 블록 밖으로 전달될 때 Python runtime이 exception
-event를 기록한다. 반면 자동 status 설정만 끄고, operation의 최종 의미는 코드가 `ERROR`, `error.type`, exception message를
-명시적으로 설정한다.
+`record_exception`은 기본값 `True`로 남기므로 `PaymentDeclined`가 `with` 블록 밖으로 전달될 때 Python runtime이
+exception event를 기록한다. 반면 자동 status 설정만 끄고, operation의 최종 의미는 코드가 `ERROR`, `error.type`,
+exception message를 명시적으로 설정한다.
 
 왜 이렇게 했을까? 기본 `set_status_on_exception=True`를 그대로 두면 Python 1.45.0은 uncaught exception에 대해
 `PaymentDeclined: issuer declined payment`처럼 exception type까지 포함한 description으로 status를 자동 설정한다. 이 장은
-현재 Semantic Conventions의 operation-failure guidance를 직접 관찰하는 것이 목적이므로, **exception detail event는 runtime에
-맡기고 operation status는 명시적으로 통제**한다.
+현재 Semantic Conventions의 operation-failure guidance를 직접 관찰하는 것이 목적이므로,
+**exception detail event는 runtime에 맡기고 operation status는 명시적으로 통제**한다.
 
 이 둘을 다음처럼 구분한다.
 

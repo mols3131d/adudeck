@@ -46,14 +46,14 @@ service.version = 2026.10
 
 실제 환경에서는 process, container, pod, cloud resource 같은 정보도 Resource에 들어갈 수 있다.
 
-일반적인 in-process SDK 예제에서는 application process가 telemetry를 만들면서 동시에 Resource가 설명하는 workload이기도 해서
-둘이 같은 것처럼 보이기 쉽다. 하지만 항상 그런 것은 아니다. 예를 들어 외부 agent나 eBPF 기반 instrumentation이 다른
+일반적인 in-process SDK 예제에서는 application process가 telemetry를 만들면서 동시에 Resource가 설명하는 workload이기도
+해서 둘이 같은 것처럼 보이기 쉽다. 하지만 항상 그런 것은 아니다. 예를 들어 외부 agent나 eBPF 기반 instrumentation이 다른
 process를 관찰해 telemetry를 만들 수 있다. 이 경우 **emitter는 agent지만 Resource는 관찰 대상 workload를 설명**한다.
 
 따라서 Resource를 “telemetry를 출력한 코드의 정체”라고 외우지 않는다.
 
-이번 예제에서는 하나의 `TracerProvider(resource=...)`에 Resource를 연결하고, 그 Provider에서 만들어진 span이 같은 Resource
-configuration을 공유하게 한다.
+이번 예제에서는 하나의 `TracerProvider(resource=...)`에 Resource를 연결하고, 그 Provider에서 만들어진 span이 같은
+Resource configuration을 공유하게 한다.
 
 ## 3. Instrumentation Scope는 “누가 만들었는가”를 설명한다
 
@@ -72,8 +72,8 @@ same Resource
 └─ scope: adudeck.payment
 ```
 
-이 구분 덕분에 “어느 observed service/workload의 telemetry인가?”와 “어느 library/module이 telemetry를 만들었는가?”를 섞지
-않을 수 있다.
+이 구분 덕분에 “어느 observed service/workload의 telemetry인가?”와 “어느 library/module이 telemetry를 만들었는가?”를
+섞지 않을 수 있다.
 
 ## 4. 실행 전에 예측한다
 

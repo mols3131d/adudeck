@@ -26,7 +26,8 @@ business operation
 - data absence를 곧바로 “instrumentation bug”나 “backend bug”로 단정하지 않는다.
 - controlled failure를 사용해 hypothesis를 검증한다.
 - sampling처럼 “데이터가 없어도 pipeline 고장이 아닐 수 있는 이유”를 고려한다.
-- trace에서는 trace/span ID로 같은 execution을 연결하고, metric에서는 Resource·attributes·time window를 이용해 관련 관찰 범위를 좁힌다.
+- trace에서는 trace/span ID로 같은 execution을 연결하고, metric에서는 Resource·attributes·time window를 이용해 관련 관찰
+  범위를 좁힌다.
 - 서로 다른 signal의 correlation과 개별 execution identity를 같은 것으로 취급하지 않는다.
 
 ## 1. Diagnosis의 기본 질문
@@ -122,9 +123,9 @@ debug exporter에는 보이는데 backend에는 없다면 instrumentation이나 
 
 Telemetry가 보이지 않는 이유가 항상 failure는 아니다.
 
-예를 들어 **sampling**은 모든 trace candidate를 반드시 record/export하지 않고 일부를 의도적으로 선택할 수 있다. 이 장에서는
-sampling algorithm 자체를 설계하지 않는다. 중요한 것은 “관찰 결과가 없음”이 곧바로 pipeline failure를 뜻하지 않을 수
-있다는 점이다.
+예를 들어 **sampling**은 모든 trace candidate를 반드시 record/export하지 않고 일부를 의도적으로 선택할 수 있다. 이
+장에서는 sampling algorithm 자체를 설계하지 않는다. 중요한 것은 “관찰 결과가 없음”이 곧바로 pipeline failure를 뜻하지
+않을 수 있다는 점이다.
 
 filter/processor가 데이터를 제거할 수도 있고, query time range나 Resource filter가 틀렸을 수도 있다.
 
@@ -141,8 +142,8 @@ filter/processor가 데이터를 제거할 수도 있고, query time range나 Re
 
 Trace 안에서는 `trace_id`, `span_id`, `parent_id`로 개별 execution의 관계를 직접 연결할 수 있다.
 
-Metric은 반복 measurement를 집계하므로 일반 metric series 자체에 “이 한 요청의 trace ID”와 같은 execution identity가 있는
-것은 아니다. 이번 덱에서는 metric과 trace를 연결할 때 다음 정도까지만 주장한다.
+Metric은 반복 measurement를 집계하므로 일반 metric series 자체에 “이 한 요청의 trace ID”와 같은 execution identity가
+있는 것은 아니다. 이번 덱에서는 metric과 trace를 연결할 때 다음 정도까지만 주장한다.
 
 ```text
 same observed Resource

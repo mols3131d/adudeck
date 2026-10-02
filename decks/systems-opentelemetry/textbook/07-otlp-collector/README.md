@@ -32,8 +32,8 @@ docker version
 docker info
 ```
 
-Docker를 사용할 수 없는 환경에서는 config와 data path 설명까지 학습하고, runtime evidence는 Docker가 가능한 환경에서 다시
-확인한다. 이 경우 “Collector까지 검증했다”고 주장하지 않는다.
+Docker를 사용할 수 없는 환경에서는 config와 data path 설명까지 학습하고, runtime evidence는 Docker가 가능한 환경에서
+다시 확인한다. 이 경우 “Collector까지 검증했다”고 주장하지 않는다.
 
 현재 calibration 기준은 다음과 같다.
 
@@ -110,8 +110,8 @@ application endpoint=http://127.0.0.1:4318/v1/traces
 checkout: business work completed
 ```
 
-그 뒤 `BatchSpanProcessor`가 ended span을 OTLP exporter에 넘기고, `provider.shutdown()`이 pending export를 flush한 뒤 process가
-끝난다.
+그 뒤 `BatchSpanProcessor`가 ended span을 OTLP exporter에 넘기고, `provider.shutdown()`이 pending export를 flush한 뒤
+process가 끝난다.
 
 ## 5. 같은 span이 Collector까지 갔는지 확인한다
 
@@ -174,8 +174,8 @@ cp textbook/07-otlp-collector/collector-config.yaml /tmp/adudeck-otel-collector.
 
 복사본의 `service.pipelines.traces`에서 receiver 연결을 제거하거나 traces pipeline을 제거해 본다.
 
-OpenTelemetry Collector에서는 receiver를 `receivers:`에 **configure**하는 것과 `service.pipelines`에 넣어 **enable**하는 것이
-별개다.
+OpenTelemetry Collector에서는 receiver를 `receivers:`에 **configure**하는 것과 `service.pipelines`에 넣어 **enable**하는
+것이 별개다.
 
 Collector version과 validation rule에 따라 active pipeline이 없는 config를 startup 단계에서 거부할 수 있다. 그 경우
 startup error 자체가 configuration boundary evidence다. 시작은 되지만 listener/data path가 없어진다면 그것도 별개의
