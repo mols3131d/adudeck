@@ -1,12 +1,12 @@
 # 4장 · Resource와 API/SDK
 
 앞 장까지는 span 안의 관계와 의미를 읽었다. 이제 한 단계 뒤로 물러나
-**누가 telemetry를 만들고 누가 실제로 처리하는지**를 본다.
+**telemetry가 무엇을 설명하고, 누가 그것을 만들며, 누가 실제로 처리하는지**를 본다.
 
 이번 장의 핵심 구분은 두 개다.
 
 ```text
-Resource              = telemetry가 설명하는 실행 주체
+Resource              = telemetry가 설명하는 observed entity / workload
 Instrumentation Scope = telemetry를 만든 논리적 software unit
 ```
 
@@ -22,6 +22,7 @@ API → Provider/SDK → Processor → Exporter
 - `Resource`와 `Instrumentation Scope`를 구분한다.
 - `TracerProvider → SpanProcessor → Exporter` 데이터 흐름을 설명한다.
 - 같은 `service.name`이 곧 같은 process나 같은 Resource object를 뜻하지 않는다는 것을 설명한다.
+- telemetry를 기술적으로 emit하는 component와 Resource가 설명하는 observed entity가 항상 같지는 않음을 설명한다.
 
 ## 1. API는 “무엇을 기록할지” 말한다
 
@@ -32,9 +33,9 @@ SDK는 실제 Provider, sampling, processing, export 같은 runtime behavior를 
 
 따라서 library가 OpenTelemetry API를 사용한다고 해서 특정 backend에 종속되는 것은 아니다.
 
-## 2. Resource는 “누구의 telemetry인가”를 설명한다
+## 2. Resource는 “어떤 entity의 telemetry인가”를 설명한다
 
-Resource는 telemetry를 발생시키는 entity를 설명한다.
+OpenTelemetry Resource는 **telemetry가 생산되는 observed entity**를 설명한다.
 
 예를 들면:
 
@@ -45,7 +46,14 @@ service.version = 2026.10
 
 실제 환경에서는 process, container, pod, cloud resource 같은 정보도 Resource에 들어갈 수 있다.
 
-중요한 점은 Resource가 Provider에 연결되고, 그 Provider에서 만들어진 telemetry에 함께 붙는다는 것이다.
+일반적인 in-process SDK 예제에서는 application process가 telemetry를 만들면서 동시에 Resource가 설명하는 workload이기도 해서
+둘이 같은 것처럼 보이기 쉽다. 하지만 항상 그런 것은 아니다. 예를 들어 외부 agent나 eBPF 기반 instrumentation이 다른
+process를 관찰해 telemetry를 만들 수 있다. 이 경우 **emitter는 agent지만 Resource는 관찰 대상 workload를 설명**한다.
+
+따라서 Resource를 “telemetry를 출력한 코드의 정체”라고 외우지 않는다.
+
+이번 예제에서는 하나의 `TracerProvider(resource=...)`에 Resource를 연결하고, 그 Provider에서 만들어진 span이 같은 Resource
+configuration을 공유하게 한다.
 
 ## 3. Instrumentation Scope는 “누가 만들었는가”를 설명한다
 
@@ -64,7 +72,8 @@ same Resource
 └─ scope: adudeck.payment
 ```
 
-이 구분 덕분에 “어느 service인가?”와 “어느 library/module이 telemetry를 만들었는가?”를 섞지 않을 수 있다.
+이 구분 덕분에 “어느 observed service/workload의 telemetry인가?”와 “어느 library/module이 telemetry를 만들었는가?”를 섞지
+않을 수 있다.
 
 ## 4. 실행 전에 예측한다
 
@@ -75,6 +84,7 @@ same Resource
 1. 두 span의 `resource.attributes.service.name`은 같은가?
 2. instrumentation scope name도 같은가?
 3. span이 끝난 뒤 ConsoleSpanExporter까지 가는 경로에 어떤 SDK component가 있는가?
+4. 두 span의 `service.name`이 같다는 사실만으로 같은 process라고 결론 내릴 수 있는가?
 
 ## 5. 실행한다
 
@@ -130,17 +140,20 @@ processing이 더 적합하다.
 2. API를 사용하는 library가 특정 exporter를 직접 설정하지 않는 편이 좋은 이유는 무엇인가?
 3. Processor와 Exporter의 책임을 구분해 설명해 보자.
 4. 같은 `service.name` 값만으로 같은 process라고 결론 내릴 수 없는 이유는 무엇인가?
+5. telemetry emitter와 Resource가 설명하는 observed entity가 달라질 수 있는 예를 하나 들어 보자.
 
 ## 다른 사례에 적용하기
 
 하나의 web service에서 framework instrumentation과 application의 business instrumentation이 함께 span을 만든다.
 
-- Resource는 어떻게 공유될 수 있는가?
+- 어떤 Resource를 공유할 수 있는가?
 - framework와 business span을 instrumentation scope로 어떻게 구분할 수 있는가?
+- 외부 agent가 이 service를 관찰한다면 emitter와 Resource의 관계는 어떻게 달라질 수 있는가?
 - 이 구조가 Unit 5의 instrumentation 비교에서 왜 유용한가?
 
 ### 참고 기준
 
+- [OpenTelemetry Resource specification](https://opentelemetry.io/docs/specs/otel/resource/)
 - [OpenTelemetry Resources](https://opentelemetry.io/docs/concepts/resources/)
 - [OpenTelemetry Instrumentation Scope](https://opentelemetry.io/docs/concepts/instrumentation-scope/)
 - [OpenTelemetry Python instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
