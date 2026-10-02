@@ -6,4 +6,5 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
   "langfuse>=4.16,<5",
+  "openai>=3.19.2,<4",
 ]
