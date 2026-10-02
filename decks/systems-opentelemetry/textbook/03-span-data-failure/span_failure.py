@@ -43,7 +43,7 @@ def charge_payment(should_fail: bool) -> None:
 
         exc = PaymentDeclined("issuer declined payment")
         span.set_attribute("error.type", error_type(exc))
-        span.set_status(Status(StatusCode.ERROR, "payment declined"))
+        span.set_status(Status(StatusCode.ERROR, str(exc)))
         raise exc
 
 
