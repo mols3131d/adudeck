@@ -88,11 +88,13 @@ from langfuse import (
     get_client,
     propagate_attributes,
 )
+from langfuse.api import NotFoundError
 from langfuse.openai import OpenAI as LangfuseOpenAI
 
 assert callable(get_client)
 assert callable(propagate_attributes)
 assert callable(Evaluation)
+assert issubclass(NotFoundError, Exception)
 
 for method_name in (
     "start_as_current_observation",
@@ -114,6 +116,10 @@ assert "version" in get_dataset_params
 get_prompt_params = inspect.signature(Langfuse.get_prompt).parameters
 assert "version" in get_prompt_params
 assert "label" in get_prompt_params
+
+create_prompt_params = inspect.signature(Langfuse.create_prompt).parameters
+for parameter in ("name", "prompt", "labels", "type"):
+    assert parameter in create_prompt_params
 
 client = LangfuseOpenAI(api_key="local-test-key")
 assert callable(client.responses.create)
@@ -170,7 +176,7 @@ case "$TARGET" in
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator,openai-sdk-deck,langfuse-deck,scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, scripts" >&2
     exit 1
     ;;
 esac
