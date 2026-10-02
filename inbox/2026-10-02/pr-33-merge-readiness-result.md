@@ -10,8 +10,8 @@
 **Merge blocker 0건. PR #33은 MERGE-READY / Ready for review 수준이다.**
 
 엄격 self-review에서 발견한 P0/P1 gap을 닫은 뒤 Ready로 전환했고, Ready 전환 직후 Codex review가 추가로 발견한 P2 두
-건도 다시 검토해 실제 defect로 확인한 뒤 수정했다. 검증 revision의 `ci/validated`는 success이며, locked core test뿐 아니라
-Flask zero-code/mixed instrumentation과 실제 OpenTelemetry Collector container acceptance까지 포함한다.
+건도 다시 검토해 실제 defect로 확인한 뒤 수정했다. 검증 revision의 `ci/validated`는 success이며, locked core test뿐
+아니라 Flask zero-code/mixed instrumentation과 실제 OpenTelemetry Collector container acceptance까지 포함한다.
 
 이 문서는 검증된 implementation/self-review snapshot을 기록한다. 이후 문서-only commit이나 PR metadata 변경이 생기면
 merge 시점의 live PR head와 GitHub status가 최종 authority다.
@@ -89,8 +89,8 @@ PR을 Draft에서 Ready로 전환한 직후 Codex review가 두 개의 P2 thread
 2. external acceptance에서 `docker run -d`가 `try` 바깥에 있어, daemon이 container를 시작한 직후 CLI timeout/interrupt가
    발생하면 cleanup guarantee를 깨뜨릴 수 있었다.
 
-두 finding 모두 재현 경로가 명확해 valid finding으로 분류했고 local repair했다. 수정 후 core validation과 external runtime
-acceptance를 모두 다시 실행한 CI run에서 success를 확인했고, 각 review thread에 수정 근거를 남긴 뒤 resolve했다.
+두 finding 모두 재현 경로가 명확해 valid finding으로 분류했고 local repair했다. 수정 후 core validation과 external
+runtime acceptance를 모두 다시 실행한 CI run에서 success를 확인했고, 각 review thread에 수정 근거를 남긴 뒤 resolve했다.
 
 ## Integration review
 
