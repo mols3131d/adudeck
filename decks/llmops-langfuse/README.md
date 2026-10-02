@@ -206,8 +206,9 @@ Responses API create surface
 - Unit 7: compiled prompt linkage + label/version selection + bounded bootstrap
 - Unit 8: independent variant states + paired comparison + regression semantics + release gate
 
-2026-10-02의 merge-readiness run에서는 Python 3.14.6의 새 deck-local virtual environment를 만들고 lock에서 dependencies를
-설치한 뒤 위 SDK smoke와 Unit 1–8 tests가 모두 통과했다. Repository `ci/validated`도 같은 validated tree에서 성공했다.
+2026-10-02의 merge-readiness run에서는 Python 3.14.6의 새 deck-local virtual environment를 만들고 lock에서
+dependencies를 설치한 뒤 위 SDK smoke와 Unit 1–8 tests가 모두 통과했다. Repository `ci/validated`도 같은 validated
+tree에서 성공했다.
 
 ## Live labs
 
@@ -263,8 +264,8 @@ Merge completion claim에 포함하지 않는 것:
 - 실제 OpenAI provider call이 이번 CI에서 성공했다는 주장
 - production workload distribution에서 품질이 개선됐다는 주장
 
-즉 이 deck은 **학습 자료와 locked local runtime contract의 merge-ready 상태**이며, live/cloud evidence는 교본이 명시적으로
-분리해 가르치는 상위 validation tier다.
+즉 이 deck은 **학습 자료와 locked local runtime contract의 merge-ready 상태**이며, live/cloud evidence는 교본이
+명시적으로 분리해 가르치는 상위 validation tier다.
 
 ## Dependency contract
 
