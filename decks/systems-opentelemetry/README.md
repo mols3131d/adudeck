@@ -129,11 +129,11 @@ Repository CI의 `ci/validated`는 core validation과 external acceptance가 모
   3·4·6·8의 learner-visible evidence를 검증한다.
 - Core evidence에는 handled error와 final failure의 차이, Resource와 Instrumentation Scope 분리, 실제 두 process 사이
   context propagation과 의도적 단절, Counter/UpDownCounter/Histogram measurement semantics가 포함된다.
-- External acceptance는 Flask `3.1.3` + OpenTelemetry contrib `0.66b0`에서 zero-code framework span과 manual business span이
-  같은 trace에서 parent/child로 연결되고 서로 다른 Instrumentation Scope를 갖는지 실제 HTTP request로 검증한다.
+- External acceptance는 Flask `3.1.3` + OpenTelemetry contrib `0.66b0`에서 zero-code framework span과 manual business
+  span이 같은 trace에서 parent/child로 연결되고 서로 다른 Instrumentation Scope를 갖는지 실제 HTTP request로 검증한다.
 - External acceptance는 OTLP HTTP exporter `1.45.0` → Collector `0.162.0` receiver → batch → debug exporter를 실제
-  container로 실행하고 application과 Collector의 trace/span ID가 일치하는지 검증한다. 잘못된 OTLP endpoint에서는 business
-  work가 완료되더라도 해당 trace가 Collector에 도착하지 않는 것도 확인한다.
+  container로 실행하고 application과 Collector의 trace/span ID가 일치하는지 검증한다. 잘못된 OTLP endpoint에서는
+  business work가 완료되더라도 해당 trace가 Collector에 도착하지 않는 것도 확인한다.
 - Unit 9는 앞선 unit의 evidence를 재사용하는 diagnostic synthesis다. Backend UI 자체는 core completion claim에 포함하지
   않는다.
 - 전체 deck completion은 textbook 존재가 아니라 outcome coverage, runtime validation boundary, integration review가 모두
