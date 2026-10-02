@@ -226,7 +226,8 @@ Live API key와 customer data는 repository에 기록하지 않는다.
 
 - Langfuse Python SDK latest release는 `v4.16.0`이며 current v4/OpenTelemetry path와 일치한다.
 - Unit 3의 `answer-generation`은 wrapped OpenAI provider call 자체를 표현하는 generation으로 설명을 보정했다.
-- Unit 8은 failure-driven eval design, evaluation coverage, human-reference calibration, release policy를 포함하도록 심화했다.
+- Unit 8은 failure-driven eval design, evaluation coverage, human-reference calibration, release policy를 포함하도록
+  심화했다.
 - `textbook/README.md`에 validation level, 누적 checkpoint, final assessment rubric을 추가했다.
 
 아직 end-to-end acceptance로 주장하지 않는 것:
