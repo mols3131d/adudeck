@@ -8,7 +8,6 @@ import selectors
 import socket
 import subprocess
 import sys
-import time
 import unittest
 
 
@@ -120,7 +119,14 @@ class TextbookExampleTest(unittest.TestCase):
             port = probe.getsockname()[1]
 
         server = subprocess.Popen(
-            [sys.executable, "-u", str(TEXTBOOK / "06-propagation/service_b.py"), "--port", str(port)],
+            [
+                sys.executable,
+                "-u",
+                str(TEXTBOOK / "06-propagation/service_b.py"),
+                "--port",
+                str(port),
+                "--once",
+            ],
             env=clean_env(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -129,11 +135,9 @@ class TextbookExampleTest(unittest.TestCase):
         self.assertIsNotNone(server.stdout)
         selector = selectors.DefaultSelector()
         selector.register(server.stdout, selectors.EVENT_READ)
-        server_output: list[str] = []
         try:
             self.assertTrue(selector.select(timeout=5), "service B did not announce readiness")
             ready = server.stdout.readline()
-            server_output.append(ready)
             self.assertIn(f"127.0.0.1:{port}", ready)
 
             command = [sys.executable, str(TEXTBOOK / "06-propagation/client.py"), "--port", str(port)]
@@ -150,32 +154,21 @@ class TextbookExampleTest(unittest.TestCase):
             self.assertEqual(client.stderr, "")
             self.assertEqual(re.search(r"response=ok", client.stdout).group(0), "response=ok")
 
-            deadline = time.monotonic() + 5
-            complete = False
-            while time.monotonic() < deadline:
-                remaining = deadline - time.monotonic()
-                if not selector.select(timeout=max(remaining, 0)):
-                    break
-                line = server.stdout.readline()
-                if not line:
-                    break
-                server_output.append(line)
-                if line.strip() == "service-b request complete":
-                    complete = True
-                    break
-            self.assertTrue(complete, "service B did not finish and export the request span")
+            remaining_out, remaining_err = server.communicate(timeout=5)
+            server_output = ready + remaining_out
+            self.assertEqual(remaining_err, "")
+            self.assertIn("service-b request complete", server_output)
+            self.assertEqual(server.returncode, 0)
+            return client.stdout, server_output
         finally:
             selector.close()
-            server.terminate()
-            try:
-                remaining_out, remaining_err = server.communicate(timeout=3)
-            except subprocess.TimeoutExpired:
-                server.kill()
-                remaining_out, remaining_err = server.communicate(timeout=3)
-            server_output.append(remaining_out)
-            self.assertEqual(remaining_err, "")
-
-        return client.stdout, "".join(server_output)
+            if server.poll() is None:
+                server.terminate()
+                try:
+                    server.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    server.kill()
+                    server.wait(timeout=3)
 
     def test_context_propagation_connects_processes_and_drop_context_breaks_it(self) -> None:
         normal_client, normal_server = self.run_propagation_case(drop_context=False)
