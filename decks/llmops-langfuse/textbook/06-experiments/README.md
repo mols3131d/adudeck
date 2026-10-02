@@ -6,7 +6,8 @@ Experiment가 답하려는 질문은 더 구체적이다.
 
 > **같은 cases와 같은 evaluation contract 아래에서, 의도한 condition을 바꾸었을 때 어떤 behavior가 달라졌는가?**
 
-이 장에서는 먼저 Langfuse 없이 comparison mechanics를 확인한 뒤, 같은 원리를 Langfuse Experiment Runner와 **고정된 hosted dataset snapshot**에 적용한다.
+이 장에서는 먼저 Langfuse 없이 comparison mechanics를 확인한 뒤, 같은 원리를 Langfuse Experiment Runner와
+**고정된 hosted dataset snapshot**에 적용한다.
 
 ## 학습 목표
 
@@ -170,7 +171,8 @@ retriever R2
 parser rewrite
 ```
 
-두 번째 실험도 release package 전체의 결과를 비교하는 데는 의미가 있을 수 있다. 하지만 어느 change가 차이를 만들었는지 분리하기 어렵다.
+두 번째 실험도 release package 전체의 결과를 비교하는 데는 의미가 있을 수 있다. 하지만 어느 change가 차이를 만들었는지
+분리하기 어렵다.
 
 따라서 먼저 질문한다.
 
@@ -244,7 +246,8 @@ Dataset은 시간이 지나면서 변할 수 있다.
 11:00  case B 수정
 ```
 
-Baseline은 09:30 snapshot을 쓰고 candidate는 11:30 snapshot을 쓰면 결과 차이가 application change 때문인지 dataset change 때문인지 섞인다.
+Baseline은 09:30 snapshot을 쓰고 candidate는 11:30 snapshot을 쓰면 결과 차이가 application change 때문인지 dataset
+change 때문인지 섞인다.
 
 그래서 비교 contract에 dataset identity뿐 아니라 **dataset version**이 필요하다.
 
@@ -259,7 +262,8 @@ dataset = langfuse.get_dataset(
 
 `version`은 그 timestamp 기준의 dataset item state를 읽기 위한 condition이다.
 
-이 deck에서는 schema migration 같은 별도 변화까지 이 한 값으로 설명한다고 가정하지 않는다. 여기서 version은 **experiment case population을 고정하는 snapshot boundary**로 사용한다.
+이 deck에서는 schema migration 같은 별도 변화까지 이 한 값으로 설명한다고 가정하지 않는다. 여기서 version은
+**experiment case population을 고정하는 snapshot boundary**로 사용한다.
 
 ## 7. Hands-on: snapshot timestamp를 하나 고정한다
 
@@ -314,7 +318,8 @@ get_dataset(name, version=T)
 baseline   candidate
 ```
 
-이 구조가 중요한 이유는 두 run 사이에 label이나 current dataset이 바뀌더라도 이번 comparison의 case population은 이미 고정되어 있기 때문이다.
+이 구조가 중요한 이유는 두 run 사이에 label이나 current dataset이 바뀌더라도 이번 comparison의 case population은 이미
+고정되어 있기 때문이다.
 
 ## 8. UI에서는 세 level을 왕복한다
 
@@ -376,7 +381,8 @@ evaluator가 timeout
 → evaluator error
 ```
 
-Evaluator error를 0으로 바꾸면 quality failure처럼 보인다. 반대로 실패 row를 평균에서 조용히 제외하면 coverage가 좋아 보일 수 있다.
+Evaluator error를 0으로 바꾸면 quality failure처럼 보인다. 반대로 실패 row를 평균에서 조용히 제외하면 coverage가 좋아
+보일 수 있다.
 
 Unit 8에서는 baseline/candidate의 이런 상태를 독립적으로 보존한 release gate를 만든다.
 
@@ -441,7 +447,8 @@ release를 막는 regression
 
 ## 다음 장
 
-지금까지 application condition은 metadata로 표현할 수 있었다. 다음 장에서는 prompt 자체를 versioned artifact로 다루고, **실제 generation이 어느 immutable prompt version을 사용했는지** 연결한다.
+지금까지 application condition은 metadata로 표현할 수 있었다. 다음 장에서는 prompt 자체를 versioned artifact로 다루고,
+**실제 generation이 어느 immutable prompt version을 사용했는지** 연결한다.
 
 ## References
 
