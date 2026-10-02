@@ -2,8 +2,8 @@
 
 이번 장에서는 OpenAI나 framework integration을 붙이지 않는다.
 
-먼저 작은 Python workflow를 Langfuse data model로 표현하고 **현재 실행 context가 observation parentage를 어떻게 결정하는지**
-직접 확인한다.
+먼저 작은 Python workflow를 Langfuse data model로 표현하고
+**현재 실행 context가 observation parentage를 어떻게 결정하는지** 직접 확인한다.
 
 이 mechanism을 이해하면 나중에 decorator, provider integration, distributed tracing을 사용할 때 trace가 왜 예상과 다르게
 갈라지거나 붙는지 설명할 수 있다.

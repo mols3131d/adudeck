@@ -358,8 +358,8 @@ latency          operational metric
 cost             operational metric
 ```
 
-Metric이 많을수록 좋다는 뜻은 아니다. Langfuse Academy와 일반적인 eval practice 모두 실제 failure mode와 product goal에서
-metric을 선택할 것을 강조한다.
+Metric이 많을수록 좋다는 뜻은 아니다. Langfuse Academy와 일반적인 eval practice 모두 실제 failure mode와 product
+goal에서 metric을 선택할 것을 강조한다.
 
 측정할 이유를 설명할 수 없는 metric은 noise가 된다.
 

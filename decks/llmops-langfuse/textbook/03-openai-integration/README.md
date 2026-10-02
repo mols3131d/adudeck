@@ -343,8 +343,8 @@ python textbook/03-openai-integration/test_openai_integration.py
 
 ## 11. Checkpoint: 어떤 layer가 소유해야 하는가?
 
-다음 정보를 `application span`, `provider generation`, `score`, `metadata/tag` 중 어디에 두는 것이 자연스러운지 정하고 이유를
-설명한다.
+다음 정보를 `application span`, `provider generation`, `score`, `metadata/tag` 중 어디에 두는 것이 자연스러운지 정하고
+이유를 설명한다.
 
 1. `support-turn`
 2. model name

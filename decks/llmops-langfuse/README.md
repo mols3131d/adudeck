@@ -230,8 +230,8 @@ Live API key와 customer data는 repository에 기록하지 않는다.
 현재 작업 환경에서 `uv lock`을 다시 시도했지만 `pypi.org` DNS resolution이 불가능해 dependency resolution을 완료하지
 못했다. 따라서 lockfile을 추측해서 만들지 않는다.
 
-Textbook content와 deterministic learning contracts가 완성되었다는 것과 **locked/live runtime acceptance가 완료되었다는 것**은
-분리해서 기록한다.
+Textbook content와 deterministic learning contracts가 완성되었다는 것과
+**locked/live runtime acceptance가 완료되었다는 것**은 분리해서 기록한다.
 
 ## Dependency contract
 
