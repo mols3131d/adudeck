@@ -31,7 +31,7 @@ operation
 | [1. 환경 준비](01-setup/README.md) | 같은 환경에서 관찰을 재현할 수 있는가? |
 | [2. 첫 트레이스](02-first-trace/README.md) | current context는 span을 어떻게 한 trace로 연결하는가? |
 | [3. Span data와 실패](03-span-data-failure/README.md) | 실패를 span에서 어떤 의미로 표현해야 하는가? |
-| [4. Resource와 API/SDK](04-resource-api-sdk/README.md) | 누가 telemetry를 만들고, 누가 실제로 처리하는가? |
+| [4. Resource와 API/SDK](04-resource-api-sdk/README.md) | 무엇의 telemetry이고, 누가 만들고 처리하는가? |
 | [5. Instrumentation](05-instrumentation/README.md) | manual, library, zero-code는 무엇을 각각 잘 보는가? |
 | [6. Propagation](06-propagation/README.md) | context는 process boundary를 어떻게 건너는가? |
 | [7. OTLP와 Collector](07-otlp-collector/README.md) | telemetry는 application process 밖으로 어떻게 이동하는가? |
@@ -46,6 +46,7 @@ operation
 | 실패 의미를 status/attribute로 표현 | 3 | 3, 9 |
 | Resource, Scope, API/SDK 책임 구분 | 4 | 4, 5, 9 |
 | instrumentation 방식을 목적에 맞게 선택 | 5 | 5, 9 |
+| Semantic Conventions의 interoperability 역할 설명 | 3, 5, 8 | 8, 9 |
 | cross-process context propagation 설명 | 6 | 6, 9 |
 | OTLP/Collector data path 추적 | 7 | 7, 9 |
 | metric instrument 선택과 cardinality 판단 | 8 | 8, 9 |
