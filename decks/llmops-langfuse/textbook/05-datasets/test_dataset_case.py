@@ -34,17 +34,29 @@ class DatasetCaseContractTest(unittest.TestCase):
         self.assertEqual(payload["source_observation_id"], "obs-generation-1")
         self.assertEqual(payload["metadata"]["failure_mode"], "refund-eligibility")
 
-    def test_case_does_not_copy_a_raw_customer_transcript(self) -> None:
+    def test_case_exports_only_the_synthetic_domain_allowlist(self) -> None:
         case = build_refund_regression_case(
             case_id="refund-day-15",
             days_since_delivery=15,
             source_trace_id="trace-production-2",
         )
 
-        serialized = repr(case.as_langfuse_item(dataset_name="support/refund-policy"))
-        self.assertNotIn("email", serialized.lower())
-        self.assertNotIn("customer_name", serialized.lower())
-        self.assertEqual(case.expected_output["eligible"], False)
+        payload = case.as_langfuse_item(dataset_name="support/refund-policy")
+
+        self.assertEqual(
+            payload,
+            {
+                "dataset_name": "support/refund-policy",
+                "input": {"days_since_delivery": 15},
+                "expected_output": {"eligible": False, "policy_days": 14},
+                "metadata": {
+                    "source": "production-review",
+                    "failure_mode": "refund-eligibility",
+                    "case_id": "refund-day-15",
+                },
+                "source_trace_id": "trace-production-2",
+            },
+        )
 
     def test_upload_uses_dataset_item_contract(self) -> None:
         langfuse = FakeLangfuse()
