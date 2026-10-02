@@ -41,7 +41,16 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8090)
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Handle one request and exit; used by the deterministic textbook acceptance test.",
+    )
     args = parser.parse_args()
     server = HTTPServer(("127.0.0.1", args.port), Handler)
     print(f"service-b listening on http://127.0.0.1:{args.port}", flush=True)
-    server.serve_forever()
+    if args.once:
+        server.handle_request()
+        server.server_close()
+    else:
+        server.serve_forever()
