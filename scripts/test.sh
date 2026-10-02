@@ -71,14 +71,20 @@ PY
 }
 
 run_langfuse_deck() {
-  echo "==> [test:langfuse-deck] Checking credential-free teaching contracts..."
+  echo "==> [test:langfuse-deck] Checking credential-free textbook contracts..."
   local project_dir="decks/llmops-langfuse"
 
   uv run python -m compileall -q "$project_dir/textbook"
   uv run python "$project_dir/textbook/01-first-trace/test_first_trace.py"
   uv run python "$project_dir/textbook/02-trace-design/test_trace_design.py"
+  uv run python "$project_dir/textbook/03-openai-integration/test_openai_integration.py"
+  uv run python "$project_dir/textbook/04-scores/test_score_evidence.py"
+  uv run python "$project_dir/textbook/05-datasets/test_dataset_case.py"
+  uv run python "$project_dir/textbook/06-experiments/test_experiment_compare.py"
+  uv run python "$project_dir/textbook/07-prompt-management/test_prompt_versioning.py"
+  uv run python "$project_dir/textbook/08-evaluation-loop/test_release_gate.py"
 
-  echo "==> [test:langfuse-deck] Teaching contract tests passed."
+  echo "==> [test:langfuse-deck] Textbook contract tests passed."
 }
 
 run_scripts() {
@@ -112,7 +118,7 @@ case "$TARGET" in
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator,openai-sdk-deck,langfuse-deck,scripts" >&2
     exit 1
     ;;
 esac
