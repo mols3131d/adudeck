@@ -14,7 +14,8 @@ provider integration에 모든 관찰 책임을 맡김
 
 이 장의 핵심은 자동 계측을 많이 켜는 것이 아니다.
 
-> **Provider integration은 provider call의 반복적인 telemetry를 맡고, application instrumentation은 business operation의 의미와 경계를 맡는다.**
+> **Provider integration은 provider call의 반복적인 telemetry를 맡고, application instrumentation은 business operation의
+> 의미와 경계를 맡는다.**
 
 이 책임 분리를 OpenAI Responses API와 Langfuse Python SDK v4로 확인한다.
 
@@ -47,7 +48,8 @@ answer-generation
 = wrapped OpenAI provider call 자체를 표현하는 generation observation
 ```
 
-Langfuse OpenAI integration은 OpenAI SDK call을 가로채 input/output, model, latency, usage, error 같은 provider-level evidence를 generation에 기록한다.
+Langfuse OpenAI integration은 OpenAI SDK call을 가로채 input/output, model, latency, usage, error 같은 provider-level
+evidence를 generation에 기록한다.
 
 반면 `support-turn`은 OpenAI가 알 수 없는 application 의미다.
 
@@ -63,11 +65,13 @@ Langfuse OpenAI integration은 OpenAI SDK call을 가로채 input/output, model,
 | 최종 답변이 정책상 올바른가? | evaluator / domain rule |
 | 어떤 값을 trace에 남기면 안 되는가? | application privacy policy |
 
-자동 instrumentation은 **provider boundary에서 관찰 가능한 것**을 자동화한다. Application semantics까지 추론해 주지는 않는다.
+자동 instrumentation은 **provider boundary에서 관찰 가능한 것**을 자동화한다. Application semantics까지 추론해 주지는
+않는다.
 
 ## 2. Span과 generation은 질문이 다르다
 
-Langfuse에서 generation은 LLM/model 호출을 표현하는 observation type이다. 일반 span처럼 trace 안의 execution evidence이지만 model, model parameters, usage, cost 같은 LLM-specific 정보를 표현하는 데 적합하다.
+Langfuse에서 generation은 LLM/model 호출을 표현하는 observation type이다. 일반 span처럼 trace 안의 execution
+evidence이지만 model, model parameters, usage, cost 같은 LLM-specific 정보를 표현하는 데 적합하다.
 
 ```text
 span
@@ -95,7 +99,8 @@ support-turn
 
 ## 3. Auto instrumentation은 current context 안에서 동작한다
 
-Langfuse Python SDK v4의 tracing은 OpenTelemetry context 위에서 동작한다. Wrapped OpenAI client도 호출 시점의 active context를 이용해 generation을 기존 trace에 연결할 수 있다.
+Langfuse Python SDK v4의 tracing은 OpenTelemetry context 위에서 동작한다. Wrapped OpenAI client도 호출 시점의 active
+context를 이용해 generation을 기존 trace에 연결할 수 있다.
 
 [`openai_integration.py`](openai_integration.py)는 application root span만 직접 만든다.
 
@@ -163,7 +168,8 @@ export OPENAI_MODEL="<사용할 model>"
 
 Secret과 실제 customer data는 repository에 기록하지 않는다.
 
-`OPENAI_MODEL`을 환경에서 주입하는 이유도 학습 대상이다. Model은 이후 experiment에서 바꿔 비교할 수 있는 **condition**이다.
+`OPENAI_MODEL`을 환경에서 주입하는 이유도 학습 대상이다. Model은 이후 experiment에서 바꿔 비교할 수 있는
+**condition**이다.
 
 ## 6. Live lab: stdout과 trace를 같은 execution으로 연결한다
 
@@ -236,7 +242,8 @@ support-turn
 answer-generation   # 별도 root/trace가 될 수 있음
 ```
 
-단, 1장에서 배운 boundary를 유지한다. Web framework나 다른 instrumentation이 outer OTel span을 제공한다면 provider generation은 그 outer context를 상속할 수 있다.
+단, 1장에서 배운 boundary를 유지한다. Web framework나 다른 instrumentation이 outer OTel span을 제공한다면 provider
+generation은 그 outer context를 상속할 수 있다.
 
 따라서 정확한 mental model은 다음이다.
 
@@ -381,7 +388,8 @@ Fake contract test와 live integration evidence를 같은 수준으로 주장하
 
 ## 12. Checkpoint: 어느 layer가 소유해야 하는가?
 
-다음 정보를 `application span`, `provider generation`, `score`, `metadata/tag` 중 어디에 두는 것이 자연스러운지 정하고 이유를 설명한다.
+다음 정보를 `application span`, `provider generation`, `score`, `metadata/tag` 중 어디에 두는 것이 자연스러운지 정하고
+이유를 설명한다.
 
 1. `support-turn`
 2. model name
