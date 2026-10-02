@@ -18,7 +18,9 @@ tracer = trace.get_tracer("adudeck.service_b")
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
-        carrier = {key: value for key, value in self.headers.items()}
+        # HTTP field names are case-insensitive, while a plain dict lookup is not.
+        # Normalize the carrier before OpenTelemetry looks up "traceparent".
+        carrier = {key.lower(): value for key, value in self.headers.items()}
         context = extract(carrier)
         with tracer.start_as_current_span("service_b.handle", context=context, kind=SpanKind.SERVER) as span:
             ctx = span.get_span_context()
