@@ -1,98 +1,103 @@
-# 3장 · OpenAI Integration: Provider 호출과 Application 의미를 분리하기
+# 3장 · OpenAI Integration: Provider Evidence와 Application Meaning을 분리하기
 
-2장까지는 우리가 직접 observation boundary를 만들었다. 이제 실제 LLM 호출을 넣으면 문제가 하나 생긴다.
+2장까지는 우리가 직접 observation boundary를 만들었다. 이제 실제 LLM provider 호출을 넣어 보자.
 
-LLM call마다 model, input, output, token usage, latency 같은 값을 application code가 직접 기록하면 observability code가
-provider call보다 더 커질 수 있다. 반대로 provider integration에 모든 것을 맡기면 `support-turn`, retrieval,
-validation처럼 **application만 아는 의미**가 사라진다.
+여기서 두 극단 모두 문제가 된다.
 
-이 장의 목표는 자동 계측을 많이 켜는 것이 아니다.
+```text
+모든 provider telemetry를 application code가 직접 기록
+→ instrumentation boilerplate가 커짐
 
-> **Provider integration은 provider call의 세부 evidence를 소유하고, application instrumentation은 business operation의
-> 의미와 경계를 소유한다.**
+provider integration에 모든 관찰 책임을 맡김
+→ support-turn, retrieval, validation 같은 application 의미가 사라짐
+```
 
-이 책임 분리를 직접 확인한다.
+이 장의 핵심은 자동 계측을 많이 켜는 것이 아니다.
+
+> **Provider integration은 provider call의 반복적인 telemetry를 맡고, application instrumentation은 business operation의 의미와 경계를 맡는다.**
+
+이 책임 분리를 OpenAI Responses API와 Langfuse Python SDK v4로 확인한다.
 
 ## 학습 목표
 
 이 장을 마치면 다음을 할 수 있어야 한다.
 
-- span과 generation observation이 서로 다른 질문에 답한다는 것을 설명한다.
-- `langfuse.openai.OpenAI`가 자동으로 만드는 generation과 직접 만든 application span의 관계를 설명한다.
-- OpenAI integration이 수집할 수 있는 provider-level evidence와 application이 직접 기록해야 하는 context를 구분한다.
-- 자동 instrumentation이 correctness, retrieval boundary, user/session 의미를 추론해 주지 않는 이유를 설명한다.
-- provider failure, Langfuse export failure, application validation failure를 같은 실패로 취급하지 않는다.
+- application span과 generation observation이 서로 다른 질문에 답한다는 것을 설명한다.
+- `langfuse.openai.OpenAI`가 OpenAI 호출 하나를 generation observation으로 기록하는 방식을 설명한다.
+- provider integration이 자동으로 수집할 수 있는 evidence와 application이 직접 정의해야 하는 context를 구분한다.
+- current OpenTelemetry context가 auto-instrumented generation의 parentage에 영향을 주는 이유를 설명한다.
+- provider failure, application failure, telemetry export failure를 같은 실패로 취급하지 않는다.
+- model usage/cost 같은 operational evidence와 correctness 같은 quality evidence를 구분한다.
 
-## 1. 먼저 경계를 그린다
+## 1. 먼저 observation boundary를 그린다
 
-이번 장에서 만들고 싶은 trace는 다음과 같다.
+이번 장에서 원하는 trace는 다음과 같다.
 
 ```text
 support-turn                         application span
-└─ answer-generation                generation
-   └─ OpenAI Responses API call     provider execution
+└─ answer-generation                OpenAI Responses API call을 나타내는 generation
 ```
 
-`support-turn`은 "사용자 지원 요청 하나를 처리했다"는 application 의미다.
+여기서 중요한 점이 있다.
 
-`answer-generation`은 "LLM provider를 호출해 답변을 만들었다"는 generation evidence다.
+`answer-generation` 아래에 별도의 "OpenAI API call" observation이 하나 더 생긴다고 생각하지 않는다.
 
-두 observation이 같은 trace에 들어가더라도 책임은 다르다.
+```text
+answer-generation
+= wrapped OpenAI provider call 자체를 표현하는 generation observation
+```
 
-| 질문 | 주로 누가 답하는가? |
+Langfuse OpenAI integration은 OpenAI SDK call을 가로채 input/output, model, latency, usage, error 같은 provider-level evidence를 generation에 기록한다.
+
+반면 `support-turn`은 OpenAI가 알 수 없는 application 의미다.
+
+| 질문 | 주된 owner |
 | --- | --- |
 | 이 요청은 어떤 business operation인가? | application instrumentation |
 | 어느 model을 호출했는가? | provider integration |
-| 어떤 input/output이 provider boundary를 통과했는가? | provider integration |
+| provider에 실제로 어떤 input이 전달됐는가? | provider integration |
+| provider가 어떤 output을 반환했는가? | provider integration |
 | retrieval은 언제, 왜 수행됐는가? | application instrumentation |
 | user/session은 무엇인가? | application context |
-| token usage와 model latency는 얼마인가? | provider integration |
-| 답변이 정책상 올바른가? | evaluator/application rule |
-| 어떤 값을 저장하면 안 되는가? | application privacy policy |
+| token usage와 provider latency는 얼마인가? | provider integration |
+| 최종 답변이 정책상 올바른가? | evaluator / domain rule |
+| 어떤 값을 trace에 남기면 안 되는가? | application privacy policy |
 
-자동 instrumentation은 **알 수 있는 것만 자동화한다**.
+자동 instrumentation은 **provider boundary에서 관찰 가능한 것**을 자동화한다. Application semantics까지 추론해 주지는 않는다.
 
-## 2. Generation은 단순히 "LLM 함수"라는 뜻이 아니다
+## 2. Span과 generation은 질문이 다르다
 
-Langfuse에서 generation은 LLM generation을 나타내는 observation type이다. 일반 span과 마찬가지로 trace 안의 execution
-evidence이지만, model, model parameters, usage, cost 같은 LLM-specific 정보를 표현할 수 있다.
-
-중요한 구분은 다음이다.
+Langfuse에서 generation은 LLM/model 호출을 표현하는 observation type이다. 일반 span처럼 trace 안의 execution evidence이지만 model, model parameters, usage, cost 같은 LLM-specific 정보를 표현하는 데 적합하다.
 
 ```text
 span
 = application의 의미 있는 작업 단위
 
 generation
-= LLM provider/model 호출을 설명하는 observation
+= model/provider 호출의 execution evidence
 ```
 
-그래서 다음 두 trace는 정보량이 다르다.
+예를 들어 provider call만 관찰하면 다음처럼 보일 수 있다.
 
 ```text
-A. provider call만 관찰
-
 answer-generation
+```
 
+이것만으로도 model call 자체는 디버깅할 수 있다. 하지만 application을 이해하기에는 부족할 수 있다.
 
-B. application 의미 + provider call을 함께 관찰
-
+```text
 support-turn
 ├─ retrieve-policy
 └─ answer-generation
 ```
 
-A도 model call을 디버깅하는 데 쓸 수 있다. 그러나 "이 generation이 어떤 사용자 요청의 어느 단계였는가?"라는 질문에는
-B가 훨씬 강하다.
+두 번째 trace에서는 "어느 사용자 요청의 어느 단계에서 이 generation이 실행됐는가?"까지 설명할 수 있다.
 
-## 3. OpenAI integration은 현재 context 안에서 generation을 만든다
+## 3. Auto instrumentation은 current context 안에서 동작한다
 
-Langfuse Python SDK v4의 tracing은 OpenTelemetry context 위에서 동작한다. OpenAI integration도 현재 active context를
-이용해 자동 생성한 generation을 기존 trace에 연결한다.
+Langfuse Python SDK v4의 tracing은 OpenTelemetry context 위에서 동작한다. Wrapped OpenAI client도 호출 시점의 active context를 이용해 generation을 기존 trace에 연결할 수 있다.
 
-이번 장의 [`openai_integration.py`](openai_integration.py)는 application span만 직접 만든다.
-
-핵심 부분은 다음과 같다.
+[`openai_integration.py`](openai_integration.py)는 application root span만 직접 만든다.
 
 ```python
 with langfuse.start_as_current_observation(
@@ -110,34 +115,35 @@ with langfuse.start_as_current_observation(
     root.update(output={"answer": answer})
 ```
 
-직접 `generation` observation을 만들지 않았다는 점을 본다.
+Application code는 generation을 직접 시작하지 않는다.
 
 ```text
 application code
-→ support-turn의 의미를 기록
+→ support-turn context 생성
 
-Langfuse OpenAI integration
-→ OpenAI call을 가로채 generation evidence를 기록
+wrapped OpenAI call
+→ current context를 상속
+→ answer-generation 생성
 ```
 
-이 패턴의 장점은 provider-specific telemetry boilerplate를 줄이면서도 application-level structure를 잃지 않는 데 있다.
+이 구조의 장점은 provider-specific telemetry boilerplate를 줄이면서 application topology를 유지하는 데 있다.
 
-## 4. 실행 전에 예측한다
+## 4. 실행 전에 prediction을 만든다
 
-Live API를 호출하기 전에 다음을 적어 본다.
+Live call 전에 다음을 적는다.
 
-1. 직접 생성하는 Langfuse observation은 몇 개인가?
-2. OpenAI integration이 정상적으로 동작하면 UI에는 observation이 몇 개 보일 것으로 예상하는가?
-3. `answer-generation`은 `support-turn`과 같은 trace에 들어갈까?
-4. model name과 usage는 어느 layer가 기록하는가?
-5. `support-turn`이라는 이름은 OpenAI integration이 스스로 알 수 있는가?
-6. 답변 correctness score가 자동으로 만들어질까?
+1. Application code가 직접 만드는 observation은 몇 개인가?
+2. OpenAI integration이 정상 동작하면 추가로 어떤 observation이 생기는가?
+3. `answer-generation`은 어떤 parent를 가질 것으로 예상하는가?
+4. Model name과 token usage는 어느 observation에서 보는 것이 자연스러운가?
+5. `support-turn`이라는 이름을 OpenAI wrapper가 스스로 추론할 수 있는가?
+6. Correctness score가 자동으로 생길까?
 
-예측을 먼저 적으면 "화면에 뭔가 생겼다"가 아니라 **어떤 mechanism을 검증했는지** 설명할 수 있다.
+좋은 prediction은 "성공할 것 같다"가 아니라 **관찰 가능한 identity와 관계**를 예상한다.
 
 ## 5. 환경 준비
 
-이 deck은 OpenAI integration을 실제 학습 경로로 사용하므로 deck dependency에 `openai`가 명시되어 있어야 한다.
+이 deck의 core path는 Langfuse와 OpenAI SDK를 모두 사용한다.
 
 ```bash
 cd decks/llmops-langfuse
@@ -155,12 +161,11 @@ export OPENAI_API_KEY="sk-..."
 export OPENAI_MODEL="<사용할 model>"
 ```
 
-Secret과 실제 customer data는 Git에 기록하지 않는다.
+Secret과 실제 customer data는 repository에 기록하지 않는다.
 
-`OPENAI_MODEL`을 코드에 고정하지 않는 이유도 학습 대상이다. Model은 experiment에서 바꿔 비교할 수 있는 **condition**이지
-source code에 숨겨야 하는 상수가 아니다.
+`OPENAI_MODEL`을 환경에서 주입하는 이유도 학습 대상이다. Model은 이후 experiment에서 바꿔 비교할 수 있는 **condition**이다.
 
-## 6. Live lab: 한 번만 호출하고 evidence를 삼각측량한다
+## 6. Live lab: stdout과 trace를 같은 execution으로 연결한다
 
 실행한다.
 
@@ -168,7 +173,7 @@ source code에 숨겨야 하는 상수가 아니다.
 uv run python textbook/03-openai-integration/openai_integration.py
 ```
 
-stdout에는 application이 직접 아는 identity를 출력한다.
+Script는 application이 직접 알고 있는 identity를 출력한다.
 
 ```text
 trace_id=...
@@ -176,7 +181,7 @@ root_observation_id=...
 answer=...
 ```
 
-그 다음 Langfuse UI에서 같은 `trace_id`를 찾아 다음을 확인한다.
+그 다음 Langfuse UI에서 같은 trace를 찾아 확인한다.
 
 ```text
 surface A: stdout
@@ -185,31 +190,65 @@ surface A: stdout
 - final answer
 
 surface B: Langfuse trace
-- support-turn root
-- 그 아래의 answer-generation
-- generation의 model
-- generation input/output
-- usage / latency evidence
+- support-turn
+- 그 child인 answer-generation
+- generation model
+- provider input/output
+- usage / latency / error evidence
 ```
 
-두 surface가 **같은 logical execution**을 가리키는지 확인하는 것이 핵심이다.
+핵심은 두 surface가 **같은 logical execution**을 설명하는지 확인하는 것이다.
 
 ### 관찰 질문
 
 - `answer-generation`의 parent는 무엇인가?
-- generation의 input은 root input과 완전히 같은가, 아니면 provider에 실제 전달된 형태인가?
-- root output과 generation output은 어떤 관계인가?
-- model/usage는 root span이 아니라 generation에서 보는 편이 자연스러운 이유는 무엇인가?
-- OpenAI call이 실패하면 generation evidence와 root span의 상태는 어떻게 보이는가?
+- Generation input은 provider에 전달된 실제 request shape와 어떻게 대응하는가?
+- Root output과 generation output은 왜 비슷하지만 책임이 다른가?
+- Model/usage를 root span이 아니라 generation에서 보는 것이 자연스러운 이유는 무엇인가?
+- Provider call이 실패하면 generation과 root span에는 각각 어떤 evidence가 남는가?
 
-## 7. Manual instrumentation과 automatic instrumentation을 비교한다
+## 7. Variation: application context 밖에서 provider call을 실행한다
 
-Manual 방식에서는 application이 대략 다음 정보를 직접 전달해야 한다.
+Mechanism을 확인하려면 한 조건만 바꾼다.
+
+Baseline:
 
 ```text
-start generation
-→ model 기록
-→ input 기록
+support-turn context 안에서 OpenAI call
+```
+
+Variation:
+
+```text
+support-turn context를 닫은 뒤 OpenAI call
+```
+
+Standalone process에서 다른 active OpenTelemetry parent가 없다면 두 실행의 topology가 달라질 수 있다.
+
+```text
+baseline
+support-turn
+└─ answer-generation
+
+variation
+support-turn
+
+answer-generation   # 별도 root/trace가 될 수 있음
+```
+
+단, 1장에서 배운 boundary를 유지한다. Web framework나 다른 instrumentation이 outer OTel span을 제공한다면 provider generation은 그 outer context를 상속할 수 있다.
+
+따라서 정확한 mental model은 다음이다.
+
+> **Auto instrumentation도 결국 호출 시점의 current execution context에서 parentage를 얻는다.**
+
+## 8. Manual instrumentation과 automatic instrumentation 비교
+
+Manual generation instrumentation을 직접 구현한다면 application이 대략 다음 lifecycle을 책임져야 한다.
+
+```text
+generation 시작
+→ model/input 기록
 → provider 호출
 → output 기록
 → usage 기록
@@ -217,35 +256,33 @@ start generation
 → generation 종료
 ```
 
-Integration 방식에서는 provider call을 감싸는 반복 작업의 상당 부분을 wrapper가 처리한다.
+OpenAI integration은 이 provider-boundary 반복 작업의 상당 부분을 맡는다.
 
-그러나 다음 정보는 여전히 application에 남는다.
+그러나 다음은 여전히 application 책임이다.
 
 ```text
-support-turn이라는 operation boundary
-retrieve-policy라는 domain step
+support-turn 같은 business operation
+retrieval / rerank / validation boundary
 user/session correlation
-business metadata
+feature/release metadata
 privacy/masking policy
 correctness rule
 release decision
 ```
 
-따라서 좋은 mental model은 다음이다.
+그래서:
 
 ```text
 automatic instrumentation
 ≠ observability 자동 완성
 
 automatic instrumentation
-= provider boundary의 반복 계측을 맡기는 것
+= provider boundary의 반복 계측을 위임하는 것
 ```
 
-## 8. Cost와 usage는 quality가 아니다
+## 9. Usage와 cost는 quality가 아니다
 
-Generation에서 token usage와 cost를 볼 수 있다는 사실은 매우 유용하다. 그러나 이것은 quality 판정이 아니다.
-
-가능한 결과는 모두 존재한다.
+Generation에서 usage와 cost를 볼 수 있다는 것은 유용하지만 quality 판정은 아니다.
 
 ```text
 quality ↑   cost ↑
@@ -254,29 +291,27 @@ quality ↓   cost ↑
 quality ↓   cost ↓
 ```
 
-그래서 다음과 같은 문장은 근거가 부족하다.
+"token을 덜 썼으니 더 좋은 prompt"라고 결론 내릴 수 없다.
 
-> "candidate가 token을 덜 썼으니 더 좋은 prompt다."
-
-대신 질문을 분리한다.
+Dimension을 나눈다.
 
 ```text
-quality dimension
+quality
 - correctness
 - relevance
-- style
-- safety
+- groundedness
+- style / safety
 
-operational dimension
+operational
 - latency
 - token usage
 - cost
-- error rate
+- provider error rate
 ```
 
-나중의 experiment에서는 이 dimension들을 함께 보되 서로를 대체하지 않는다.
+이후 experiment에서는 여러 dimension을 함께 볼 수 있지만 서로를 대체하지 않는다.
 
-## 9. 실패도 ownership별로 나눈다
+## 10. Failure ownership을 분리한다
 
 ### Provider failure
 
@@ -287,18 +322,27 @@ OpenAI request
 → provider error
 ```
 
-Application은 provider failure contract를 따라 처리해야 한다. Langfuse export 성공 여부가 provider failure의 의미를
-바꾸지 않는다.
+이 실패의 의미와 retry/fallback contract는 application/provider integration 정책이 소유한다.
 
-### Observability/export failure
+### Application failure
+
+예: provider output은 정상적으로 왔지만 parser나 business validation이 실패했다.
 
 ```text
-application/model call은 성공
-→ telemetry export 실패
+provider success
+→ application validation failure
 ```
 
-관찰 도구 장애 때문에 성공한 business operation을 실패로 가장해서도 안 되고, 반대로 observability failure를 숨겨서도
-안 된다. 실제 production failure policy는 application 요구사항에 따라 별도로 정한다.
+Provider generation이 성공했다는 사실과 request 전체가 성공했다는 사실은 다르다.
+
+### Telemetry/export failure
+
+```text
+application/provider call 성공
+→ observability export 실패
+```
+
+관찰 도구 장애를 business failure와 같은 것으로 만들지 않는다. 동시에 telemetry gap 자체는 운영상 별도로 관찰해야 한다.
 
 ### Evaluation failure
 
@@ -307,11 +351,17 @@ answer 생성 성공
 → evaluator 실행 실패
 ```
 
-이것은 "answer score = 0"과 다르다. 다음 장에서 이 distinction을 코드로 다룬다.
+이것은 `score=0`과 다르다. 다음 장에서 이 차이를 직접 다룬다.
 
-## 10. Credential-free contract test
+## 11. Credential-free contract test
 
-[`test_openai_integration.py`](test_openai_integration.py)는 외부 API 없이 다음 application contract를 검증한다.
+[`test_openai_integration.py`](test_openai_integration.py)는 외부 API 없이 application-side contract를 검증한다.
+
+```bash
+python textbook/03-openai-integration/test_openai_integration.py
+```
+
+검증하는 것:
 
 ```text
 support-turn span을 application이 직접 만든다
@@ -319,32 +369,19 @@ support-turn span을 application이 직접 만든다
 → provider response를 root output으로 연결한다
 ```
 
-실행:
+검증하지 않는 것:
 
-```bash
-python textbook/03-openai-integration/test_openai_integration.py
+```text
+실제 langfuse.openai.OpenAI가 generation을 export하는가
+실제 usage/cost가 계산되는가
+Cloud UI에서 parent/child가 예상대로 보이는가
 ```
 
-이 test는 의도적으로 **Langfuse OpenAI integration 자체를 fake로 증명하지 않는다**.
+Fake contract test와 live integration evidence를 같은 수준으로 주장하지 않는다.
 
-증명하는 것:
+## 12. Checkpoint: 어느 layer가 소유해야 하는가?
 
-- teaching code의 application boundary가 유지된다.
-- model이 hard-code되지 않고 주입된다.
-- provider response가 root output으로 연결된다.
-
-증명하지 않는 것:
-
-- 실제 `langfuse.openai.OpenAI`가 generation을 export한다.
-- token/cost가 실제 project에서 계산된다.
-- Langfuse Cloud UI의 parent/child tree가 예상대로 렌더링된다.
-
-그 세 항목은 installed SDK contract와 live lab evidence로 확인해야 한다.
-
-## 11. Checkpoint: 어떤 layer가 소유해야 하는가?
-
-다음 정보를 `application span`, `provider generation`, `score`, `metadata/tag` 중 어디에 두는 것이 자연스러운지 정하고
-이유를 설명한다.
+다음 정보를 `application span`, `provider generation`, `score`, `metadata/tag` 중 어디에 두는 것이 자연스러운지 정하고 이유를 설명한다.
 
 1. `support-turn`
 2. model name
@@ -353,38 +390,41 @@ python textbook/03-openai-integration/test_openai_integration.py
 5. retrieval source count
 6. final answer correctness
 7. `channel=web`
-8. OpenAI response latency
+8. provider latency
+9. parser validation failure
 
-정답 단어보다 중요한 것은 **왜 그 위치에서 가장 잘 해석되는가**다.
+정답 단어보다 **그 evidence를 나중에 어떤 질문에 사용할 것인가**를 설명하는 것이 중요하다.
 
-## 12. Transfer exercise
+## 13. Transfer exercise
 
-새 application은 다음 구조를 가진다.
+다음 application을 설계한다.
 
 ```text
 answer-request
 ├─ classify-intent
 ├─ retrieve-context
 ├─ rerank-context
-└─ model call
+└─ OpenAI Responses call
 ```
 
-OpenAI integration을 붙였더니 generation 하나는 잘 보인다.
-
-설계하라.
+질문:
 
 - 어떤 application operation을 별도 span으로 남길 것인가?
-- 어떤 operation은 너무 세밀해서 observation으로 만들지 않을 것인가?
-- user/session context는 어디서 주입할 것인가?
-- 어떤 sensitive input은 기록하지 않거나 mask해야 하는가?
-- model call이 다른 provider로 바뀌어도 유지되어야 하는 observation은 무엇인가?
+- 어떤 내부 helper는 observation으로 만들지 않을 것인가?
+- user/session context는 어디에서 주입할 것인가?
+- sensitive input은 어느 boundary에서 mask하거나 기록하지 않을 것인가?
+- provider를 OpenAI에서 다른 provider로 바꿔도 유지되어야 하는 observation은 무엇인가?
+- provider generation만 보고는 판정할 수 없는 correctness 질문은 무엇인가?
 
-이 설계가 가능하면 "OpenAI integration 사용법"이 아니라 **observability ownership**을 이해한 것이다.
+이 설계를 설명할 수 있다면 OpenAI wrapper 사용법보다 더 중요한 **observability ownership**을 이해한 것이다.
 
 ## 다음 장
 
-Trace는 execution evidence다. 다음 장에서는 execution을 평가한 결과를 **score evidence**로 붙인다. 중요한 질문은
-"어떻게 점수를 보내는가?"보다 먼저 **무엇을, 어떤 rule로, 어느 level에서 평가하는가?**다.
+Trace와 generation은 execution evidence다. 다음 장에서는 실행을 평가한 결과를 **score evidence**로 연결한다.
+
+중요한 질문은 "점수를 어떻게 보내는가?"가 아니라 먼저 다음이다.
+
+> **무엇을, 어떤 rule로, 어느 execution scope에서 평가하는가?**
 
 ## References
 
