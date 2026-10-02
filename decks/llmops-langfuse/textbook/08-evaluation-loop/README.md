@@ -2,7 +2,8 @@
 
 이제 각각의 Langfuse 기능을 따로 외우는 단계는 끝났다.
 
-마지막 장의 목표는 trace, score, dataset, experiment, prompt version을 하나의 **evidence-preserving improvement loop**로 연결하는 것이다.
+마지막 장의 목표는 trace, score, dataset, experiment, prompt version을 하나의 **evidence-preserving improvement loop**로
+연결하는 것이다.
 
 ```text
 production observation
@@ -130,7 +131,8 @@ structured deterministic check
 
 이렇게 하면 `quality=0.7` 같은 추상적인 metric보다 무엇을 고쳐야 하는지가 훨씬 분명하다.
 
-Product-specific eval은 generic benchmark를 대체하려는 것이 아니라 **내 application의 실제 failure를 측정하기 위한 contract**다.
+Product-specific eval은 generic benchmark를 대체하려는 것이 아니라
+**내 application의 실제 failure를 측정하기 위한 contract**다.
 
 ## 3. End-to-end worked example
 
@@ -300,7 +302,8 @@ LLM judge calibration
 judge disagreement investigation
 ```
 
-다만 human label도 자동으로 절대적인 ground truth가 되는 것은 아니다. 주관적인 task에서는 reviewer끼리 disagreement할 수 있다.
+다만 human label도 자동으로 절대적인 ground truth가 되는 것은 아니다. 주관적인 task에서는 reviewer끼리 disagreement할 수
+있다.
 
 따라서 더 좋은 표현은 다음이다.
 
