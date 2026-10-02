@@ -1,6 +1,7 @@
 # Langfuse Textbook Guide
 
-이 디렉터리는 Langfuse 기능 목록을 외우는 자료가 아니라, **production execution을 관찰하고 평가 가능한 evidence로 바꾸며, 변경 전후를 비교해 release decision까지 연결하는 AI engineering loop**를 배우기 위한 교본이다.
+이 디렉터리는 Langfuse 기능 목록을 외우는 자료가 아니라, **production execution을 관찰하고 평가 가능한 evidence로
+바꾸며, 변경 전후를 비교해 release decision까지 연결하는 AI engineering loop**를 배우기 위한 교본이다.
 
 교본 전체에서 사용하는 가장 중요한 흐름은 다음이다.
 
@@ -172,7 +173,8 @@ support-turn
 └─ answer-generation
 ```
 
-`answer-generation`은 **OpenAI provider call 자체를 나타내는 generation observation**이다. 그 아래 별도의 provider-call child observation이 자동으로 하나 더 생긴다고 가정하지 않는다.
+`answer-generation`은 **OpenAI provider call 자체를 나타내는 generation observation**이다. 그 아래 별도의 provider-call
+child observation이 자동으로 하나 더 생긴다고 가정하지 않는다.
 
 하지만 wrapper는 다음을 스스로 알 수 없다.
 
@@ -223,7 +225,8 @@ raw production data
 ≠ reusable evaluation case
 ```
 
-Dataset versioning도 정확히 이해한다. 현재 Langfuse dataset version은 item 변경 시점의 dataset state를 **timestamp 기반 version**으로 추적한다. Dataset schema 변화는 같은 방식의 item-version snapshot으로 간주하지 않는다.
+Dataset versioning도 정확히 이해한다. 현재 Langfuse dataset version은 item 변경 시점의 dataset state를
+**timestamp 기반 version**으로 추적한다. Dataset schema 변화는 같은 방식의 item-version snapshot으로 간주하지 않는다.
 
 ### 6. Prompt version과 label은 다르다
 
@@ -235,7 +238,8 @@ label
 = 특정 version을 가리키는 mutable pointer
 ```
 
-`latest`와 `production`은 같은 의미가 아니다. 요청한 label이 없으면 Langfuse가 조용히 `production`이나 `latest`로 fallback한다고 가정하지 않는다.
+`latest`와 `production`은 같은 의미가 아니다. 요청한 label이 없으면 Langfuse가 조용히 `production`이나 `latest`로
+fallback한다고 가정하지 않는다.
 
 ## 연습과 평가의 기준
 
