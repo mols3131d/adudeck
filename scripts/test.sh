@@ -118,7 +118,7 @@ case "$TARGET" in
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator,openai-sdk-deck,langfuse-deck,scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, scripts" >&2
     exit 1
     ;;
 esac
