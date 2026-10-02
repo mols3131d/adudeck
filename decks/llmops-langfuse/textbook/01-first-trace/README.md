@@ -1,19 +1,25 @@
-# 1장 · 첫 Trace와 Observation
+# 1장 · 첫 Trace와 Observation: Current Context가 Topology를 만든다
 
-이번 장에서는 OpenAI나 LangChain을 붙이지 않는다. 먼저 작은 Python 작업 하나를 Langfuse data model로 표현하고,
-**current observation context가 관계를 만드는 방식**을 직접 확인한다.
+이번 장에서는 OpenAI나 framework integration을 붙이지 않는다.
+
+먼저 작은 Python workflow를 Langfuse data model로 표현하고 **현재 실행 context가 observation parentage를 어떻게 결정하는지**
+직접 확인한다.
+
+이 mechanism을 이해하면 나중에 decorator, provider integration, distributed tracing을 사용할 때 trace가 왜 예상과 다르게
+갈라지거나 붙는지 설명할 수 있다.
 
 ## 학습 목표
 
 - trace와 observation의 관계를 설명한다.
 - root observation과 child observation을 구분한다.
-- `start_as_current_observation()`이 current context를 이용해 관계를 만드는 방식을 설명한다.
-- nested observation이 끝난 뒤 이전 current observation이 복원되는 이유를 설명한다.
-- 짧은 script에서 `flush()`가 필요한 이유를 설명한다.
+- `start_as_current_observation()`이 current context를 이용해 parent/child 관계를 만드는 방식을 설명한다.
+- nested observation 종료 후 이전 current observation이 복원되는 이유를 설명한다.
+- Langfuse v4가 OpenTelemetry context 위에서 동작한다는 boundary를 설명한다.
+- short-lived script에서 `flush()`가 필요한 이유를 설명한다.
 
-## 1. observations-first mental model
+## 1. Observations-first mental model
 
-현재 Langfuse Python SDK v4는 **observation을 중심으로** 생각한다.
+현재 Langfuse Python SDK v4에서는 execution을 observation 중심으로 본다.
 
 ```text
 trace
@@ -22,11 +28,20 @@ trace
    └─ child observation
 ```
 
-Observation은 application execution의 한 작업이다.
-예를 들면 retrieval, parsing, tool call, LLM generation이 각각 observation이 될 수 있다.
+Observation은 application execution의 의미 있는 작업이다.
 
-Trace는 관련 observation들을 하나의 실행으로 묶는다.
-Session은 여러 trace를 더 큰 사용자 interaction 단위로 묶을 수 있다.
+예:
+
+```text
+retrieve-policy
+parse-tool-result
+answer-generation
+validate-output
+```
+
+Trace는 관련 observation을 한 execution으로 묶는다.
+
+Session은 여러 trace를 더 큰 interaction 단위로 묶을 수 있다.
 
 ```text
 session
@@ -38,79 +53,63 @@ session
    └─ observation
 ```
 
-여기서 중요한 점은 **Python 함수 호출 관계 자체가 parent/child를 만드는 것이 아니라는 것**이다.
-관계를 만드는 핵심 상태는 현재 실행 context에 어떤 observation이 active한가이다.
+중요한 점:
 
-## 2. 이번 실습에서 볼 것
+> **Python 함수 호출 관계 자체가 parent/child 관계를 만들지 않는다.**
+
+핵심 state는 observation을 시작하는 순간의 **active OpenTelemetry execution context**다.
+
+Langfuse는 이 context를 이용해 observation parentage와 trace correlation을 만든다.
+
+## 2. 첫 experiment
 
 실습 파일은 [`first_trace.py`](first_trace.py)다.
 
-Baseline은 다음 구조를 만든다.
+Baseline:
 
 ```text
 support-turn
 └─ search-policy
 ```
 
-두 observation이 같은 trace에 들어가고, `search-policy`가 끝난 뒤 current observation이 다시 `support-turn`으로
-복원되는지 확인한다.
+`support-turn` 안에서 `search-policy`를 시작한다.
 
-그 다음 `--detach-search` variation에서는 `search-policy`를 root observation이 종료된 뒤 실행한다.
+확인할 evidence:
 
 ```text
-baseline
-trace A
-└─ support-turn
-   └─ search-policy
-
-variation
-trace A
-└─ support-turn
-
-trace B
-└─ search-policy
+root_trace_id
+root_observation_id
+search_trace_id
+search_observation_id
+current_after_search
 ```
 
-한 가지 조건만 바꾸기 때문에 trace가 갈라진 원인을 current context 차이로 설명할 수 있다.
+비교할 것은 UUID 자체가 아니라 관계다.
 
-## 3. 환경 준비
-
-Deck dependency contract는 root의 [`pyproject.toml`](../../pyproject.toml)이 소유한다.
-현재 범위는 Langfuse Python SDK v4이며 `langfuse>=4.16,<5`를 사용한다.
-
-```bash
-cd decks/llmops-langfuse
-uv sync
+```text
+root trace id == search trace id ?
+root observation id != search observation id ?
+child 종료 후 current observation == root observation id ?
 ```
 
-Langfuse Cloud 또는 self-hosted project의 key를 shell environment에 넣는다.
-실제 secret은 Git에 기록하지 않는다.
+## 3. 실행 전 prediction
 
-```bash
-export LANGFUSE_PUBLIC_KEY="pk-lf-..."
-export LANGFUSE_SECRET_KEY="sk-lf-..."
-export LANGFUSE_BASE_URL="https://cloud.langfuse.com"
-```
+코드를 실행하지 말고 먼저 적는다.
 
-`LANGFUSE_BASE_URL`은 key가 속한 Cloud region 또는 self-hosted deployment와 맞아야 한다.
-
-## 4. 실행 전에 예측한다
-
-먼저 코드를 실행하지 말고 다음을 예상한다.
-
-1. baseline에서 trace는 몇 개 생길까?
-2. observation은 몇 개 생길까?
-3. `support-turn`과 `search-policy`의 `trace_id`는 같을까?
-4. 두 observation의 `observation_id`도 같을까?
-5. `search-policy` block이 끝난 직후 current observation은 무엇일까?
+1. baseline에는 trace가 몇 개 생길까?
+2. observation은 몇 개인가?
+3. root와 child의 `trace_id`는 같은가?
+4. root와 child의 `observation_id`도 같은가?
+5. `search-policy`가 끝난 직후 current observation은 무엇인가?
 
 그 다음 실행한다.
 
 ```bash
+cd decks/llmops-langfuse
 uv run python textbook/01-first-trace/first_trace.py
 ```
 
-Script는 learner-visible evidence를 stdout에도 출력한다.
+예상 형태:
 
 ```text
 root_trace_id=...
@@ -121,17 +120,11 @@ current_after_search=...
 same_trace=true
 ```
 
-ID의 실제 값은 매번 달라질 수 있다. 비교해야 하는 것은 **값 자체가 아니라 관계**다.
+UI에서도 같은 trace tree를 확인한다.
 
-- root와 search의 `trace_id`가 같은가?
-- root와 search의 `observation_id`가 다른가?
-- `current_after_search`가 root observation ID로 복원되는가?
+## 4. Context state를 한 단계씩 추적한다
 
-Langfuse UI에서도 같은 실행의 observation tree를 확인한다.
-
-## 5. 코드에서 state가 어떻게 변하는가
-
-핵심 부분은 다음과 같다.
+핵심 코드:
 
 ```python
 with langfuse.start_as_current_observation(
@@ -141,79 +134,126 @@ with langfuse.start_as_current_observation(
     search_policy(langfuse, "환불 기간")
 ```
 
-실행 state를 풀어 쓰면 다음과 같다.
+State transition:
 
 ```text
-with root 진입
-current observation = support-turn
+root 진입
+current = support-turn
 
 search-policy 진입
-current observation = search-policy
-trace context = support-turn과 동일
+current = search-policy
+parent context = support-turn
 
 search-policy 종료
-current observation = support-turn 으로 복원
+current = support-turn 복원
 
 root 종료
-current observation = 없음
+current = 이전 outer context
 ```
 
-`search_policy()`가 root의 child가 되는 이유는 이름이나 Python call stack 때문이 아니다.
-`search-policy`가 시작될 때 `support-turn`이 current observation이었기 때문이다.
+Standalone script에서 이전 outer context가 없었다면 root 종료 뒤 Langfuse current observation도 없다.
 
-## 6. 한 조건만 바꾼다
+이 복원 behavior가 중요한 이유는 nested operation을 끝낸 뒤 caller context에서 다시 child를 만들 수 있기 때문이다.
 
-이제 같은 script를 다음처럼 실행한다.
+## 5. Variation: Langfuse root 밖으로 child를 옮긴다
 
 ```bash
 uv run python textbook/01-first-trace/first_trace.py --detach-search
 ```
 
-이 variation에서는 root context가 닫힌 뒤 `search-policy`를 시작한다.
+이번 variation에서는 `support-turn`이 끝난 뒤 `search-policy`를 시작한다.
 
-실행 전에 예상한다.
+이 standalone lab에는 root 밖의 다른 active parent를 만들지 않는다.
 
-- `same_trace`는 어떻게 바뀔까?
-- `search_trace_id`는 root와 어떤 관계가 될까?
-- `search-policy`의 parent가 사라지는 이유는 무엇일까?
-- 함수 `search_policy()` 자체는 그대로인데 trace topology가 바뀌는 이유는 무엇일까?
-
-기대하는 핵심 차이는 다음과 같다.
+따라서 예상은:
 
 ```text
-baseline  → same_trace=true
-variation → same_trace=false
+trace A
+└─ support-turn
+
+trace B
+└─ search-policy
 ```
 
-UI에서는 baseline이 하나의 tree로, variation은 두 개의 root execution으로 보이는지 비교한다.
+그리고:
 
-## 7. `flush()`의 역할
+```text
+same_trace=false
+```
 
-Langfuse SDK는 trace data를 background에서 batch/export할 수 있다.
-짧게 실행되고 바로 종료되는 script에서는 process가 export보다 먼저 끝날 수 있다.
+### 왜 "항상 새 trace"라고 외우면 안 되는가?
 
-그래서 이번 실습은 마지막에 다음을 호출한다.
+Langfuse v4는 OpenTelemetry context 위에서 동작한다.
+
+실제 web framework나 이미 instrumented된 runtime에서는 Langfuse root observation 바깥에도 **outer OpenTelemetry span**이
+active할 수 있다.
+
+그 경우:
+
+```text
+Langfuse observation block 종료
+≠
+OpenTelemetry parent context가 반드시 완전히 사라짐
+```
+
+따라서 정확한 statement는 다음이다.
+
+> **이 standalone experiment에서는 outer active OpenTelemetry parent가 없기 때문에 root block 밖에서 시작한
+> `search-policy`가 별도 trace가 된다. 일반적으로 parentage는 observation 시작 시점의 current OpenTelemetry context에
+> 의해 결정된다.**
+
+이 nuance는 distributed tracing을 배울 때 매우 중요하다.
+
+## 6. 함수 구조와 trace 구조는 같은 것이 아니다
+
+다음 코드가 있다고 하자.
+
+```python
+def a():
+    b()
+```
+
+이것만으로:
+
+```text
+a observation
+└─ b observation
+```
+
+이 만들어지는 것은 아니다.
+
+Observation을 실제로 어디에서 시작했는지, 시작 순간 current context가 무엇인지가 중요하다.
+
+반대로 decorator나 auto instrumentation을 쓰면 Python call boundary가 observation과 비슷하게 보일 수 있다. 그래도
+mechanism은 "함수이기 때문에"가 아니라 instrumentation이 context를 만들고 전파했기 때문이다.
+
+## 7. `flush()`는 topology가 아니라 export boundary다
+
+Langfuse SDK는 telemetry를 background batch/export할 수 있다.
+
+Short-lived script는 process가 너무 빨리 종료될 수 있으므로 마지막에:
 
 ```python
 langfuse.flush()
 ```
 
-`flush()`는 observation 관계를 만드는 함수가 아니다.
-이미 만들어진 telemetry를 short-lived process가 종료되기 전에 내보내는 **export boundary**에 가깝다.
+를 호출한다.
 
-즉 다음 둘을 구분한다.
+구분:
 
 ```text
 start_as_current_observation()
-→ execution context와 observation lifetime
+→ observation lifetime / current context / parentage
 
 flush()
-→ pending telemetry export 완료를 기다림
+→ 이미 생성된 pending telemetry를 export하는 boundary
 ```
 
-## 8. `@observe()`는 같은 문제를 더 짧게 푼다
+`flush()`를 호출한다고 잘못 연결된 parent/child 관계가 고쳐지는 것은 아니다.
 
-Langfuse는 decorator도 제공한다.
+## 8. Decorator는 mechanism을 숨겨 편리하게 만든다
+
+Langfuse는 `@observe()`도 제공한다.
 
 ```python
 from langfuse import observe
@@ -224,61 +264,136 @@ def search_policy(query: str) -> str:
     return "구매 후 14일 이내 환불 가능"
 ```
 
-Decorator는 function input/output, timing, error를 자동으로 capture하기 편하다.
-하지만 처음부터 decorator만 사용하면 **observation lifetime과 current context 변화**가 감춰질 수 있다.
-그래서 이 deck은 context manager로 mechanism을 먼저 확인한 뒤 decorator로 넘어간다.
+Decorator는 function input/output/timing/error capture를 줄여 준다.
 
-## 9. Local contract test
+하지만 첫 학습부터 decorator만 보면 다음 state가 가려질 수 있다.
 
-[`test_first_trace.py`](test_first_trace.py)는 Langfuse Cloud credential 없이 실행할 수 있는 작은 contract test다. 외부
-SDK를 흉내 내는 fake client를 사용해 **우리 teaching code가 의도한 nesting과 variation을 정확히 수행하는지** 확인한다.
+```text
+언제 context에 들어갔는가?
+언제 이전 context로 복원됐는가?
+어떤 active parent를 상속했는가?
+```
+
+그래서 이 deck은 explicit context manager로 mechanism을 먼저 보고 convenience API로 이동한다.
+
+## 9. Credential-free contract test
+
+[`test_first_trace.py`](test_first_trace.py)는 fake client로 **teaching code 자체의 control flow**를 검증한다.
 
 ```bash
 python textbook/01-first-trace/test_first_trace.py
 ```
 
-이 test가 증명하는 범위는 제한적이다.
+검증:
 
 ```text
-증명함
-- baseline에서 child call이 root context 안에서 일어남
-- child 종료 뒤 root context를 다시 읽음
-- detach variation에서 root context 밖에서 child를 실행함
+baseline
+- child가 root 안에서 시작
+- 같은 fake trace identity를 상속
+- child 종료 후 root context 복원
 
-증명하지 않음
-- Langfuse SDK 4.16.x의 실제 runtime behavior
-- Cloud ingestion 성공
-- UI rendering
+detached
+- root context가 닫힌 뒤 search 실행
+- 이 standalone fake model에서는 별도 trace
 ```
 
-실제 SDK/API behavior는 current Langfuse documentation과 live playground 실행으로 별도 검증한다.
+검증하지 않음:
 
-## 10. 이해도 점검
+```text
+실제 OpenTelemetry runtime semantics
+Langfuse SDK 4.16.x exporter behavior
+Cloud ingestion
+UI rendering
+outer framework span과의 distributed parentage
+```
 
-다음 질문에 코드 없이 답해 본다.
+Fake test와 live/runtime evidence를 같은 수준으로 말하지 않는다.
 
-1. `trace_id`와 `observation_id`는 각각 무엇을 식별하는가?
-2. 두 observation이 같은 `trace_id`를 가지면서 서로 다른 `observation_id`를 가지는 이유는 무엇인가?
-3. nested child가 끝난 뒤 root가 다시 current observation이 되는 것이 왜 유용한가?
-4. `search_policy()` 호출을 root 밖으로 옮겼을 뿐인데 새 trace가 생기는 이유는 무엇인가?
-5. 모든 Python 함수에 observation을 만들면 오히려 trace가 나빠질 수 있는 이유는 무엇인가?
+## 10. Live observation checklist
 
-## 오해하기 쉬운 점
+Langfuse project에서 baseline과 variation을 각각 실행한 뒤 확인한다.
+
+### Baseline
+
+```text
+support-turn
+└─ search-policy
+```
+
+- trace id 공유
+- observation id 분리
+- child timing이 root 안에 포함
+- stdout의 current context evidence와 UI tree가 일치
+
+### Detached variation
+
+Standalone script 기준:
+
+```text
+support-turn
+
+search-policy
+```
+
+- 서로 다른 trace identity
+- 같은 Python helper를 사용했지만 topology 변화
+- 차이는 helper name이 아니라 active parent context
+
+## 11. 오해하기 쉬운 점
 
 - 함수 하나가 자동으로 observation 하나라는 뜻은 아니다.
-- trace는 Python call tree 자체가 아니다.
-- 모든 함수에 observation을 만들 필요도 없다.
-- `flush()`가 parent/child relationship을 만드는 것도 아니다.
-- 의미 있는 operation boundary를 선택해야 한다.
+- trace는 Python call tree의 복사본이 아니다.
+- root observation 종료가 모든 환경에서 "OTel context 없음"을 뜻하지 않는다.
+- 모든 함수에 observation을 만들 필요는 없다.
+- `flush()`는 parent/child 관계를 만들지 않는다.
+- UUID 값 자체보다 identity 관계가 중요하다.
+- 의미 없는 세부 span을 많이 만들면 오히려 trace readability가 나빠진다.
+
+## 12. Checkpoint
+
+코드 없이 답한다.
+
+1. `trace_id`와 `observation_id`는 무엇을 식별하는가?
+2. child observation이 root와 같은 trace에 들어가는 직접적인 원인은 무엇인가?
+3. child 종료 후 root current context가 복원되는 것이 왜 필요한가?
+4. standalone detached variation이 새 trace가 되는 조건은 무엇인가?
+5. web request의 outer OTel span이 active하다면 detached experiment의 결과가 달라질 수 있는 이유는 무엇인가?
+6. `flush()`와 context manager가 각각 어떤 state를 다루는가?
+
+## 13. Transfer exercise
+
+다음 runtime을 상상한다.
+
+```text
+HTTP server span
+└─ support-turn
+   └─ search-policy
+```
+
+`support-turn`을 닫은 뒤에도 HTTP server span은 active하다.
+
+그 상태에서 새 Langfuse observation을 시작한다.
+
+예측하라.
+
+- 새 observation이 반드시 완전히 새로운 distributed trace가 될까?
+- 어떤 outer context를 확인해야 하는가?
+- "Langfuse current observation 없음"과 "OpenTelemetry current span 없음"은 같은 statement인가?
+
+답을 설명할 때 **current execution context**라는 말을 사용한다.
 
 ## 다음 장
 
-다음 장에서는 observation을 많이 만드는 법이 아니라
-**나중에 사람이 읽고 evaluator가 사용할 수 있는 trace를 어떻게 설계할지** 다룬다.
+이제 observation을 만드는 mechanism을 알았다.
+
+다음 장에서는 observation을 많이 만드는 법이 아니라 **나중에 사람이 읽고 evaluator가 사용할 수 있는 trace를 어떻게
+설계하는가**를 다룬다.
 
 ## References
 
 - [Langfuse SDK Overview](https://langfuse.com/docs/observability/sdk/overview)
 - [Get Started with LLM Tracing](https://langfuse.com/docs/observability/get-started)
 - [Trace IDs & Distributed Tracing](https://langfuse.com/docs/observability/features/trace-ids-and-distributed-tracing)
-- [Python SDK Reference](https://python.reference.langfuse.com/)
+- [OpenTelemetry Context](https://opentelemetry.io/docs/languages/python/context/)
+- [OpenTelemetry Library Instrumentation](https://opentelemetry.io/docs/languages/python/instrumentation/)
+- [Langfuse Python SDK Reference](https://python.reference.langfuse.com/)
