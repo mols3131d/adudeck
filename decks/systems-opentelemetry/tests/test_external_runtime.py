@@ -104,6 +104,16 @@ def stop_process(process: subprocess.Popen) -> None:
         process.wait(timeout=3)
 
 
+def parse_scope_summary(line: str) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for key in ("trace_id", "span_id", "parent_id", "scope"):
+        match = re.search(rf"(?:^| ){key}=([^ ]+)", line)
+        if match is None:
+            raise AssertionError(f"missing {key} in scope summary: {line}")
+        fields[key] = match.group(1)
+    return fields
+
+
 class ExternalRuntimeAcceptanceTest(unittest.TestCase):
     def run_flask_server(
         self,
@@ -189,28 +199,33 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
         try:
             body = wait_http(f"http://127.0.0.1:{mixed_port}/checkout", mixed_process)
             self.assertIn("42000", body)
-            output = wait_for_file_text(
+            mixed_output = wait_for_file_text(
                 mixed_log,
                 [
-                    "checkout.calculate_total",
                     "scope=adudeck.checkout.business",
                     "scope=opentelemetry.instrumentation.flask",
                 ],
                 timeout=15,
             )
-            self.assertIn("scope=opentelemetry.instrumentation.flask", output)
         finally:
             stop_process(mixed_process)
         mixed_output = mixed_log.read_text(encoding="utf-8")
         mixed_log.unlink(missing_ok=True)
 
-        spans = [value for value in json_objects(mixed_output) if value.get("context")]
-        business = next(span for span in spans if span.get("name") == "checkout.calculate_total")
-        server_spans = [span for span in spans if span.get("kind") == "SpanKind.SERVER"]
-        self.assertEqual(len(server_spans), 1, mixed_output)
-        server = server_spans[0]
-        self.assertEqual(business["context"]["trace_id"], server["context"]["trace_id"])
-        self.assertEqual(business["parent_id"], server["context"]["span_id"])
+        summaries = [line for line in mixed_output.splitlines() if line.startswith("scope-summary ")]
+        business_line = next(
+            line for line in summaries if "scope=adudeck.checkout.business" in line
+        )
+        framework_lines = [
+            line for line in summaries if "scope=opentelemetry.instrumentation.flask" in line
+        ]
+        self.assertEqual(len(framework_lines), 1, mixed_output)
+
+        business = parse_scope_summary(business_line)
+        framework = parse_scope_summary(framework_lines[0])
+        self.assertEqual(business["trace_id"], framework["trace_id"])
+        self.assertEqual(business["parent_id"], framework["span_id"])
+        self.assertNotEqual(business["scope"], framework["scope"])
 
     def test_otlp_http_reaches_collector_and_failure_stays_outside_business_work(self) -> None:
         if shutil.which("docker") is None:
