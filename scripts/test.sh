@@ -71,20 +71,75 @@ PY
 }
 
 run_langfuse_deck() {
-  echo "==> [test:langfuse-deck] Checking credential-free textbook contracts..."
+  echo "==> [test:langfuse-deck] Checking locked deck environment and textbook contracts..."
   local project_dir="decks/llmops-langfuse"
 
-  uv run python -m compileall -q "$project_dir/textbook"
-  uv run python "$project_dir/textbook/01-first-trace/test_first_trace.py"
-  uv run python "$project_dir/textbook/02-trace-design/test_trace_design.py"
-  uv run python "$project_dir/textbook/03-openai-integration/test_openai_integration.py"
-  uv run python "$project_dir/textbook/04-scores/test_score_evidence.py"
-  uv run python "$project_dir/textbook/05-datasets/test_dataset_case.py"
-  uv run python "$project_dir/textbook/06-experiments/test_experiment_compare.py"
-  uv run python "$project_dir/textbook/07-prompt-management/test_prompt_versioning.py"
-  uv run python "$project_dir/textbook/08-evaluation-loop/test_release_gate.py"
+  # Bootstrap the first deck-local lock in CI. Remove this line once uv.lock is persisted.
+  env -u VIRTUAL_ENV uv lock --project "$project_dir"
 
-  echo "==> [test:langfuse-deck] Textbook contract tests passed."
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python -m compileall -q "$project_dir/textbook"
+
+  echo "==> [test:langfuse-deck] Checking installed Langfuse/OpenAI public API surface..."
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked python - <<'PY'
+import inspect
+
+from langfuse import (
+    Evaluation,
+    Langfuse,
+    LangfuseSpan,
+    get_client,
+    propagate_attributes,
+)
+from langfuse.openai import OpenAI as LangfuseOpenAI
+
+assert callable(get_client)
+assert callable(propagate_attributes)
+assert callable(Evaluation)
+
+for method_name in (
+    "start_as_current_observation",
+    "create_dataset_item",
+    "get_dataset",
+    "run_experiment",
+    "get_prompt",
+    "create_prompt",
+    "flush",
+):
+    assert callable(getattr(Langfuse, method_name))
+
+assert callable(LangfuseSpan.score)
+assert callable(LangfuseSpan.score_trace)
+
+get_dataset_params = inspect.signature(Langfuse.get_dataset).parameters
+assert "version" in get_dataset_params
+
+get_prompt_params = inspect.signature(Langfuse.get_prompt).parameters
+assert "version" in get_prompt_params
+assert "label" in get_prompt_params
+
+client = LangfuseOpenAI(api_key="local-test-key")
+assert callable(client.responses.create)
+PY
+
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/01-first-trace/test_first_trace.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/02-trace-design/test_trace_design.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/03-openai-integration/test_openai_integration.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/04-scores/test_score_evidence.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/05-datasets/test_dataset_case.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/06-experiments/test_experiment_compare.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/07-prompt-management/test_prompt_versioning.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/08-evaluation-loop/test_release_gate.py"
+
+  echo "==> [test:langfuse-deck] Locked SDK and textbook contract validation passed."
 }
 
 run_scripts() {
