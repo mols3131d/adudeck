@@ -83,8 +83,16 @@ run = "bash scripts/test.sh dataset-generator"
 description = "Validate repository shell script syntax"
 run = "bash scripts/test.sh scripts"
 
+[tasks."test:opentelemetry-deck"]
+description = "Validate locked OpenTelemetry textbook evidence across Units 2, 3, 4, 6, and 8"
+run = "bash scripts/test.sh opentelemetry-deck"
+
+[tasks."test:opentelemetry-acceptance"]
+description = "Run Flask zero-code and OTLP/Collector end-to-end textbook acceptance"
+run = "bash scripts/test.sh opentelemetry-acceptance"
+
 [tasks.test]
-description = "Run all repository test suites"
+description = "Run all core repository test suites"
 run = "bash scripts/test.sh all"
 
 [tasks."git:setup"]
