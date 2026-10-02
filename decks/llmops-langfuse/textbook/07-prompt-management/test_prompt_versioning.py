@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from types import SimpleNamespace
 
-from prompt_versioning import generate_with_prompt
+from prompt_versioning import fetch_prompt, generate_with_prompt, prompt_lookup_kwargs
 
 
 class FakePrompt:
@@ -38,6 +38,16 @@ class FakeOpenAI:
         self.responses = FakeResponses()
 
 
+class FakeLangfuse:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, dict[str, object]]] = []
+        self.prompt = FakePrompt()
+
+    def get_prompt(self, name: str, **kwargs):
+        self.calls.append((name, kwargs))
+        return self.prompt
+
+
 class PromptVersioningContractTest(unittest.TestCase):
     def test_compiled_prompt_and_version_object_travel_together(self) -> None:
         client = FakeOpenAI()
@@ -65,6 +75,47 @@ class PromptVersioningContractTest(unittest.TestCase):
         self.assertEqual(evidence["prompt_name"], "support/refund-answer")
         self.assertEqual(evidence["prompt_version"], 21)
         self.assertEqual(evidence["prompt_labels"], ("staging",))
+
+    def test_label_lookup_uses_movable_pointer(self) -> None:
+        langfuse = FakeLangfuse()
+
+        prompt = fetch_prompt(langfuse, label="staging")
+
+        self.assertIs(prompt, langfuse.prompt)
+        self.assertEqual(
+            langfuse.calls,
+            [
+                (
+                    "support/refund-answer",
+                    {"type": "chat", "label": "staging"},
+                )
+            ],
+        )
+
+    def test_exact_version_lookup_does_not_depend_on_label(self) -> None:
+        langfuse = FakeLangfuse()
+
+        fetch_prompt(langfuse, version=21)
+
+        self.assertEqual(
+            langfuse.calls,
+            [
+                (
+                    "support/refund-answer",
+                    {"type": "chat", "version": 21},
+                )
+            ],
+        )
+
+    def test_default_lookup_is_production_label(self) -> None:
+        self.assertEqual(
+            prompt_lookup_kwargs(label=None, version=None),
+            {"type": "chat", "label": "production"},
+        )
+
+    def test_label_and_version_cannot_be_selected_together(self) -> None:
+        with self.assertRaisesRegex(ValueError, "not both"):
+            prompt_lookup_kwargs(label="staging", version=21)
 
 
 if __name__ == "__main__":
