@@ -10,17 +10,24 @@ Research mode: deep iterative review
 권장 기준은 다음과 같다.
 
 1. **Normative authority:** POSIX.1-2024 Shell Command Language를 현재 언어 의미의 기준으로 삼는다.
-2. **Runnable baseline:** 초급 core example은 POSIX.1-2024 전체가 아니라 현재 흔한 `/bin/sh`에서도 검증하기 쉬운 보수적인 공통 부분을 우선한다.
-3. **Central execution model:** `source → token recognition → parsing → expansion → redirection → execution → exit status`를 반복해서 사용한다.
-4. **Central data invariant:** source의 word와 program이 받는 final argument vector는 같은 것이 아니다. quoting과 expansion이 argument boundary를 결정한다.
+2. **Runnable baseline:** 초급 core example은 POSIX.1-2024 전체가 아니라 현재 흔한 `/bin/sh`에서도 검증하기 쉬운
+   보수적인 공통 부분을 우선한다.
+3. **Central execution model:**
+   `source → token recognition → parsing → expansion → redirection → execution → exit status`를 반복해서 사용한다.
+4. **Central data invariant:** source의 word와 program이 받는 final argument vector는 같은 것이 아니다. quoting과
+   expansion이 argument boundary를 결정한다.
 5. **Central control invariant:** shell의 조건과 반복은 command가 만드는 exit status를 중심으로 이해한다.
-6. **Environment model:** current shell environment, command environment, subshell environment를 구분한다. 특히 pipeline에서 state mutation이 parent shell에 남는다고 가정하지 않는다.
+6. **Environment model:** current shell environment, command environment, subshell environment를 구분한다. 특히
+   pipeline에서 state mutation이 parent shell에 남는다고 가정하지 않는다.
 7. **Portability model:** `표준 여부`, `배포 구현 지원`, `배포판 정책`, `lint tool 판단`을 서로 다른 층으로 유지한다.
 8. **Pedagogy:** `predict → observe → explain → vary → repair → transfer`를 syntax transcription보다 우선한다.
-9. **Validation:** syntax, static feedback, runtime behavior, implementation comparison을 구분하고 어느 하나도 portability proof로 과장하지 않는다.
-10. **Scope discipline:** shell이 작고 투명한 glue/automation에 적합한 범위를 가르치되, 큰 application architecture를 shell로 확장하는 것을 목표로 삼지 않는다.
+9. **Validation:** syntax, static feedback, runtime behavior, implementation comparison을 구분하고 어느 하나도
+   portability proof로 과장하지 않는다.
+10. **Scope discipline:** shell이 작고 투명한 glue/automation에 적합한 범위를 가르치되, 큰 application architecture를
+    shell로 확장하는 것을 목표로 삼지 않는다.
 
-가장 중요한 연구 결론은 **“POSIX.1-2024 compliant”와 “오늘 여러 `/bin/sh`에서 바로 동작한다”는 동일한 주장도, 동일한 evidence도 아니라는 것**이다.
+가장 중요한 연구 결론은
+**“POSIX.1-2024 compliant”와 “오늘 여러 `/bin/sh`에서 바로 동작한다”는 동일한 주장도, 동일한 evidence도 아니라는 것**이다.
 
 ## Corrections Discovered During Deep Review
 
@@ -30,9 +37,12 @@ Research mode: deep iterative review
 
 기존 보고서는 `set -o pipefail`을 Bash 전용으로 분류했다. 이는 POSIX.1-2024 기준으로 잘못되었다.
 
-POSIX.1-2024는 pipeline exit status를 `pipefail` option과 함께 정의하며, Rationale은 Austin Group Defect 789를 통해 `pipefail`이 추가되었다고 명시한다.
+POSIX.1-2024는 pipeline exit status를 `pipefail` option과 함께 정의하며, Rationale은 Austin Group Defect 789를 통해
+`pipefail`이 추가되었다고 명시한다.
 
-하지만 이 사실이 곧 모든 현재 `/bin/sh`가 같은 support를 제공한다는 뜻은 아니다. Debian dash는 0.5.12-7에서 upstream `pipefail` patch를 받아들였지만, BusyBox ash source에서는 `pipefail` support가 build-time Bash compatibility option에 묶여 있는 상태다.
+하지만 이 사실이 곧 모든 현재 `/bin/sh`가 같은 support를 제공한다는 뜻은 아니다. Debian dash는 0.5.12-7에서 upstream
+`pipefail` patch를 받아들였지만, BusyBox ash source에서는 `pipefail` support가 build-time Bash compatibility option에
+묶여 있는 상태다.
 
 **Revised disposition:**
 
@@ -46,7 +56,8 @@ pipefail
 
 ### Correction 2 · dash의 `$'...'` 지원 상태를 deployment와 upstream으로 분리한다
 
-POSIX.1-2024는 Dollar-Single-Quotes (`$'...'`)를 표준화했다. Debian unstable의 dash 0.5.12 계열 문서/패키지에서는 이 기능이 늦게 반영되었지만, Debian bug #989239 기록상 upstream dash 0.5.13.1에서는 2026-02-28 기준 수정이 확인되었다.
+POSIX.1-2024는 Dollar-Single-Quotes (`$'...'`)를 표준화했다. Debian unstable의 dash 0.5.12 계열 문서/패키지에서는 이
+기능이 늦게 반영되었지만, Debian bug #989239 기록상 upstream dash 0.5.13.1에서는 2026-02-28 기준 수정이 확인되었다.
 
 따라서 “dash는 `$'...'`를 지원하지 않는다”는 현재 일반화도 부정확하다.
 
@@ -59,15 +70,18 @@ older/deployed dash 0.5.12 line: support may be absent
 Debian /bin/sh policy today: POSIX.1-2017 + Debian-specific additions
 ```
 
-이 사례는 Issue 8 adoption이 shell별 한 번의 전환이 아니라 **feature-by-feature, release-by-release**로 진행된다는 좋은 evidence다.
+이 사례는 Issue 8 adoption이 shell별 한 번의 전환이 아니라 **feature-by-feature, release-by-release**로 진행된다는 좋은
+evidence다.
 
 ### Correction 3 · ShellCheck 결과도 versioned evidence다
 
-ShellCheck latest tagged release는 v0.11.0(2025-08-03)이고, 현재 master changelog에는 POSIX.1-2024가 `$'...'`를 표준화했기 때문에 SC3003을 제거한다는 unreleased change가 기록되어 있다.
+ShellCheck latest tagged release는 v0.11.0(2025-08-03)이고, 현재 master changelog에는 POSIX.1-2024가 `$'...'`를
+표준화했기 때문에 SC3003을 제거한다는 unreleased change가 기록되어 있다.
 
 즉 같은 POSIX script라도 ShellCheck version에 따라 warning이 달라질 수 있다.
 
-**Revised disposition:** future lab이 특정 ShellCheck output을 expected evidence로 사용한다면 version을 기록하거나 pin한다.
+**Revised disposition:** future lab이 특정 ShellCheck output을 expected evidence로 사용한다면 version을 기록하거나
+pin한다.
 
 ## Research Questions
 
@@ -76,7 +90,8 @@ ShellCheck latest tagged release는 v0.11.0(2025-08-03)이고, 현재 master cha
 - 2026년 현재 portable `sh` 교본의 normative 기준은 무엇인가?
 - POSIX.1-2024에서 새로 표준화된 surface와 deployed `/bin/sh` 사이의 lag를 어떻게 다뤄야 하는가?
 - quoting/expansion을 어떤 mental model로 설명해야 정확하면서도 초급자에게 과도하게 복잡하지 않은가?
-- assignment, ordinary argument, redirection처럼 expansion context가 달라질 때 한 개의 단순 pipeline 모델이 어디까지 유효한가?
+- assignment, ordinary argument, redirection처럼 expansion context가 달라질 때 한 개의 단순 pipeline 모델이 어디까지
+  유효한가?
 - pipeline과 subshell이 variable state에 미치는 영향을 언제 가르쳐야 하는가?
 - exit status, `&&`/`||`, `if`, loop, function, `set -e`, `pipefail`을 어떤 순서로 연결해야 하는가?
 - function에서 `local`을 쓰지 않는 portable core는 어떻게 설명해야 하는가?
@@ -93,13 +108,15 @@ ShellCheck latest tagged release는 v0.11.0(2025-08-03)이고, 현재 master cha
 
 <https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html>
 
-shell operation, token recognition, quoting, expansion, redirection, simple commands, pipelines, lists, functions, execution environment, exit status를 판단하는 최우선 source다.
+shell operation, token recognition, quoting, expansion, redirection, simple commands, pipelines, lists, functions,
+execution environment, exit status를 판단하는 최우선 source다.
 
 #### POSIX.1-2024 Rationale
 
 <https://pubs.opengroup.org/onlinepubs/9799919799/xrat/V4_xcu_chap01.html>
 
-왜 특정 historical behavior가 유지되었는지, Issue 8에서 무엇이 추가되었는지, portability choice가 왜 그렇게 정의되었는지를 해석할 때 사용한다.
+왜 특정 historical behavior가 유지되었는지, Issue 8에서 무엇이 추가되었는지, portability choice가 왜 그렇게
+정의되었는지를 해석할 때 사용한다.
 
 ### Tier B · Deployed implementation and platform policy
 
@@ -107,7 +124,8 @@ shell operation, token recognition, quoting, expansion, redirection, simple comm
 
 <https://www.debian.org/doc/debian-policy/ch-files.html>
 
-Debian `/bin/sh` script가 현재 기대할 수 있는 baseline은 POSIX.1-2017에 Debian-specific additions를 더한 것이다. 그 additions에는 `local`, 특정 `echo -n`, `test -a/-o` behavior 등이 포함된다.
+Debian `/bin/sh` script가 현재 기대할 수 있는 baseline은 POSIX.1-2017에 Debian-specific additions를 더한 것이다. 그
+additions에는 `local`, 특정 `echo -n`, `test -a/-o` behavior 등이 포함된다.
 
 이것은 **Debian policy이지 cross-platform POSIX definition이 아니다**.
 
@@ -119,13 +137,15 @@ Debian `/bin/sh` script가 현재 기대할 수 있는 baseline은 POSIX.1-2017�
 
 <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1071238>
 
-`$'...'`와 `pipefail`의 adoption timing이 서로 다르다는 점을 확인하는 evidence다. 한 implementation이 “Issue 8 지원”이라는 하나의 boolean으로 움직이지 않는다는 점이 중요하다.
+`$'...'`와 `pipefail`의 adoption timing이 서로 다르다는 점을 확인하는 evidence다. 한 implementation이 “Issue 8
+지원”이라는 하나의 boolean으로 움직이지 않는다는 점이 중요하다.
 
 #### Alpine / BusyBox ash
 
 <https://wiki.alpinelinux.org/wiki/Shell_management>
 
-Alpine Linux의 `/bin/sh`는 기본적으로 BusyBox ash에 연결된다. BusyBox ash source는 `$'...'`와 `pipefail` 등 일부 feature가 build-time Bash compatibility configuration에 따라 달라질 수 있음을 보여준다.
+Alpine Linux의 `/bin/sh`는 기본적으로 BusyBox ash에 연결된다. BusyBox ash source는 `$'...'`와 `pipefail` 등 일부
+feature가 build-time Bash compatibility configuration에 따라 달라질 수 있음을 보여준다.
 
 따라서 BusyBox라는 이름만 보고 feature support를 단정하지 않는다.
 
@@ -135,7 +155,8 @@ Alpine Linux의 `/bin/sh`는 기본적으로 BusyBox ash에 연결된다. BusyBo
 
 <https://www.gnu.org/software/bash/manual/bash.html>
 
-Bash default behavior, `--posix`, `set -o posix`, `sh` invocation 차이를 확인한다. Bash는 comparison target이지 POSIX `sh` definition의 owner가 아니다.
+Bash default behavior, `--posix`, `set -o posix`, `sh` invocation 차이를 확인한다. Bash는 comparison target이지 POSIX
+`sh` definition의 owner가 아니다.
 
 ### Tier D · Static feedback
 
@@ -145,7 +166,8 @@ Bash default behavior, `--posix`, `set -o posix`, `sh` invocation 차이를 확�
 
 <https://github.com/koalaman/shellcheck/blob/master/CHANGELOG.md>
 
-quoting, suspicious expansion, common semantic error, non-POSIX syntax을 찾는 feedback surface다. 표준 revision과 ShellCheck version에 따라 rule이 변할 수 있으므로 normative authority로 사용하지 않는다.
+quoting, suspicious expansion, common semantic error, non-POSIX syntax을 찾는 feedback surface다. 표준 revision과
+ShellCheck version에 따라 rule이 변할 수 있으므로 normative authority로 사용하지 않는다.
 
 ### Tier E · Pedagogy references
 
@@ -155,13 +177,16 @@ quoting, suspicious expansion, common semantic error, non-POSIX syntax을 찾는
 
 <https://missing.csail.mit.edu/2026/command-line-environment/>
 
-arguments, streams, environment, return codes, signals를 연결된 execution model로 가르치는 점은 좋은 참고다. 반면 examples는 Bash를 명시적으로 사용하고 `[[ ... ]]`, process substitution, Bash strict-mode recipe 등 Bash-specific assumptions를 포함한다.
+arguments, streams, environment, return codes, signals를 연결된 execution model로 가르치는 점은 좋은 참고다. 반면
+examples는 Bash를 명시적으로 사용하고 `[[ ... ]]`, process substitution, Bash strict-mode recipe 등 Bash-specific
+assumptions를 포함한다.
 
 따라서 **teaching move는 참고하고 dialect는 복제하지 않는다**.
 
 ## Finding 1 · `sh`, implementation, platform policy를 세 층으로 분리해야 한다
 
-초급자는 `/bin/sh`, dash, Bash, BusyBox ash를 모두 “shell”이라는 한 범주로 보기 쉽다. portable scripting에서는 최소 다음 층을 분리해야 한다.
+초급자는 `/bin/sh`, dash, Bash, BusyBox ash를 모두 “shell”이라는 한 범주로 보기 쉽다. portable scripting에서는 최소 다음
+층을 분리해야 한다.
 
 ```text
 language contract: POSIX shell language revision
@@ -171,7 +196,8 @@ implementation/build: dash / Bash POSIX mode / BusyBox ash config / ...
 platform policy: Debian /bin/sh contract, Alpine defaults, target environment
 ```
 
-예를 들어 Debian Policy는 `local`을 `/bin/sh`에 요구하지만 POSIX.1-2024의 portable function model은 `local` variable을 요구하지 않는다. Debian에서 동작한다는 사실을 POSIX language guarantee로 끌어올리면 안 된다.
+예를 들어 Debian Policy는 `local`을 `/bin/sh`에 요구하지만 POSIX.1-2024의 portable function model은 `local` variable을
+요구하지 않는다. Debian에서 동작한다는 사실을 POSIX language guarantee로 끌어올리면 안 된다.
 
 ### Textbook implication
 
@@ -198,7 +224,8 @@ read source
 
 이 순서는 shell syntax가 단순 문자열 substitution이 아니라는 것을 이해시키는 데 매우 강하다.
 
-하지만 초급 mental model을 모든 grammar context에 똑같이 적용하면 또 다른 오류를 만든다. simple command에서는 assignment word와 redirection이 일반 argument word와 다른 processing 규칙을 가진다.
+하지만 초급 mental model을 모든 grammar context에 똑같이 적용하면 또 다른 오류를 만든다. simple command에서는 assignment
+word와 redirection이 일반 argument word와 다른 processing 규칙을 가진다.
 
 따라서 교본은 두 단계로 가르치는 것이 좋다.
 
@@ -216,7 +243,8 @@ program $value
 program "$value"
 ```
 
-두 line은 단순 style 차이가 아니다. unquoted expansion은 field splitting과 pathname expansion에 참여할 수 있고, quoted expansion은 argument boundary를 보존한다.
+두 line은 단순 style 차이가 아니다. unquoted expansion은 field splitting과 pathname expansion에 참여할 수 있고, quoted
+expansion은 argument boundary를 보존한다.
 
 따라서 첫 slice에서 반드시 관찰할 값은 pretty output보다 다음이다.
 
@@ -238,11 +266,13 @@ argv[1]
 
 ### Important refinement
 
-교본 설명에서 “quote하면 항상 safe” 같은 추상적 slogan보다 **어떤 expansion stage가 억제되고 어떤 field boundary가 남는가**를 설명한다.
+교본 설명에서 “quote하면 항상 safe” 같은 추상적 slogan보다
+**어떤 expansion stage가 억제되고 어떤 field boundary가 남는가**를 설명한다.
 
 ## Finding 4 · assignment context는 ordinary argument context와 다르다
 
-`name=value`가 assignment word로 인식될 때의 expansion은 ordinary command argument와 같지 않다. 또한 `export` 같은 declaration utility 뒤의 assignment는 assignment context를 가진다.
+`name=value`가 assignment word로 인식될 때의 expansion은 ordinary command argument와 같지 않다. 또한 `export` 같은
+declaration utility 뒤의 assignment는 assignment context를 가진다.
 
 이 차이는 다음과 같은 code를 이해할 때 중요하다.
 
@@ -256,11 +286,13 @@ printf '<%s>\n' "$x"
 
 ### Textbook implication
 
-Unit 1에서는 ordinary argument context를 기준으로 quote/field splitting을 가르친다. Unit 2에서 variable assignment와 environment를 다룰 때 “expansion behavior는 grammar context에 따라 달라진다”는 첫 예외를 명시적으로 연결한다.
+Unit 1에서는 ordinary argument context를 기준으로 quote/field splitting을 가르친다. Unit 2에서 variable assignment와
+environment를 다룰 때 “expansion behavior는 grammar context에 따라 달라진다”는 첫 예외를 명시적으로 연결한다.
 
 ## Finding 5 · command substitution은 string capture가 아니라 lossy boundary가 있다
 
-`$(...)`는 subshell environment에서 command를 실행하고 output의 trailing newline sequence를 제거한다. 그래서 command output을 shell variable에 넣는 것은 arbitrary byte stream을 손실 없이 저장하는 일반 mechanism이 아니다.
+`$(...)`는 subshell environment에서 command를 실행하고 output의 trailing newline sequence를 제거한다. 그래서 command
+output을 shell variable에 넣는 것은 arbitrary byte stream을 손실 없이 저장하는 일반 mechanism이 아니다.
 
 이 사실은 다음 beginner misconception을 막는다.
 
@@ -268,9 +300,11 @@ Unit 1에서는 ordinary argument context를 기준으로 quote/field splitting�
 
 ### Textbook implication
 
-초급 core에서는 `$(...)`를 backtick form보다 우선한다. Rationale도 nested/complex substitution에서 backticks를 권장하지 않는다.
+초급 core에서는 `$(...)`를 backtick form보다 우선한다. Rationale도 nested/complex substitution에서 backticks를 권장하지
+않는다.
 
-worked example은 command substitution으로 얻은 값의 trailing newline이 사라지는 작은 counterexample을 하나 포함하는 것이 좋다. binary/NUL boundary는 심화 note로 두고 core progression을 방해하지 않는다.
+worked example은 command substitution으로 얻은 값의 trailing newline이 사라지는 작은 counterexample을 하나 포함하는 것이
+좋다. binary/NUL boundary는 심화 note로 두고 core progression을 방해하지 않는다.
 
 ## Finding 6 · `"$@"`는 forwarding invariant로 가르쳐야 한다
 
@@ -294,7 +328,8 @@ argument boundaries preserved
 - wildcard character를 literal로 포함한 argument
 - leading `-` argument
 
-마지막 case는 script가 다른 utility로 argument를 전달할 때 `--` 같은 utility-level option boundary가 별개의 문제라는 것도 보여줄 수 있다.
+마지막 case는 script가 다른 utility로 argument를 전달할 때 `--` 같은 utility-level option boundary가 별개의 문제라는
+것도 보여줄 수 있다.
 
 ## Finding 7 · exit status가 shell control flow의 공통 상태다
 
@@ -315,7 +350,8 @@ command status
 
 ### Additional misconception · `&&`와 `||` precedence
 
-POSIX shell에서 `&&`와 `||`는 **동일 precedence이며 left-associative**다. C, JavaScript 등에서 `&&`가 `||`보다 높은 precedence인 것과 다르다.
+POSIX shell에서 `&&`와 `||`는 **동일 precedence이며 left-associative**다. C, JavaScript 등에서 `&&`가 `||`보다 높은
+precedence인 것과 다르다.
 
 따라서 다음처럼 mixed chain을 expression처럼 읽는 습관을 일찍 교정할 가치가 있다.
 
@@ -329,7 +365,8 @@ command1 && command2 || command3
 
 pipeline을 `stdout → stdin` diagram만으로 설명하면 절반만 설명한 것이다.
 
-POSIX.1-2024에서는 multi-command pipeline의 각 command가 subshell environment에 놓이며, extension으로 implementation이 일부 또는 전체 command를 current environment에서 실행할 수도 있다.
+POSIX.1-2024에서는 multi-command pipeline의 각 command가 subshell environment에 놓이며, extension으로 implementation이
+일부 또는 전체 command를 current environment에서 실행할 수도 있다.
 
 따라서 다음 형태가 parent variable을 업데이트한다고 portable하게 가정하면 안 된다.
 
@@ -339,11 +376,13 @@ producer | while IFS= read -r line; do
 done
 ```
 
-implementation에 따라 loop body가 current shell에서 실행될 수 있어 보이는 경우가 있어도 portable script는 그 persistence에 의존하지 않아야 한다.
+implementation에 따라 loop body가 current shell에서 실행될 수 있어 보이는 경우가 있어도 portable script는 그
+persistence에 의존하지 않아야 한다.
 
 ### Textbook implication
 
-Unit 2에서 pipeline data flow를 소개할 때 “process/data flow”와 “shell state flow”를 구분한다. Unit 4 loop에서 pipeline-fed loop를 다룬다면 이 portability trap을 반드시 되짚는다.
+Unit 2에서 pipeline data flow를 소개할 때 “process/data flow”와 “shell state flow”를 구분한다. Unit 4 loop에서
+pipeline-fed loop를 다룬다면 이 portability trap을 반드시 되짚는다.
 
 ## Finding 9 · `pipefail`은 status model 뒤에 와야 한다
 
@@ -378,7 +417,8 @@ command
 └── fd 2 → stderr destination
 ```
 
-simple command processing과 pipeline 연결에는 order가 있다. pipeline의 standard-stream connection이 먼저 정해지고 command의 explicit redirection이 이를 바꿀 수 있다.
+simple command processing과 pipeline 연결에는 order가 있다. pipeline의 standard-stream connection이 먼저 정해지고
+command의 explicit redirection이 이를 바꿀 수 있다.
 
 따라서 다음 같은 비교를 output 암기 대신 descriptor state tracing으로 다룬다.
 
@@ -399,7 +439,8 @@ name() {
 }
 ```
 
-function invocation 동안 positional parameters는 function arguments로 바뀌고, function이 끝나면 호출자의 positional parameter state가 복원된다. 반면 일반 variable은 Python/JavaScript function local scope처럼 자동 격리되지 않는다.
+function invocation 동안 positional parameters는 function arguments로 바뀌고, function이 끝나면 호출자의 positional
+parameter state가 복원된다. 반면 일반 variable은 Python/JavaScript function local scope처럼 자동 격리되지 않는다.
 
 `local`은 널리 구현되고 Debian Policy에서는 `/bin/sh` addition으로 요구되지만 POSIX portable guarantee가 아니다.
 
@@ -418,7 +459,8 @@ Unit 5는 `local`을 core code에 사용하지 않는다. 대신 다음을 가�
 
 초급 error handling을 `set -e` recipe로 시작하면 shell의 실제 control semantics를 가린다.
 
-POSIX `set` application guidance도 function invocation이 conditional context에 놓이는 경우 `-e`가 function body에서 기대와 다르게 동작할 수 있음을 경고한다.
+POSIX `set` application guidance도 function invocation이 conditional context에 놓이는 경우 `-e`가 function body에서
+기대와 다르게 동작할 수 있음을 경고한다.
 
 따라서 교본은 먼저 다음을 가르친다.
 
@@ -429,11 +471,13 @@ POSIX `set` application guidance도 function invocation이 conditional context�
 
 그 뒤 `set -e`를 **convenience option + context-sensitive behavior**로 분석한다.
 
-`set -euo pipefail`을 의미를 이해하기 전의 주문처럼 제시하지 않는다. 특히 `pipefail`은 현재 POSIX이지만 support baseline은 별도로 확인한다.
+`set -euo pipefail`을 의미를 이해하기 전의 주문처럼 제시하지 않는다. 특히 `pipefail`은 현재 POSIX이지만 support
+baseline은 별도로 확인한다.
 
 ## Finding 13 · `trap`은 cleanup responsibility와 연결해야 한다
 
-POSIX.1-2024 `trap`은 `EXIT`와 symbolic signal names를 지원하고, trap action이 끝난 뒤 `$?`를 trap 실행 전 값으로 복원하도록 정의한다.
+POSIX.1-2024 `trap`은 `EXIT`와 symbolic signal names를 지원하고, trap action이 끝난 뒤 `$?`를 trap 실행 전 값으로
+복원하도록 정의한다.
 
 초급 교본에서는 signal catalog보다 resource lifetime에 연결하는 편이 좋다.
 
@@ -450,13 +494,15 @@ symbolic names (`INT`, `TERM`, `EXIT`)을 우선하고 numeric signal 값은 por
 
 `echo`는 historical option/backslash behavior 차이 때문에 portable formatted output을 가르치는 기본 도구로 부적합하다.
 
-교본의 predictable output은 `printf`를 기본으로 사용한다. `echo` 자체를 금지할 필요는 없지만 escape 처리나 option ambiguity가 의미 있는 예제에서는 `printf`를 선택한다.
+교본의 predictable output은 `printf`를 기본으로 사용한다. `echo` 자체를 금지할 필요는 없지만 escape 처리나 option
+ambiguity가 의미 있는 예제에서는 `printf`를 선택한다.
 
 ## Finding 15 · `test`에서는 복합 expression을 command composition으로 푸는 편이 낫다
 
 `[ ... ]`는 syntax punctuation처럼 보여도 실제로는 `test` utility form이다.
 
-복합 condition을 한 개의 `[ ... ]` 안에서 `-a`/`-o`로 쌓기보다 다음처럼 shell control operators로 composition하는 편이 읽기 쉽고 ambiguity도 줄인다.
+복합 condition을 한 개의 `[ ... ]` 안에서 `-a`/`-o`로 쌓기보다 다음처럼 shell control operators로 composition하는 편이
+읽기 쉽고 ambiguity도 줄인다.
 
 ```sh
 if [ -f "$path" ] && [ -r "$path" ]; then
@@ -468,7 +514,8 @@ Debian `/bin/sh`는 `test -a/-o`를 별도 policy addition으로 보장하지만
 
 ## Finding 16 · shebang은 shell grammar와 executable dispatch를 분리해 설명한다
 
-POSIX Shell Command Language는 source의 첫 줄이 `#!`로 시작하는 경우 shell-language 관점 결과를 unspecified로 둔다. Rationale은 `#!`를 interpreter selection을 위한 historical extension 영역으로 설명한다.
+POSIX Shell Command Language는 source의 첫 줄이 `#!`로 시작하는 경우 shell-language 관점 결과를 unspecified로 둔다.
+Rationale은 `#!`를 interpreter selection을 위한 historical extension 영역으로 설명한다.
 
 현실적으로 executable script에서 `#!/bin/sh`는 매우 중요하므로 제외하지 않는다. 다만 다음 두 층을 구분한다.
 
@@ -504,7 +551,8 @@ sh script.sh
 | multi-shell matrix | selected implementations 사이 차이가 있는가 | 모든 conforming implementation |
 | POSIX text | standardized semantics가 무엇인가 | deployed implementation adoption |
 
-**Key rule:** implementation matrix는 portability를 “증명”하기보다 잘못된 assumption을 **반증하기 위한 도구**로 사용한다.
+**Key rule:** implementation matrix는 portability를 “증명”하기보다 잘못된 assumption을 **반증하기 위한 도구**로
+사용한다.
 
 ## Feature Classification for the Textbook
 
@@ -555,7 +603,8 @@ portable core에서 사용하지 않는다.
 
 ### What to reuse from Missing Semester
 
-2026 material은 shell program communication을 Arguments, Streams, Environment Variables, Return Codes, Signals로 나누고 다시 연결한다. 이는 mechanism-first 교본과 잘 맞는다.
+2026 material은 shell program communication을 Arguments, Streams, Environment Variables, Return Codes, Signals로 나누고
+다시 연결한다. 이는 mechanism-first 교본과 잘 맞는다.
 
 또한 `if`와 `while`을 return code와 연결하는 설명은 이 deck의 exit-status model과 잘 맞는다.
 
@@ -702,7 +751,8 @@ source line
 → transfer to a new argument value
 ```
 
-assignment context, pipeline state, functions까지 한 slice에 넣지 않는다. 첫 mental model을 검증한 뒤 후속 unit에서 context-sensitive rules를 추가한다.
+assignment context, pipeline state, functions까지 한 slice에 넣지 않는다. 첫 mental model을 검증한 뒤 후속 unit에서
+context-sensitive rules를 추가한다.
 
 ## Practice Types to Prefer
 
@@ -771,13 +821,15 @@ concept에 맞는 state를 직접 관찰한다.
 
 `pipefail`과 `$'...'`만 봐도 같은 dash family에서 adoption timing이 다르다.
 
-**Disposition:** 새 Issue 8 feature마다 별도 support evidence를 확인한다. “Issue 8 supported”라는 coarse label로 대신하지 않는다.
+**Disposition:** 새 Issue 8 feature마다 별도 support evidence를 확인한다. “Issue 8 supported”라는 coarse label로
+대신하지 않는다.
 
 ### Risk 2 · BusyBox behavior can be build-config dependent
 
 BusyBox ash source에서 일부 compatibility feature는 build-time option에 묶여 있다.
 
-**Disposition:** BusyBox version 문자열만으로 capability를 추정하지 않는다. future runtime test에서는 실제 binary behavior를 확인한다.
+**Disposition:** BusyBox version 문자열만으로 capability를 추정하지 않는다. future runtime test에서는 실제 binary
+behavior를 확인한다.
 
 ### Risk 3 · Platform policy can exceed POSIX
 
@@ -793,25 +845,32 @@ ShellCheck master와 tagged release의 POSIX.1-2024 handling이 다를 수 있�
 
 ### Risk 5 · exact implementation matrix is not yet chosen
 
-현재 curriculum은 implementation-neutral하다. repository CI에서 실제로 어떤 shells를 cheap하게 실행할 수 있는지는 first runnable slice 단계에서 확인해야 한다.
+현재 curriculum은 implementation-neutral하다. repository CI에서 실제로 어떤 shells를 cheap하게 실행할 수 있는지는 first
+runnable slice 단계에서 확인해야 한다.
 
-**Disposition:** playground/validation을 만들기 전 target matrix를 최소 비용으로 정한다. curriculum 자체를 특정 distro에 종속시키지 않는다.
+**Disposition:** playground/validation을 만들기 전 target matrix를 최소 비용으로 정한다. curriculum 자체를 특정 distro에
+종속시키지 않는다.
 
 ### Open question · how far to teach POSIX utilities
 
-portable shell script의 correctness는 shell grammar뿐 아니라 `test`, `printf`, `read`, `getopts`, `mktemp` 같은 utility contract에도 영향을 받는다. 모든 utility portability를 한 deck에서 다루면 범위가 급격히 넓어진다.
+portable shell script의 correctness는 shell grammar뿐 아니라 `test`, `printf`, `read`, `getopts`, `mktemp` 같은 utility
+contract에도 영향을 받는다. 모든 utility portability를 한 deck에서 다루면 범위가 급격히 넓어진다.
 
-**Disposition:** shell-language competence에 직접 필요한 standard utility만 해당 unit에서 최소 범위로 가르치고, general Unix utility portability는 별도 주제로 확장하지 않는다.
+**Disposition:** shell-language competence에 직접 필요한 standard utility만 해당 unit에서 최소 범위로 가르치고, general
+Unix utility portability는 별도 주제로 확장하지 않는다.
 
 ## Review Against the Textbook Contract
 
 이번 research 방향은 다음 이유로 textbook foundation에 적합하다.
 
-- **progression:** final argv → environment/state → fd/data flow → exit control → iteration → functions → failure/cleanup 순으로 dependency가 있다.
+- **progression:** final argv → environment/state → fd/data flow → exit control → iteration → functions →
+  failure/cleanup 순으로 dependency가 있다.
 - **mechanism:** syntax 이름보다 hidden state와 transformation을 중심에 둔다.
-- **misconceptions:** `sh=Bash`, source text=argv, `if=boolean expression`, pipeline=state-preserving, `local=portable`, `set -e=always abort`, lint=proof 같은 plausible wrong models을 명시적으로 다룬다.
+- **misconceptions:** `sh=Bash`, source text=argv, `if=boolean expression`, pipeline=state-preserving, `local=portable`,
+  `set -e=always abort`, lint=proof 같은 plausible wrong models을 명시적으로 다룬다.
 - **practice:** prediction/tracing/debugging/transfer가 가능한 observable surface를 정의했다.
-- **evidence fidelity:** POSIX normative text, implementation evidence, platform policy, lint feedback를 같은 authority로 섞지 않는다.
+- **evidence fidelity:** POSIX normative text, implementation evidence, platform policy, lint feedback를 같은
+  authority로 섞지 않는다.
 - **scope:** shell 전체 ecosystem이나 production shell architecture로 확장하지 않는다.
 
 ## Review History
@@ -855,9 +914,12 @@ portable shell script의 correctness는 shell grammar뿐 아니라 `test`, `prin
 4. current shell / command / subshell → state mutation boundary
 ```
 
-이 네 model이 있으면 quoting, variables, arguments, redirection, pipelines, conditions, loops, functions, error handling을 독립적인 문법 목록이 아니라 하나의 작은 execution language로 연결할 수 있다.
+이 네 model이 있으면 quoting, variables, arguments, redirection, pipelines, conditions, loops, functions, error
+handling을 독립적인 문법 목록이 아니라 하나의 작은 execution language로 연결할 수 있다.
 
-현재 가장 중요한 build decision은 유지한다. 전체 textbook을 먼저 채우지 않는다. 첫 implementation은 **ordinary argument context의 `source text → final argv` calibration slice** 하나를 설명, worked reasoning, prediction, runtime observation, repair, transfer까지 완성한 뒤 review한다.
+현재 가장 중요한 build decision은 유지한다. 전체 textbook을 먼저 채우지 않는다. 첫 implementation은
+**ordinary argument context의 `source text → final argv` calibration slice** 하나를 설명, worked reasoning, prediction,
+runtime observation, repair, transfer까지 완성한 뒤 review한다.
 
 ## Public References
 
