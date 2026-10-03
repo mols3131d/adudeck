@@ -192,13 +192,13 @@ process
 
 그리고 redirection이 **command가 실행되기 전에 file descriptor 연결을 바꾸는 단계**라는 점을 실행 순서와 연결한다.
 
-pipeline은 stdout/stdin 연결과 exit status를 동시에 가진다. Bash의 `pipefail`을 초급 POSIX core 해결책처럼 제시하지 않고,
-먼저 POSIX pipeline status와 명시적 error handling을 이해시키는 편이 적절하다.
+pipeline은 stdout/stdin 연결과 exit status를 동시에 가진다. Bash의 `pipefail`을 초급 POSIX core 해결책처럼 제시하지
+않고, 먼저 POSIX pipeline status와 명시적 error handling을 이해시키는 편이 적절하다.
 
 ## Finding 5 · script arguments에서는 `"$@"`가 핵심 invariant다
 
-POSIX의 special parameter `@`는 positional parameters를 표현하며, double quote 안에서 사용할 때 각각의 parameter boundary를
-보존하는 중요한 동작을 가진다.
+POSIX의 special parameter `@`는 positional parameters를 표현하며, double quote 안에서 사용할 때 각각의 parameter
+boundary를 보존하는 중요한 동작을 가진다.
 
 따라서 `for x in "$@"`, helper function forwarding, wrapper script 등의 예제로 **원래 argument vector를 보존한다**는
 invariant를 반복하는 것이 좋다.
@@ -278,8 +278,8 @@ sh script.sh
 - `if`, `&&`, `||`, explicit `exit`로 의도를 표현할 수 있다.
 - cleanup이 필요한 경우 `trap`과 resource lifetime을 생각해야 한다.
 
-그 다음 `set -e`를 convenience option과 failure case 분석 대상으로 소개하면, option이 control-flow reasoning을 대체하는 것을
-막을 수 있다.
+그 다음 `set -e`를 convenience option과 failure case 분석 대상으로 소개하면, option이 control-flow reasoning을 대체하는
+것을 막을 수 있다.
 
 ## Finding 10 · validation을 syntax / lint / runtime으로 나눈다
 
@@ -443,8 +443,8 @@ implementation-sensitive assumption을 실제 evidence로 드러내는 것이다
 
 ### `local` variable convention
 
-여러 실제 shell에서 지원되지만 POSIX core language로 기대하면 안 된다. 초급 function unit에서는 global/shared shell state를
-먼저 정확하게 가르치고, implementation extension으로 필요할 때만 비교한다.
+여러 실제 shell에서 지원되지만 POSIX core language로 기대하면 안 된다. 초급 function unit에서는 global/shared shell
+state를 먼저 정확하게 가르치고, implementation extension으로 필요할 때만 비교한다.
 
 **Disposition:** core curriculum에서 portable guarantee로 사용하지 않는다.
 
@@ -452,8 +452,8 @@ implementation-sensitive assumption을 실제 evidence로 드러내는 것이다
 
 미래 playground가 Linux-only인지 macOS까지 포함하는지에 따라 실제 implementation matrix가 달라진다.
 
-**Disposition:** deck curriculum은 implementation-neutral하게 유지하고, first runnable slice를 만들 때 repository/runtime에서
-검증 가능한 최소 matrix를 정한다.
+**Disposition:** deck curriculum은 implementation-neutral하게 유지하고, first runnable slice를 만들 때
+repository/runtime에서 검증 가능한 최소 matrix를 정한다.
 
 ## Research Conclusion
 
@@ -466,18 +466,20 @@ source → expansion → final argv
 command → exit status → control flow
 ```
 
-여기에 file-descriptor data flow를 결합하면 quoting, variables, arguments, tests, loops, functions, error handling을 서로 독립적인
-문법 항목이 아니라 하나의 실행 언어로 배울 수 있다.
+여기에 file-descriptor data flow를 결합하면 quoting, variables, arguments, tests, loops, functions, error handling을
+서로 독립적인 문법 항목이 아니라 하나의 실행 언어로 배울 수 있다.
 
-따라서 첫 구현은 전체 textbook을 한꺼번에 채우지 않고 `source text → final argv` calibration slice를 완성한 뒤 설명 깊이,
-관찰 방식, practice 난이도, portability validation을 검토하는 것이 적절하다.
+따라서 첫 구현은 전체 textbook을 한꺼번에 채우지 않고 `source text → final argv` calibration slice를 완성한 뒤 설명
+깊이, 관찰 방식, practice 난이도, portability validation을 검토하는 것이 적절하다.
 
 ## Public References
 
-- The Open Group, POSIX.1-2024, Shell Command Language: <https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html>
+- The Open Group, POSIX.1-2024, Shell Command Language:
+  <https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html>
 - GNU, Bash Reference Manual 5.3: <https://www.gnu.org/software/bash/manual/bash.html>
 - Debian, dash(1) manual: <https://manpages.debian.org/unstable/dash/dash.1.en.html>
-- Debian Bug #989239, dash Dollar-Single-Quotes support history: <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=989239>
+- Debian Bug #989239, dash Dollar-Single-Quotes support history:
+  <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=989239>
 - ShellCheck: <https://www.shellcheck.net/>
 - ShellCheck SC3003 history: <https://www.shellcheck.net/wiki/SC3003>
 - MIT Missing Semester 2026, Introduction to the Shell: <https://missing.csail.mit.edu/2026/course-shell/>
