@@ -153,8 +153,8 @@ substitution, field splitting, pathname expansion을 비교하고 최종 `argv`�
 
 ### Unit 2 · Variables, Parameters, and Command Data Flow
 
-assignment, environment, `export`, positional/special parameters, redirection, pipeline, lists를 하나의 실행 상태와 data-flow
-관점으로 연결한다.
+assignment, environment, `export`, positional/special parameters, redirection, pipeline, lists를 하나의 실행 상태와
+data-flow 관점으로 연결한다.
 
 ### Unit 3 · Decisions Are Exit Status
 
@@ -168,8 +168,8 @@ assignment, environment, `export`, positional/special parameters, redirection, p
 
 ### Unit 5 · Functions and Small Script Structure
 
-POSIX function definition, function-local positional parameters, shared shell state, environment/export 경계, function exit
-status를 다룬다. 필요한 경우 `getopts`를 이용해 작은 command interface를 만든다.
+POSIX function definition, function-local positional parameters, shared shell state, environment/export 경계, function
+exit status를 다룬다. 필요한 경우 `getopts`를 이용해 작은 command interface를 만든다.
 
 ### Unit 6 · Failure, Cleanup, and Portability Feedback
 
@@ -178,8 +178,8 @@ status를 다룬다. 필요한 경우 `getopts`를 이용해 작은 command inte
 
 ### Unit 7 · Capstone: A Portable Automation Script
 
-처음부터 완성 script를 복사하지 않는다. 요구사항에서 inputs, outputs, failure conditions를 정의하고 작은 단위로 작성한 뒤
-argument preservation, redirection, exit status, cleanup, portability를 검증한다.
+처음부터 완성 script를 복사하지 않는다. 요구사항에서 inputs, outputs, failure conditions를 정의하고 작은 단위로 작성한
+뒤 argument preservation, redirection, exit status, cleanup, portability를 검증한다.
 
 ## Practice Model
 
@@ -194,8 +194,8 @@ predict
 → transfer
 ```
 
-예를 들어 `echo "$files"`를 한 번 따라 치는 대신, 같은 variable을 quoted/unquoted로 전달했을 때 **program이 실제로 몇 개의
-arguments를 받는지 먼저 예측**하고 검증한다.
+예를 들어 `echo "$files"`를 한 번 따라 치는 대신, 같은 variable을 quoted/unquoted로 전달했을 때
+**program이 실제로 몇 개의 arguments를 받는지 먼저 예측**하고 검증한다.
 
 후반으로 갈수록 scaffold를 줄인다. 마지막에는 Bashism이 섞인 script나 whitespace/glob 때문에 깨지는 script를 보고
 학습자가 스스로 문제를 분류하고 수정하게 한다.
@@ -229,5 +229,5 @@ one source line
 - 첫 calibration slice를 선택했다.
 - textbook chapter와 playground는 아직 구현하지 않았다.
 
-다음 build increment는 Unit 0 전체를 한꺼번에 채우는 것이 아니라, 위 calibration slice를 실제 설명·worked example·practice와
-함께 한 번 완성하고 검토하는 것이다.
+다음 build increment는 Unit 0 전체를 한꺼번에 채우는 것이 아니라, 위 calibration slice를 실제 설명·worked
+example·practice와 함께 한 번 완성하고 검토하는 것이다.
