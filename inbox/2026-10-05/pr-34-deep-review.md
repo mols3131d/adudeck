@@ -13,11 +13,11 @@ Verdict: **Keep Draft. Do not merge yet.**
 ## Executive verdict
 
 PR #34 is now a strong textbook draft with a coherent learning model, good evidence semantics, and a real locked runtime
-validation path. The earlier structural blockers around the deck-local environment, SDK smoke, asymmetric evaluation state,
-exact prompt-version lookup, fallback provenance, and payload allowlisting have been substantially repaired.
+validation path. The earlier structural blockers around the deck-local environment, SDK smoke, asymmetric evaluation
+state, exact prompt-version lookup, fallback provenance, and payload allowlisting have been substantially repaired.
 
-The remaining risk is no longer breadth or basic textbook quality. It is **cross-unit integration correctness and persistent
-state safety**.
+The remaining risk is no longer breadth or basic textbook quality. It is
+**cross-unit integration correctness and persistent state safety**.
 
 The deepest review found three high-severity correctness/state-safety blockers, two medium-severity contract gaps, one
 merge-state blocker, and one stale completion claim:
@@ -27,25 +27,27 @@ merge-state blocker, and one stale completion claim:
 3. **High — Unit 7 bootstrap can mutate an existing prompt series when the selected label is missing.**
 4. **Medium — Unit 5 dataset promotion is not rerun-idempotent and can change later experiment populations.**
 5. **Medium — Unit 6 accepts timezone-aware timestamps that are not UTC although the SDK contract requires UTC.**
-6. **High operational gate — GitHub currently reports the PR as `mergeable_state=dirty`; the branch must be reconciled with `main`.**
-7. **Medium evidence-fidelity gap — the deck README still claims a strict merge-ready state that the current head no longer satisfies.**
+6. **High operational gate — GitHub currently reports the PR as `mergeable_state=dirty`; the branch must be reconciled
+   with `main`.**
+7. **Medium evidence-fidelity gap — the deck README still claims a strict merge-ready state that the current head no
+   longer satisfies.**
 
 The most important correction to the current PR narrative is this:
 
 > Deterministic CI being green does not prove the cumulative Unit 5 → Unit 6 hosted flow, persistent Cloud-state safety,
-> or release-gate numeric evidence validity. Those are currently outside the exercised test surface, and concrete defects
-> exist in all three areas.
+> or release-gate numeric evidence validity. Those are currently outside the exercised test surface, and concrete
+> defects exist in all three areas.
 
-The PR should remain Draft until these items are repaired, the branch is reconciled with `main`, the locked validation is
-rerun on the new head, and one final integration review finds no material blocker.
+The PR should remain Draft until these items are repaired, the branch is reconciled with `main`, the locked validation
+is rerun on the new head, and one final integration review finds no material blocker.
 
 ---
 
 ## Review method — `mols-loops` deep pass
 
 This review used the repository guidance and the `mols-loops` Prepare → Research → Plan → Work → Review cycle with three
-substantive review loops. The loops were intentionally separated so that a strong local unit test or good prose could not
-mask a broken cumulative path.
+substantive review loops. The loops were intentionally separated so that a strong local unit test or good prose could
+not mask a broken cumulative path.
 
 ### Prepare
 
@@ -95,7 +97,8 @@ Checked current Langfuse Python SDK reference and release state.
 
 Result:
 
-- `create_dataset_item(..., id=...)` explicitly supports upsert/deduplication and requires user-supplied IDs to be globally unique;
+- `create_dataset_item(..., id=...)` explicitly supports upsert/deduplication and requires user-supplied IDs to be
+  globally unique;
 - `get_dataset(..., version=...)` explicitly requires a timezone-aware datetime in UTC;
 - prompt labels are unique across versions and `latest` is reserved/managed by Langfuse;
 - Langfuse Python SDK `v4.17.0` was released on 2026-10-05; the deck remains locked to `4.16.0` and the `v4.17.0`
@@ -117,8 +120,8 @@ Result:
 - the top-level deck README's merge-ready claim is stale relative to the actual current findings and PR body;
 - final GitHub metadata reports `mergeable=false`, `rebaseable=false`, `mergeable_state=dirty`.
 
-Stop condition was reached after Loop 3 because additional review surfaces converged on the same bounded repair set rather
-than producing a new class of blocker.
+Stop condition was reached after Loop 3 because additional review surfaces converged on the same bounded repair set
+rather than producing a new class of blocker.
 
 ---
 
@@ -167,8 +170,8 @@ The cumulative path described by the textbook is therefore broken in two indepen
    `eligible` and `policy_days`.
 
 The current Unit 6 test named `test_application_accepts_hosted_dataset_item_shape` uses `{"days": 10}`, so it models the
-Unit 6 local schema rather than the actual Unit 5 hosted item contract. The test therefore reinforces the mismatch instead
-of detecting it.
+Unit 6 local schema rather than the actual Unit 5 hosted item contract. The test therefore reinforces the mismatch
+instead of detecting it.
 
 ### Why this matters
 
@@ -196,7 +199,8 @@ Prefer the smallest coherent repair:
 - make the hosted task read `days_since_delivery` and return the same expected contract, including `policy_days`, or
   otherwise make evaluator semantics explicitly compare only the intended fields;
 - replace the misleading hosted-shape test with the exact Unit 5 payload shape;
-- add one credential-free cross-unit contract test so future local refactors cannot silently split the two chapters again.
+- add one credential-free cross-unit contract test so future local refactors cannot silently split the two chapters
+  again.
 
 Do not solve this by introducing a generic data-adapter framework. One explicit cumulative contract is enough.
 
@@ -246,8 +250,8 @@ candidate_average - baseline_average < min_correctness_delta
 
 false rather than generating a rejection reason.
 
-A non-critical row with `baseline=NaN` and `candidate=NaN`, full coverage, and otherwise valid policy inputs can therefore
-produce `approved=True` even though there is no usable correctness evidence.
+A non-critical row with `baseline=NaN` and `candidate=NaN`, full coverage, and otherwise valid policy inputs can
+therefore produce `approved=True` even though there is no usable correctness evidence.
 
 The same class of defect exists independently on the operational metric:
 
@@ -268,8 +272,8 @@ missing / failed / unknown evidence
 ≠ valid quality evidence
 ```
 
-Allowing non-finite values to enter the success-shaped `scored` or latency path violates exactly that invariant. The code
-must be at least as strict as the prose.
+Allowing non-finite values to enter the success-shaped `scored` or latency path violates exactly that invariant. The
+code must be at least as strict as the prose.
 
 ### Required repair
 
@@ -281,8 +285,8 @@ At the numeric boundaries:
 - if the release-gate score is specifically a normalized correctness score, explicitly define and enforce its intended
   domain rather than relying on an implicit convention.
 
-Do not silently coerce invalid evidence to `0`. Invalid numeric evidence should remain a validation/evaluation gap or fail
-construction/decision explicitly.
+Do not silently coerce invalid evidence to `0`. Invalid numeric evidence should remain a validation/evaluation gap or
+fail construction/decision explicitly.
 
 ### Required tests
 
@@ -331,14 +335,14 @@ The risk is larger than adding a harmless lab row because Langfuse manages promp
 `latest` label. The learning script can therefore affect routing/history in a project that already uses the same prompt
 name.
 
-The current fake test only models "prompt exists" versus "prompt missing" and cannot express "name exists, requested label
-missing", so the dangerous state is untested.
+The current fake test only models "prompt exists" versus "prompt missing" and cannot express "name exists, requested
+label missing", so the dangerous state is untested.
 
 ### Why this matters
 
-A learning lab should not require the learner to understand an undocumented destructive/persistent state transition before
-running it. This is especially important because the text explicitly promises that the script will not silently change
-existing project state.
+A learning lab should not require the learner to understand an undocumented destructive/persistent state transition
+before running it. This is especially important because the text explicitly promises that the script will not silently
+change existing project state.
 
 ### Required repair
 
@@ -349,7 +353,8 @@ A bounded solution should combine the smallest useful safeguards, for example:
 - a dedicated lab-owned prompt namespace/name rather than the production-looking `support/refund-answer`;
 - clear instruction to use a dedicated lab/test project when practical;
 - a preflight that distinguishes prompt-series existence from selected-label absence before creating a version;
-- explicit documentation of what persistent state the bootstrap creates and how a learner intentionally resets/abandons it.
+- explicit documentation of what persistent state the bootstrap creates and how a learner intentionally resets/abandons
+  it.
 
 Do not build general provisioning infrastructure for one tutorial lab.
 
@@ -410,8 +415,8 @@ Use either:
 - a stable, globally unique lab item ID; or
 - an explicit reset/cleanup flow that makes mutation visible.
 
-For one synthetic lab case, a stable namespaced/deterministic ID is simpler. Do not use the raw `case_id` without accounting
-for the SDK's global-uniqueness requirement.
+For one synthetic lab case, a stable namespaced/deterministic ID is simpler. Do not use the raw `case_id` without
+accounting for the SDK's global-uniqueness requirement.
 
 Add a rerun contract test that proves the same logical lab case uses the same external item identity.
 
@@ -477,8 +482,8 @@ The PR head remains:
 
 This means the current branch cannot be merged cleanly into the current `main` without conflict resolution.
 
-This is separate from the textbook findings above. Even if all code findings were fixed, merge readiness cannot be claimed
-until the branch is reconciled with `main` and validation is rerun on the reconciled tree.
+This is separate from the textbook findings above. Even if all code findings were fixed, merge readiness cannot be
+claimed until the branch is reconciled with `main` and validation is rerun on the reconciled tree.
 
 Required final sequence:
 
@@ -511,9 +516,9 @@ That statement is no longer consistent with the same branch's current evidence:
 - the prompt bootstrap has a persistent-state collision;
 - GitHub currently reports a dirty merge state.
 
-The earlier `inbox/2026-10-02/pr-34-merge-ready-plan.md` also has a historical completion statement. As an inbox artifact,
-it can remain as historical evidence; the new review should supersede it rather than rewriting history. The public deck
-entrypoint, however, should not present the stale completion state as current fact.
+The earlier `inbox/2026-10-02/pr-34-merge-ready-plan.md` also has a historical completion statement. As an inbox
+artifact, it can remain as historical evidence; the new review should supersede it rather than rewriting history. The
+public deck entrypoint, however, should not present the stale completion state as current fact.
 
 Required change after the functional repairs:
 
@@ -575,8 +580,8 @@ These earlier findings are substantially repaired:
 
 ### Unit 8 asymmetric evaluation state — closed
 
-The capstone now has separate `VariantEvidence` for baseline and candidate, separate coverage metrics, paired comparison,
-and correct critical regression versus continuing-failure terminology.
+The capstone now has separate `VariantEvidence` for baseline and candidate, separate coverage metrics, paired
+comparison, and correct critical regression versus continuing-failure terminology.
 
 The new non-finite finding is a narrower validation defect; it does not invalidate the repaired model structure.
 
@@ -663,8 +668,8 @@ locked/reviewed baseline = 4.16.0
 current latest observed on 2026-10-05 = 4.17.0
 ```
 
-Do not rewrite the lock only to chase a patch release unless the project intentionally chooses to refresh the baseline and
-rerun validation.
+Do not rewrite the lock only to chase a patch release unless the project intentionally chooses to refresh the baseline
+and rerun validation.
 
 ---
 
@@ -741,13 +746,13 @@ If all are closed and no new evidence-backed blocker appears, mark Ready for rev
 **Do not merge PR #34 at the reviewed head.**
 
 The deck is close, but the phrase "close" should not obscure the nature of the remaining defects. Two of them directly
-break or invalidate the deck's capstone evidence loop, one can mutate external prompt state, and GitHub currently reports an
-actual merge conflict with `main`.
+break or invalidate the deck's capstone evidence loop, one can mutate external prompt state, and GitHub currently
+reports an actual merge conflict with `main`.
 
 The good news is that the remaining scope is bounded. No architecture change or textbook rewrite is needed.
 
 A correct completion statement for the current head is:
 
 > **The 0–8 curriculum and primary authoring pass are strong, the locked local validation foundation is in place, but
-> cumulative hosted integration, numeric evidence validation, persistent-state isolation, rerun/UTC contracts, and current
-> branch reconciliation remain open. Keep the PR Draft until those gates are closed.**
+> cumulative hosted integration, numeric evidence validation, persistent-state isolation, rerun/UTC contracts, and
+> current branch reconciliation remain open. Keep the PR Draft until those gates are closed.**
