@@ -78,8 +78,8 @@ fd connection → stream/data flow
 current shell / command / subshell → state mutation boundary
 ```
 
-단, 두 번째 model은 모든 control-flow construct의 **decision input**이 exit status라는 뜻으로 확장하면 안 된다. 이 구분이
-Finding 2의 핵심이다.
+단, 두 번째 model은 모든 control-flow construct의 **decision input**이 exit status라는 뜻으로 확장하면 안 된다. 이
+구분이 Finding 2의 핵심이다.
 
 ### 4. 첫 calibration slice는 적절하게 작다
 
@@ -102,9 +102,9 @@ predict
 
 ### Finding 1 · Outcome development / assessment coverage가 없다 — MERGE BLOCKER
 
-`adudeck-deck-curriculum`은 curriculum baseline에 substantial outcome이 어디에서 개발되고 어디에서 평가되는지의 coverage를
-요구한다. 현재 README에는 11개의 observable learning outcome과 unit architecture, generic practice model은 있지만 이
-둘을 연결하는 map이 없다.
+`adudeck-deck-curriculum`은 curriculum baseline에 substantial outcome이 어디에서 개발되고 어디에서 평가되는지의
+coverage를 요구한다. 현재 README에는 11개의 observable learning outcome과 unit architecture, generic practice model은
+있지만 이 둘을 연결하는 map이 없다.
 
 이 상태에서는 모든 unit을 작성해도 다음 competence가 실제로 평가되는지 추적하기 어렵다.
 
@@ -171,7 +171,8 @@ GitHub의 outdated 상태를 resolved disposition으로 해석하면 안 된다.
 
 - outcome 7을 “control-flow construct의 decision input과 resulting status를 구분한다”는 방향으로 교정한다.
 - Unit 3에서 `case`를 status-based selection으로 설명하지 않는다.
-- `case`에 필요한 최소 shell pattern-matching semantics를 Unit 1 pathname pattern 또는 Unit 3의 명시적 prerequisite로 연결한다.
+- `case`에 필요한 최소 shell pattern-matching semantics를 Unit 1 pathname pattern 또는 Unit 3의 명시적 prerequisite로
+  연결한다.
 - `for`는 Unit 4의 item-list iteration model로 유지한다.
 - `$?`는 argument-processing outcome이 아니라 status/control-flow outcome으로 이동한다.
 
@@ -285,9 +286,9 @@ POSIX source에서 다시 검증하는 현재 정책을 유지한다.
 
 ### Unit 2 cognitive load
 
-Unit 2는 assignment/environment, positional parameters, fd/redirection, pipeline, execution-environment boundary를 한 unit에
-모은다. Concept dependency상 같은 integration zone에 둘 수는 있지만 실제 textbook chapter를 작성할 때 한 chapter로
-압축하면 cognitive load가 커질 수 있다.
+Unit 2는 assignment/environment, positional parameters, fd/redirection, pipeline, execution-environment boundary를 한
+unit에 모은다. Concept dependency상 같은 integration zone에 둘 수는 있지만 실제 textbook chapter를 작성할 때 한
+chapter로 압축하면 cognitive load가 커질 수 있다.
 
 **Disposition:** curriculum blocker는 아니다. `adudeck-textbook-write` 단계에서 chapter/bundle을 여러 개로 나누더라도
 Unit 2 responsibility는 유지할 수 있다.
@@ -305,14 +306,16 @@ boundary를 따로 검증·표시해야 한다.
 검토 시점 PR branch는 current `main`보다 1 commit 뒤이고 compare state는 `diverged`다. 다만 PR은 mergeable하며,
 `adudeck-deck-curriculum`과 `adudeck-textbook` Skill content는 PR head와 current `main`에서 동일했다.
 
-**Disposition:** 현재 finding의 원인은 branch drift가 아니다. 최종 merge 전 latest `main`과 integration status를 다시 확인한다.
+**Disposition:** 현재 finding의 원인은 branch drift가 아니다. 최종 merge 전 latest `main`과 integration status를 다시
+확인한다.
 
 ## CI / repository state
 
 검토 대상 revision `eb868f5b170c1b344054e96aeb27e8ad3ffec91d`에는 `ci/validated = success` status가 있었다.
 이것은 repository tree validation이 통과했다는 evidence이지 curriculum semantic correctness의 proof는 아니다.
 
-이 review report 자체와 후속 repair가 branch를 변경하므로 merge gate에서는 **새 final head의 CI/status를 다시 확인해야 한다.**
+이 review report 자체와 후속 repair가 branch를 변경하므로 merge gate에서는
+**새 final head의 CI/status를 다시 확인해야 한다.**
 
 ## Minimal repair sequence
 
