@@ -1,6 +1,7 @@
 # Python에서 사용하는 Rust 구현체 실습
 
-**Python API는 Python 사용자에게 자연스럽게 유지하고, 성능·정확성·배포 요구가 있는 내부 구현을 Rust로 작성**하는 hands-on 덱이다. Agentic coding을 통해 구현·실험·수정·검증하는 과정을 학습한다.
+**Python API는 Python 사용자에게 자연스럽게 유지하고, 성능·정확성·배포 요구가 있는 내부 구현을 Rust로 작성**하는
+hands-on 덱이다. Agentic coding을 통해 구현·실험·수정·검증하는 과정을 학습한다.
 
 현재는 후속 학습을 위한 backlog이다. 실습 프로젝트와 배포 artifact는 아직 작성되지 않았다.
 
@@ -19,7 +20,8 @@
 
 - [Rust 입문](../language-rust_intro/README.md)의 학습 목표
 - Python의 패키징, 가상환경, `pytest`와 간단한 profiling 경험
-- [Rust 심화](../language-rust_advanced/README.md)는 최적화·동시성 단계에서 유용하며, 모든 단원을 선행 완료할 필요는 없다.
+- [Rust 심화](../language-rust_advanced/README.md)는 최적화·동시성 단계에서 유용하며, 모든 단원을 선행 완료할 필요는
+  없다.
 
 ## Learning scope
 
@@ -32,12 +34,14 @@
 7. End-to-end benchmark: 호출 오버헤드, 데이터 전송 비용, 작은 입력과 큰 입력 비교
 8. Agentic iteration: 요구사항 → 구현 → 컴파일/테스트 → 벤치마크 → 수정
 
-첫 프로젝트 후보는 Python용 텍스트·레코드 처리 라이브러리의 작은 핵심 함수다. 실제 Python 병목이 확인되지 않으면 Rust 이식이 최적의 선택이라고 가정하지 않는다.
+첫 프로젝트 후보는 Python용 텍스트·레코드 처리 라이브러리의 작은 핵심 함수다. 실제 Python 병목이 확인되지 않으면 Rust
+이식이 최적의 선택이라고 가정하지 않는다.
 
 ## Completion evidence
 
-Python에서 `import` 가능한 installable wheel 하나를 만들고, Python baseline과 Rust-backed 구현의 동작 일치·실패 처리·성능 측정을 재현한다.
-측정에서 이점이 없거나 maintenance cost가 더 크면 Python 구현을 유지한다는 판단도 유효한 결과다.
+Python에서 `import` 가능한 installable wheel 하나를 만들고, Python baseline과 Rust-backed 구현의 동작 일치·실패
+처리·성능 측정을 재현한다. 측정에서 이점이 없거나 maintenance cost가 더 크면 Python 구현을 유지한다는 판단도 유효한
+결과다.
 
 ## References
 

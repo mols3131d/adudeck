@@ -16,7 +16,8 @@ Rust 입문 이후, **고성능·신뢰성 있는 라이브러리의 내부 구�
 
 ## Prerequisites
 
-[Rust 입문](../language-rust_intro/README.md)의 학습 목표를 충족해야 한다. Python의 profiling 및 기본 동시성 경험은 도움이 되지만 필수는 아니다.
+[Rust 입문](../language-rust_intro/README.md)의 학습 목표를 충족해야 한다. Python의 profiling 및 기본 동시성 경험은
+도움이 되지만 필수는 아니다.
 
 ## Learning scope
 
@@ -28,12 +29,13 @@ Rust 입문 이후, **고성능·신뢰성 있는 라이브러리의 내부 구�
 6. Profiling, criterion-based benchmarking, 최적화 전후 회귀 검증
 7. 작은 성능 민감 라이브러리의 설계 변경·검증
 
-`unsafe`/FFI는 안전한 API로 표현할 수 없는 요구가 확인되었을 때 경계와 invariant를 학습한다. GPU, embedded, kernel 개발이나 production distributed system 구축은 core 범위가 아니다.
+`unsafe`/FFI는 안전한 API로 표현할 수 없는 요구가 확인되었을 때 경계와 invariant를 학습한다. GPU, embedded, kernel
+개발이나 production distributed system 구축은 core 범위가 아니다.
 
 ## Completion evidence
 
-같은 기능의 기준 구현과 개선 구현에 대해 correctness test와 반복 benchmark를 제시한다.
-최적화가 실제로 도움이 되는 조건, 되지 않는 조건, 복잡성 비용을 설명한다. Agent의 구현 속도와 Rust 실행 성능을 같은 지표로 섞지 않는다.
+같은 기능의 기준 구현과 개선 구현에 대해 correctness test와 반복 benchmark를 제시한다. 최적화가 실제로 도움이 되는 조건,
+되지 않는 조건, 복잡성 비용을 설명한다. Agent의 구현 속도와 Rust 실행 성능을 같은 지표로 섞지 않는다.
 
 ## References
 
