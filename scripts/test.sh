@@ -9,7 +9,7 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 if [[ "$#" -gt 1 ]]; then
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|opentelemetry-deck|opentelemetry-acceptance|scripts]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts]" >&2
   exit 2
 fi
 
@@ -70,6 +70,85 @@ PY
   echo "==> [test:openai-sdk-deck] Locked deck validation passed."
 }
 
+run_langfuse_deck() {
+  echo "==> [test:langfuse-deck] Checking locked deck environment and textbook contracts..."
+  local project_dir="decks/llmops-langfuse"
+
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python -m compileall -q "$project_dir/textbook"
+
+  echo "==> [test:langfuse-deck] Checking installed Langfuse/OpenAI public API surface..."
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked python - <<'PY'
+import inspect
+
+from langfuse import (
+    Evaluation,
+    Langfuse,
+    LangfuseSpan,
+    get_client,
+    propagate_attributes,
+)
+from langfuse.api import NotFoundError
+from langfuse.openai import OpenAI as LangfuseOpenAI
+
+assert callable(get_client)
+assert callable(propagate_attributes)
+assert callable(Evaluation)
+assert issubclass(NotFoundError, Exception)
+
+for method_name in (
+    "start_as_current_observation",
+    "create_dataset_item",
+    "get_dataset",
+    "run_experiment",
+    "get_prompt",
+    "create_prompt",
+    "flush",
+):
+    assert callable(getattr(Langfuse, method_name))
+
+assert callable(LangfuseSpan.score)
+assert callable(LangfuseSpan.score_trace)
+
+get_dataset_params = inspect.signature(Langfuse.get_dataset).parameters
+assert "version" in get_dataset_params
+
+create_dataset_item_params = inspect.signature(Langfuse.create_dataset_item).parameters
+assert "id" in create_dataset_item_params
+
+get_prompt_params = inspect.signature(Langfuse.get_prompt).parameters
+assert "version" in get_prompt_params
+assert "label" in get_prompt_params
+assert "cache_ttl_seconds" in get_prompt_params
+
+create_prompt_params = inspect.signature(Langfuse.create_prompt).parameters
+for parameter in ("name", "prompt", "labels", "type"):
+    assert parameter in create_prompt_params
+
+client = LangfuseOpenAI(api_key="local-test-key")
+assert callable(client.responses.create)
+PY
+
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/01-first-trace/test_first_trace.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/02-trace-design/test_trace_design.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/03-openai-integration/test_openai_integration.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/04-scores/test_score_evidence.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/05-datasets/test_dataset_case.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/06-experiments/test_experiment_compare.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/07-prompt-management/test_prompt_versioning.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$project_dir/textbook/08-evaluation-loop/test_release_gate.py"
+
+  echo "==> [test:langfuse-deck] Locked SDK and textbook contract validation passed."
+}
+
 run_opentelemetry_deck() {
   echo "==> [test:opentelemetry-deck] Validating locked core textbook evidence..."
   env -u VIRTUAL_ENV uv run --project decks/systems-opentelemetry --locked \
@@ -101,8 +180,8 @@ case "$TARGET" in
   openai-sdk-deck)
     run_openai_sdk_deck
     ;;
-  scripts)
-    run_scripts
+  langfuse-deck)
+    run_langfuse_deck
     ;;
   opentelemetry-deck)
     run_opentelemetry_deck
@@ -110,16 +189,20 @@ case "$TARGET" in
   opentelemetry-acceptance)
     run_opentelemetry_acceptance
     ;;
+  scripts)
+    run_scripts
+    ;;
   all)
     run_smoke
     run_dataset_generator
     run_openai_sdk_deck
+    run_langfuse_deck
     run_opentelemetry_deck
     run_scripts
-    echo "==> All core test suites passed."
+    echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
     exit 1
     ;;
 esac
