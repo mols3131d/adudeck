@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 from prompt_versioning import (
     LAB_PROMPT,
+    PROMPT_NAME,
     ensure_lab_prompt,
     fetch_prompt,
     generate_with_prompt,
@@ -13,7 +14,7 @@ from prompt_versioning import (
 
 
 class FakePrompt:
-    name = "support/refund-answer"
+    name = PROMPT_NAME
     version = 21
     labels = ["staging"]
     prompt = LAB_PROMPT
@@ -50,14 +51,15 @@ class FakeNotFoundError(Exception):
 
 
 class FakeLangfuse:
-    def __init__(self, *, prompt: object | None = None) -> None:
+    def __init__(self, *, prompt: object | None = None, missing_labels: set[str] | None = None) -> None:
         self.calls: list[tuple[str, dict[str, object]]] = []
         self.create_calls: list[dict[str, object]] = []
         self.prompt = FakePrompt() if prompt is None else prompt
+        self.missing_labels = missing_labels or set()
 
     def get_prompt(self, name: str, **kwargs):
         self.calls.append((name, kwargs))
-        if self.prompt is MISSING:
+        if self.prompt is MISSING or kwargs.get("label") in self.missing_labels:
             raise FakeNotFoundError("prompt missing")
         return self.prompt
 
@@ -95,7 +97,7 @@ class PromptVersioningContractTest(unittest.TestCase):
                 {"role": "user", "content": "환불 기간은?"},
             ],
         )
-        self.assertEqual(evidence["prompt_name"], "support/refund-answer")
+        self.assertEqual(evidence["prompt_name"], PROMPT_NAME)
         self.assertEqual(evidence["prompt_version"], 21)
         self.assertEqual(evidence["prompt_labels"], ("staging",))
 
@@ -109,7 +111,7 @@ class PromptVersioningContractTest(unittest.TestCase):
             langfuse.calls,
             [
                 (
-                    "support/refund-answer",
+                    PROMPT_NAME,
                     {"type": "chat", "label": "staging"},
                 )
             ],
@@ -124,7 +126,7 @@ class PromptVersioningContractTest(unittest.TestCase):
             langfuse.calls,
             [
                 (
-                    "support/refund-answer",
+                    PROMPT_NAME,
                     {"type": "chat", "version": 21},
                 )
             ],
@@ -152,6 +154,7 @@ class PromptVersioningContractTest(unittest.TestCase):
         self.assertIs(prompt, langfuse.prompt)
         self.assertFalse(created)
         self.assertEqual(langfuse.create_calls, [])
+        self.assertEqual(langfuse.calls[0][1]["cache_ttl_seconds"], 0)
 
     def test_bootstrap_creates_missing_synthetic_prompt(self) -> None:
         langfuse = FakeLangfuse(prompt=MISSING)
@@ -164,11 +167,12 @@ class PromptVersioningContractTest(unittest.TestCase):
 
         self.assertTrue(created)
         self.assertEqual(prompt.labels, ["staging"])
+        self.assertEqual([call[1]["label"] for call in langfuse.calls], ["staging", "latest"])
         self.assertEqual(
             langfuse.create_calls,
             [
                 {
-                    "name": "support/refund-answer",
+                    "name": PROMPT_NAME,
                     "type": "chat",
                     "prompt": LAB_PROMPT,
                     "labels": ["staging"],
@@ -189,6 +193,17 @@ class PromptVersioningContractTest(unittest.TestCase):
                 not_found_error=FakeNotFoundError,
             )
 
+        self.assertEqual(langfuse.create_calls, [])
+
+    def test_bootstrap_rejects_existing_series_with_missing_requested_label(self) -> None:
+        langfuse = FakeLangfuse(missing_labels={"staging"})
+
+        with self.assertRaisesRegex(RuntimeError, "existing prompt series"):
+            ensure_lab_prompt(
+                langfuse, label="staging", not_found_error=FakeNotFoundError
+            )
+
+        self.assertEqual([call[1]["label"] for call in langfuse.calls], ["staging", "latest"])
         self.assertEqual(langfuse.create_calls, [])
 
 
