@@ -198,6 +198,7 @@ langfuse.create_dataset(
 
 ```python
 langfuse.create_dataset_item(
+    id="<stable-globally-unique-item-id>",
     dataset_name="support/refund-policy",
     input={"days_since_delivery": 10},
     expected_output={"eligible": True, "policy_days": 14},
@@ -212,6 +213,11 @@ langfuse.create_dataset_item(
 
 [`dataset_case.py`](dataset_case.py)는 dataset이 이미 준비되어 있다고 가정하고 item promotion만 담당한다. Dataset
 lifecycle과 case extraction을 한 함수에 섞지 않아 학습할 state transition을 더 분명하게 한다.
+
+반복 실행 시 중복 row가 늘어나지 않도록 예제는 `dataset_name`과 `case_id`에서 UUIDv5 item `id`를 만든다.
+Langfuse는 같은 `id`를 다시 업로드하면 **upsert**한다. `id`는 dataset 간에도 중복되면 안 되므로 dataset 이름을 식별자에
+포함한다. 다만 upsert가 history를 전혀 바꾸지 않는다는 뜻은 아니다. Input, expected output, source trace가
+달라지면 기존 item 내용이 갱신될 수 있다. Snapshot을 기록한 후에는 이 lab을 재실행해 실험 조건을 흔들지 않는다.
 
 ## 7. 실행 전에 예측한다
 
@@ -239,6 +245,7 @@ Test는 다음을 확인한다.
 - source trace/observation linkage가 payload에 남는다.
 - 예제 case가 raw customer transcript를 필요로 하지 않는다.
 - upload helper가 `create_dataset_item()` contract로 전달한다.
+- 같은 case/dataset은 같은 UUIDv5 id를 사용하고 다른 dataset에서는 다른 id를 사용한다.
 
 이 test가 검증하지 않는 것:
 
@@ -250,7 +257,8 @@ Test는 다음을 확인한다.
 
 ## 9. Live lab
 
-먼저 Langfuse에서 `support/refund-policy` dataset을 한 번 만든다. UI를 사용하거나 SDK로 만들어도 된다.
+먼저 **별도의 학습용 Langfuse project**에서 `support/refund-policy` dataset을 한 번 만든다. UI를 사용하거나 SDK로 만들어도 된다.
+실제 운영 dataset을 lab 대상으로 사용하지 않는다.
 
 그 다음 실제로 **학습 가치가 있다고 판단한** trace ID를 사용한다.
 
@@ -278,6 +286,7 @@ dataset item
 - 원본 trace를 열면 왜 이 case가 추가됐는지 더 자세히 알 수 있는가?
 - 원본 trace 없이도 task/evaluator를 실행할 수 있는가?
 - dataset에 저장하지 않아도 되는 production detail은 무엇인가?
+- 같은 명령을 다시 실행하면 dataset item 개수는 어떻게 되는가? Source trace를 바꾸면 무엇이 갱신되는가?
 
 ## 10. Dataset version은 비교 조건이다
 
