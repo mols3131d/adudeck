@@ -434,7 +434,10 @@ status != scored
 → score를 붙이지 않음
 ```
 
-잘못된 state를 객체 생성 시점에 거부한다.
+잘못된 state를 객체 생성 시점에 거부한다. `scored`의 correctness 값은 유한한 `[0, 1]` 범위여야 한다.
+`NaN`, `Inf` 또는 범위 밖 숫자는 성공한 평가의 evidence가 아니므로 객체 생성 시 에러가 난다.
+마찬가지로 p95 latency가 음수 또는 비유한 수라면 release decision 전에 명시적으로 거부한다.
+이를 0점이나 평균 계산에서 무시하는 row로 바꾸지 않는다.
 
 ## 8. 평균은 같은 paired population에서 계산한다
 
@@ -611,6 +614,7 @@ critical fail → fail
 critical fail → pass
 policy-satisfied pass case
 invalid status/score combination
+non-finite/out-of-range correctness와 non-finite/negative latency
 ```
 
 이 테스트가 중요한 이유는 release code가 바로 이 장의 conceptual model이기 때문이다.
