@@ -122,7 +122,8 @@ staging label = 21
 
 외부 project state가 우연히 준비되어 있다고 가정하지 않는다.
 
-[`prompt_versioning.py`](prompt_versioning.py)는 synthetic lab prompt를 bounded하게 bootstrap할 수 있다.
+[`prompt_versioning.py`](prompt_versioning.py)는 `adudeck-lab/refund-answer`라는 학습 전용 namespace에서
+synthetic prompt를 bounded하게 bootstrap할 수 있다. **운영 project와 분리된 학습용 project를 사용한다.**
 
 Live lab에 필요한 credential/model을 설정한다.
 
@@ -147,9 +148,12 @@ uv run python textbook/07-prompt-management/prompt_versioning.py \
 Bootstrap behavior:
 
 ```text
-staging label이 없음
+prompt 이름 자체가 없음 (staging label도 없음)
 → synthetic chat prompt 생성
 → staging label 연결
+
+prompt 이름은 존재하지만 staging label이 없음
+→ 기존 series의 latest/version history를 변경하지 않고 실행 중단
 
 staging label이 이미 같은 synthetic prompt를 가리킴
 → 기존 prompt 재사용
@@ -162,7 +166,10 @@ staging label이 다른 content를 가리킴
 
 마지막 경우가 중요한 이유는 학습 script가 기존 project prompt를 조용히 변경하면 안 되기 때문이다.
 
-필요하면 별도 test project나 별도 label을 사용한다.
+Bootstrap은 Langfuse에 새로운 version과 `latest`/`staging` label을 **영구적으로 기록**한다.
+재실행 때 내용이 동일하면 그대로 재사용하지만, project에 다른 label 또는 version만 있는 경우에는
+그 series를 수정하지 않는다. 상태를 초기화하고 싶다면 학습용 project에서 해당 lab prompt를 명시적으로
+관리·삭제하거나 새 학습용 project를 사용한다. 실제 운영 prompt를 삭제하지 않는다.
 
 ## 4. Label lookup을 먼저 실행한다
 
@@ -184,7 +191,7 @@ uv run python textbook/07-prompt-management/prompt_versioning.py \
 
 ```text
 prompt_selection=label=staging
-prompt_name=support/refund-answer
+prompt_name=adudeck-lab/refund-answer
 prompt_version=...
 prompt_labels=(...)
 answer=...
