@@ -5,7 +5,7 @@ import os
 from typing import Any
 
 
-PROMPT_NAME = "support/refund-answer"
+PROMPT_NAME = "adudeck-lab/refund-answer"
 LAB_PROMPT = [
     {
         "role": "system",
@@ -82,8 +82,26 @@ def ensure_lab_prompt(
             PROMPT_NAME,
             type="chat",
             label=label,
+            cache_ttl_seconds=0,
         )
     except not_found_error:
+        # Missing label does NOT mean missing prompt series. Creating a version
+        # would move Langfuse's managed 'latest' pointer on an existing series.
+        try:
+            langfuse.get_prompt(
+                PROMPT_NAME,
+                type="chat",
+                label="latest",
+                cache_ttl_seconds=0,
+            )
+        except not_found_error:
+            pass
+        else:
+            raise RuntimeError(
+                f"{PROMPT_NAME!r} exists but label {label!r} does not; "
+                "bootstrap refuses to change an existing prompt series. "
+                "Use a dedicated lab project or manage labels intentionally."
+            ) from None
         created = langfuse.create_prompt(
             name=PROMPT_NAME,
             type="chat",
@@ -142,7 +160,7 @@ def parse_args() -> argparse.Namespace:
         "--bootstrap",
         action="store_true",
         help=(
-            "Create the synthetic lab prompt if the selected label does not exist. "
+            "Create the synthetic lab prompt only when the prompt series itself is absent. "
             "Bootstrap cannot be combined with --version."
         ),
     )
