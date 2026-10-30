@@ -25,9 +25,7 @@ Dataset의 역할은 production log를 복사하는 것이 아니다.
 
 Production trace 10만 건을 그대로 dataset에 복사하는 방식은 적절하지 않다.
 
-좋은 dataset은 질문을 가진다.
-
-Dataset의 질문은 명확해야 한다. **“이 변경이 과거의 critical failure를 되살리는가?”, “boundary condition과 대표 정상 case를 여전히 만족하는가?”**
+좋은 dataset은 **“이 변경이 과거의 critical failure를 되살리는가?”, “boundary condition과 대표 정상 case를 여전히 만족하는가?”**처럼 판정할 질문을 가진다.
 
 그래서 dataset item은 **선택된 test case**다.
 
@@ -306,15 +304,15 @@ item change history를 version으로 다루고, schema 자체는 같은 방식�
 
 ### 재현 가치
 
-**재현 가치:** 다시 발생하면 중요한 실패인가? 향후 변경으로 회귀할 가능성이 있는가?
+ 다시 발생하면 중요한 실패인가? 향후 변경으로 회귀할 가능성이 있는가?
 
 ### 판정 가능성
 
-**판정 가능성:** expected behavior를 설명할 수 있고, evaluator가 관찰할 근거가 있는가?
+ expected behavior를 설명할 수 있고, evaluator가 관찰할 근거가 있는가?
 
 ### 안전한 보존
 
-**안전한 보존:** PII·secret·confidential data를 제거하거나 synthetic form으로 바꾸면서도 실패 조건을 재현할 수 있는가?
+ PII·secret·confidential data를 제거하거나 synthetic form으로 바꾸면서도 실패 조건을 재현할 수 있는가?
 
 처음 dataset은 작아도 된다.
 
