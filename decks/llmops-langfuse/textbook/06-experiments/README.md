@@ -238,6 +238,22 @@ experiment runner
 
 Production failure를 Unit 5에서 hosted dataset item으로 올렸다고 하자.
 
+여기서는 **Unit 5의 hosted item**과 앞 절의 category 기반 `LOCAL_DATA`가 서로 다른 계약임을 먼저 구분한다.
+
+```text
+Local category demo input: {"category": "electronics", "days": 10}
+Local output: {"eligible": true}
+
+Hosted Unit 5 input: {"days_since_delivery": 10}
+Hosted expected_output: {"eligible": true, "policy_days": 14}
+```
+
+Hosted task는 `days_since_delivery`를 읽고 **두 필드 모두** 반환한다. Baseline은
+`{"eligible": true, "policy_days": 14}`, candidate (`refund_window_days=7`)는
+`{"eligible": false, "policy_days": 7}`을 낸다. Full-output equality evaluator는 이 둘의
+정책 일치 여부를 판정한다. 따라서 local category 비교의 *동일한 평균·서로 다른 실패*라는 결과가 hosted
+experiment에서도 그대로 나온다고 가정하지 않는다. 이 장의 두 실습은 서로 다른 질문을 다룬다.
+
 Dataset은 시간이 지나면서 변할 수 있다.
 
 ```text
@@ -269,7 +285,7 @@ dataset = langfuse.get_dataset(
 
 Unit 5에서 필요한 dataset items를 만든 뒤, 그 상태를 이번 comparison에서 고정한다고 결정한다.
 
-예를 들어 현재 UTC 시간을 snapshot boundary로 기록한다.
+예를 들어 **item 업로드가 Langfuse에 반영된 뒤**, 현재 UTC 시간을 snapshot boundary로 기록한다.
 
 ```bash
 export LANGFUSE_DATASET="support/refund-policy"
@@ -279,6 +295,9 @@ print(datetime.now(timezone.utc).isoformat())
 PY
 )"
 ```
+
+CLI는 타임존이 포함된 ISO-8601 값을 받고, UTC가 아닌 오프셋도 UTC로 정규화해 SDK에 전달한다.
+Timestamp를 고른 뒤 같은 value로 두 run을 실행하고, 업로드·수정이 발생한 뒤의 snapshot인지 확인한다.
 
 중요한 것은 timestamp 값 자체가 아니다.
 
