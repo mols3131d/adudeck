@@ -1,18 +1,6 @@
 # 7장 · Prompt Management: Prompt Version을 실행 Evidence와 연결하기
 
-Prompt는 단순 문자열이 아니다. Production behavior를 바꿀 수 있는 **application artifact**다.
-
-따라서 다음 질문에 답할 수 있어야 한다.
-
-```text
-어떤 prompt를 요청했는가?
-어떤 immutable version이 실제로 선택됐는가?
-그 version은 어떤 label로 선택됐는가?
-실제로 provider에 전달된 compiled input은 무엇인가?
-그 generation의 score/latency/cost는 무엇이었는가?
-```
-
-이 장의 핵심은 prompt를 Langfuse UI에 저장하는 것이 아니다.
+Prompt는 production 동작을 바꾸는 **application artifact**다. 저장 여부보다 **어떤 prompt를 요청했고, 어떤 version/label이 선택됐으며, 실제 compiled input과 generation의 score·latency·cost가 무엇이었는지** 추적하는 것이 중요하다.
 
 > **Prompt selection → immutable version → compiled runtime input → generation → evaluation evidence를 연결한다.**
 
@@ -80,43 +68,15 @@ Debugging에서는 항상 묻는다.
 
 ## 2. Version과 label은 서로 다른 문제를 푼다
 
-Prompt 변경은 새 immutable version을 만든다.
+Prompt를 변경하면 새 **immutable version**이 생기지만, **label은 version을 가리키는 mutable routing pointer**다.
 
-```text
-version 20
-version 21
-version 22
-```
+| Version | Label 예시 | 의미 |
+| --- | --- | --- |
+| 20 | `production` | 현재 운영에 선택된 version |
+| 21 | `staging` | 검증 중인 candidate |
+| 22 | `latest` | 가장 최근에 생성된 version |
 
-Label은 version을 가리키는 mutable pointer다.
-
-```text
-version 20  ← production
-version 21  ← staging
-version 22  ← latest version
-```
-
-Mental model:
-
-```text
-version
-= historical identity
-= "정확히 무엇을 실행했는가?"
-
-label
-= routing pointer
-= "현재 이 이름으로 어느 version을 선택할 것인가?"
-```
-
-따라서 다음은 동시에 참일 수 있다.
-
-```text
-latest version = 22
-production label = 20
-staging label = 21
-```
-
-새 version이 생겼다는 사실은 production 승인을 의미하지 않는다.
+Version은 **“과거에 무엇을 실행했는가?”**, label은 **“지금 어느 version을 선택할 것인가?”**에 답한다. 최신 version 22가 있어도 production은 20을 가리킬 수 있다. 새 version의 생성은 production 승인과 다르다.
 
 ## 3. 먼저 lab state를 안전하게 만든다
 
@@ -145,26 +105,16 @@ uv run python textbook/07-prompt-management/prompt_versioning.py \
   --label staging
 ```
 
-Bootstrap behavior:
+Bootstrap은 다음 상태를 구분한다.
 
-```text
-prompt 이름 자체가 없음 (staging label도 없음)
-→ synthetic chat prompt 생성
-→ staging label 연결
+| 기존 상태 | 처리 |
+| --- | --- |
+| Prompt 이름 자체가 없음 | Synthetic chat prompt를 생성하고 `staging` label 연결 |
+| Prompt는 있지만 `staging` label이 없음 | 기존 `latest`/version history를 변경하지 않고 중단 |
+| `staging`이 같은 synthetic content를 가리킴 | 기존 prompt 재사용, 새 version은 생성하지 않음 |
+| `staging`이 다른 content를 가리킴 | 덮어쓰지 않고 중단 |
 
-prompt 이름은 존재하지만 staging label이 없음
-→ 기존 series의 latest/version history를 변경하지 않고 실행 중단
-
-staging label이 이미 같은 synthetic prompt를 가리킴
-→ 기존 prompt 재사용
-→ 불필요한 새 version 생성 안 함
-
-staging label이 다른 content를 가리킴
-→ 덮어쓰지 않음
-→ 실험 중단
-```
-
-마지막 경우가 중요한 이유는 학습 script가 기존 project prompt를 조용히 변경하면 안 되기 때문이다.
+학습 script가 기존 project의 prompt를 조용히 변경하지 않게 하는 것이 핵심이다.
 
 Bootstrap은 Langfuse에 새로운 version과 `latest`/`staging` label을 **영구적으로 기록**한다.
 재실행 때 내용이 동일하면 그대로 재사용하지만, project에 다른 label 또는 version만 있는 경우에는
@@ -216,33 +166,11 @@ uv run python textbook/07-prompt-management/prompt_versioning.py \
   --version 21
 ```
 
-두 실행을 비교한다.
-
-```text
-label-based
---label staging
-→ staging pointer가 현재 가리키는 version
-
-version-based
---version 21
-→ immutable version 21
-```
+두 실행의 선택 기준은 다르다. `--label staging`은 **현재 pointer가 가리키는 version**, `--version 21`은 **immutable version 21**을 선택한다.
 
 ### Prediction
 
-`staging` label을 나중에 version 22로 이동하면:
-
-```text
---label staging
-→ 22
-
---version 21
-→ 계속 21
-```
-
-이어야 한다.
-
-이 차이가 production routing과 experiment reproducibility의 차이다.
+`staging` label을 version 22로 이동하면 `--label staging`은 **22**를, `--version 21`은 계속 **21**을 선택해야 한다. 이것이 routing과 experiment reproducibility의 차이다.
 
 ## 6. Prompt object와 compiled input을 함께 전달한다
 
@@ -262,17 +190,7 @@ response = openai_client.responses.create(
 )
 ```
 
-두 정보는 역할이 다르다.
-
-```text
-compiled
-→ provider가 실제로 처리한 runtime input
-
-langfuse_prompt
-→ 그 input을 만든 Langfuse prompt version identity
-```
-
-둘이 함께 있어야 다음 evidence chain을 만들 수 있다.
+`compiled`는 provider가 처리한 실제 runtime input이고, `langfuse_prompt`는 그 input의 Langfuse prompt version identity다. 둘을 함께 전달해야 다음 evidence chain을 만들 수 있다.
 
 ```text
 prompt version
@@ -288,51 +206,17 @@ Version만 있으면 "어떤 variable 값이 실제 input을 만들었는가?"�
 
 ## 7. Missing label은 성공처럼 바꾸지 않는다
 
-다음 실험을 생각한다.
+`staging`을 요청했지만 해당 label이 없다고 하자. Application이 조용히 `production`을 사용하면 호출은 성공해도 **검증 대상이 staging candidate에서 production으로 바뀐다.**
 
-```text
-요청: staging
-실제 staging label: 없음
-```
-
-이때 application이 조용히 `production`을 사용하면 command는 성공할 수 있다.
-
-하지만 experiment 질문은 바뀌었다.
-
-```text
-우리가 검증하려던 것
-= staging candidate
-
-실제로 검증한 것
-= production
-```
-
-그래서 이 lab의 label lookup은 missing label을 실패로 유지한다.
-
-실행 성공보다 **selection identity의 정직성**이 중요하다.
+이 lab은 missing label을 실패로 유지한다. 실행 성공보다 **선택한 version의 식별 정확성**이 중요하다.
 
 ## 8. Cache는 version identity와 다른 문제를 푼다
 
 Prompt cache는 remote fetch 비용과 availability를 다룬다.
 
-개념적으로:
+Fresh cache는 저장된 prompt를 반환하고, stale cache는 SDK policy에 따라 오래된 값과 refresh 경로를 사용할 수 있다. Empty cache는 remote fetch가 필요하다.
 
-```text
-fresh cache
-→ cached prompt 반환
-
-stale cache
-→ SDK policy에 따라 stale value + refresh path
-
-empty cache
-→ remote fetch 필요
-```
-
-이것은 다음 질문과 다르다.
-
-```text
-어떤 version을 사용했는가?
-```
+**Cache 상태와 어떤 version을 사용했는가는 다른 질문**이다.
 
 Cache가 있어도 label이 어느 version을 가리키는지는 selection semantics의 문제다.
 
@@ -349,45 +233,15 @@ Fallback은 remote prompt를 얻지 못해도 application이 계속 실행되게
 Langfuse Python SDK는 fallback prompt client를 `is_fallback=True`로 표시하고, prompt name/version tracing context를 만들
 때 fallback이면 remote prompt identity를 기록하지 않는다.
 
-따라서:
-
-```text
-remote Langfuse prompt object
-→ Langfuse prompt name/version provenance를 generation에 연결 가능
-
-local fallback
-→ availability를 유지할 수 있음
-→ 같은 remote prompt-version provenance는 없음
-```
-
-이것은 버그가 아니라 서로 다른 evidence 의미다.
+Remote Langfuse prompt object는 prompt name/version provenance를 generation에 연결할 수 있지만, **local fallback은 실행을 유지해도 같은 remote provenance를 남기지 않는다.** 두 경로의 evidence 의미가 다르다.
 
 Fallback을 사용했다면 application metadata나 별도 telemetry로 그 사실을 추적할 필요가 있는지 결정한다.
 
-```text
-availability success
-≠ provenance success
-```
+**Availability 성공과 provenance 보존은 다르다.**
 
 ## 10. Prompt ownership을 명시한다
 
-가능한 정책은 여러 개다.
-
-```text
-A. Langfuse가 prompt source of truth
-B. Git이 source of truth, Langfuse는 distribution/tracing surface
-C. prompt 종류별 owner를 명시적으로 분리
-```
-
-문제는 선택 자체가 아니다.
-
-```text
-Git version A
-Langfuse version B
-둘 다 canonical이라고 주장
-```
-
-하면 incident/debugging에서 어느 artifact를 복원해야 하는지 모호해진다.
+Prompt의 source of truth는 **Langfuse**, **Git (Langfuse는 배포·추적 역할)**, 또는 **종류별로 명시한 owner** 중 하나로 정할 수 있다. 문제는 Git의 version A와 Langfuse의 version B를 모두 canonical이라고 주장해, incident 때 무엇을 복원해야 하는지 알 수 없게 되는 경우다.
 
 이 deck은 하나의 universal policy를 강제하지 않는다. 대신 **owner와 synchronization responsibility를 명시하라**고
 요구한다.
@@ -425,20 +279,7 @@ aggregate
 
 ## 12. `propagate_attributes(prompt=...)`와 direct linkage
 
-여러 auto-instrumented generation이 같은 prompt context를 공유해야 할 때는 `propagate_attributes(prompt=prompt)` 같은
-context propagation이 유용할 수 있다.
-
-반대로 특정 generation 하나에 정확한 prompt object를 연결할 수 있으면 direct linkage가 더 좁고 읽기 쉽다.
-
-```text
-specific generation
-→ direct prompt linkage
-
-여러 downstream auto-instrumented generations
-→ propagated prompt context가 유용할 수 있음
-```
-
-편의 기능이 ownership을 모호하게 만들게 두지 않는다.
+특정 generation 하나에 정확한 prompt를 연결한다면 **direct linkage**가 단순하다. 여러 downstream auto-instrumented generation이 하나의 prompt context를 공유한다면 **`propagate_attributes(prompt=prompt)`**가 유용할 수 있다. 선택의 기준은 편의보다 ownership과 실제 사용 범위다.
 
 ## 13. Credential-free contract test
 
