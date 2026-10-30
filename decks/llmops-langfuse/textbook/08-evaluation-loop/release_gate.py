@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from typing import Literal
 
 
@@ -22,6 +23,10 @@ class VariantEvidence:
             raise ValueError("scored evidence requires a score")
         if self.status != "scored" and self.score is not None:
             raise ValueError("non-scored evidence must not carry a score")
+        if self.status == "scored" and (
+            not isfinite(self.score) or not 0.0 <= self.score <= 1.0
+        ):
+            raise ValueError("scored evidence must be finite and within [0, 1]")
 
     @classmethod
     def scored(cls, score: float) -> VariantEvidence:
@@ -48,6 +53,12 @@ class ReleasePolicy:
     require_no_evaluation_gaps: bool = True
     min_correctness_delta: float = 0.0
     max_p95_latency_seconds: float = 1.6
+
+    def __post_init__(self) -> None:
+        if not isfinite(self.min_correctness_delta):
+            raise ValueError("minimum correctness delta must be finite")
+        if not isfinite(self.max_p95_latency_seconds) or self.max_p95_latency_seconds < 0:
+            raise ValueError("maximum p95 latency must be finite and nonnegative")
 
 
 @dataclass(frozen=True)
@@ -102,6 +113,8 @@ def decide_release(
     candidate_p95_latency_seconds: float,
     policy: ReleasePolicy = ReleasePolicy(),
 ) -> ReleaseDecision:
+    if not isfinite(candidate_p95_latency_seconds) or candidate_p95_latency_seconds < 0:
+        raise ValueError("candidate p95 latency must be finite and nonnegative")
     reasons: list[str] = []
 
     if policy.require_no_evaluation_gaps:
