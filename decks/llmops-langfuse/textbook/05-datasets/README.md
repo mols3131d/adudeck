@@ -257,8 +257,8 @@ Test는 다음을 확인한다.
 
 ## 9. Live lab
 
-먼저 **별도의 학습용 Langfuse project**에서 `support/refund-policy` dataset을 한 번 만든다. UI를 사용하거나 SDK로 만들어도 된다.
-실제 운영 dataset을 lab 대상으로 사용하지 않는다.
+먼저 **별도의 학습용 Langfuse project**에서 `support/refund-policy` dataset을 한 번 만든다. UI를 사용하거나 SDK로
+만들어도 된다. 실제 운영 dataset을 lab 대상으로 사용하지 않는다.
 
 그 다음 실제로 **학습 가치가 있다고 판단한** trace ID를 사용한다.
 
