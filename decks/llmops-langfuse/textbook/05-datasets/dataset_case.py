@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from typing import Any
+from uuid import NAMESPACE_URL, uuid5
 
 
 @dataclass(frozen=True)
@@ -15,7 +16,10 @@ class RegressionCase:
     source_observation_id: str | None = None
 
     def as_langfuse_item(self, *, dataset_name: str) -> dict[str, Any]:
+        # Include dataset identity: the same logical case in another dataset is distinct.
+        item_id = str(uuid5(NAMESPACE_URL, f"adudeck-langfuse-lab:{dataset_name}:{self.case_id}"))
         payload: dict[str, Any] = {
+            "id": item_id,
             "dataset_name": dataset_name,
             "input": self.input,
             "expected_output": self.expected_output,
