@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -148,6 +148,19 @@ def run_langfuse_local_experiment(
     )
 
 
+def hosted_support_application(*, item: Any, refund_window_days: int) -> dict[str, Any]:
+    """Consume the Unit 5 dataset contract, not the separate local category demo."""
+    days = _item_input(item)["days_since_delivery"]
+    return {"eligible": days <= refund_window_days, "policy_days": refund_window_days}
+
+
+def _hosted_experiment_task(refund_window_days: int):
+    def task(*, item, **kwargs):
+        return hosted_support_application(item=item, refund_window_days=refund_window_days)
+
+    return task
+
+
 def run_hosted_dataset_experiment(
     dataset: Any,
     *,
@@ -157,7 +170,7 @@ def run_hosted_dataset_experiment(
 ):
     return dataset.run_experiment(
         name=name,
-        task=_experiment_task(refund_window_days),
+        task=_hosted_experiment_task(refund_window_days),
         evaluators=[correctness_evaluator],
         metadata={
             "refund_window_days": refund_window_days,
@@ -203,7 +216,8 @@ def parse_dataset_version(value: str) -> datetime:
         ) from exc
     if version.tzinfo is None:
         raise ValueError("LANGFUSE_DATASET_VERSION must include a timezone offset")
-    return version
+    # Langfuse requires an aware UTC datetime for historical dataset retrieval.
+    return version.astimezone(timezone.utc)
 
 
 def require_langfuse_credentials() -> None:
