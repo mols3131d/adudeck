@@ -39,19 +39,12 @@ Experiment
 
 각 책임을 섞지 않는다.
 
-```text
-dataset
-= 다시 시험할 cases와 reference
-
-task
-= 실제로 시험할 application behavior
-
-evaluator
-= output을 판정하는 rule
-
-experiment
-= cases × task × evaluator를 실행하고 비교할 evidence
-```
+| 구성 요소 | 책임 |
+| --- | --- |
+| Dataset | 다시 시험할 cases와 reference |
+| Task | 실험할 application behavior |
+| Evaluator | Output을 판정하는 rule |
+| Experiment | Cases × task × evaluator를 실행·비교한 evidence |
 
 특히 task가 `expected_output`을 그대로 읽어서 정답을 반환하면 experiment가 아니다.
 
@@ -66,10 +59,7 @@ def bad_task(*, item, **kwargs):
 
 [`experiment_compare.py`](experiment_compare.py)의 local dataset에는 두 category가 있다.
 
-```text
-electronics: 14일까지 환불 가능
-perishable:   7일까지 환불 가능
-```
+이 예제의 실제 정책은 **electronics는 14일**, **perishable은 7일** 이내 환불 가능하다는 것이다.
 
 Teaching application은 일부러 category를 무시하고 하나의 global refund window만 사용한다.
 
@@ -102,27 +92,20 @@ uv run python textbook/06-experiments/experiment_compare.py
 
 핵심 결과는 다음 관계다.
 
-```text
-baseline accuracy  = 0.75
-candidate accuracy = 0.75
+| 결과 | Baseline | Candidate |
+| --- | ---: | ---: |
+| Accuracy | 0.75 | 0.75 |
 
-candidate fixes
-perishable-day-10
-
-candidate regression
-electronics-day-14   critical
-```
+Candidate는 `perishable-day-10`을 수정했지만, critical case `electronics-day-14`를 새로 실패시킨다.
 
 ## 3. 평균이 같아도 behavior는 같지 않다
 
 두 variant의 평균이 모두 75%여도 item transition은 다르다.
 
-```text
-case                  baseline   candidate
-------------------------------------------------
-electronics-day-14     PASS       FAIL   critical
-perishable-day-10      FAIL       PASS
-```
+| Case | Baseline | Candidate | 중요도 |
+| --- | --- | --- | --- |
+| `electronics-day-14` | PASS | FAIL | Critical regression |
+| `perishable-day-10` | FAIL | PASS | Fix |
 
 Aggregate는 전체 방향을 보는 데 유용하지만 어떤 case가 바뀌었는지는 알려 주지 않는다.
 
@@ -176,10 +159,7 @@ parser rewrite
 
 따라서 먼저 질문한다.
 
-```text
-이 run은 product package comparison인가?
-아니면 특정 change의 effect를 이해하려는 controlled experiment인가?
-```
+**이 run은 제품 전체 구성을 비교하는가, 아니면 특정 변경 하나의 영향을 확인하는 controlled experiment인가?**
 
 둘을 같은 causal claim으로 취급하지 않는다.
 
@@ -223,16 +203,7 @@ return Evaluation(
 
 여기서 중요한 것은 API 호출 성공이 아니라 역할 분리다.
 
-```text
-task
-≠ evaluator
-
-evaluator
-≠ expected output owner
-
-experiment runner
-≠ correctness rule owner
-```
+`task`는 application을 실행하고 `evaluator`는 output을 판정한다. `expected_output`과 correctness rule의 owner를 experiment runner로 혼동하지 않는다.
 
 ## 6. Hosted dataset에서는 version도 condition이다
 
@@ -240,13 +211,10 @@ Production failure를 Unit 5에서 hosted dataset item으로 올렸다고 하자
 
 여기서는 **Unit 5의 hosted item**과 앞 절의 category 기반 `LOCAL_DATA`가 서로 다른 계약임을 먼저 구분한다.
 
-```text
-Local category demo input: {"category": "electronics", "days": 10}
-Local output: {"eligible": true}
-
-Hosted Unit 5 input: {"days_since_delivery": 10}
-Hosted expected_output: {"eligible": true, "policy_days": 14}
-```
+| 실습 | Input | Expected/output contract |
+| --- | --- | --- |
+| Local category demo | `{"category": "electronics", "days": 10}` | `{"eligible": true}` |
+| Hosted Unit 5 dataset | `{"days_since_delivery": 10}` | `{"eligible": true, "policy_days": 14}` |
 
 Hosted task는 `days_since_delivery`를 읽고 **두 필드 모두** 반환한다. Baseline은
 `{"eligible": true, "policy_days": 14}`, candidate (`refund_window_days=7`)는
@@ -256,11 +224,7 @@ experiment에서도 그대로 나온다고 가정하지 않는다. 이 장의 �
 
 Dataset은 시간이 지나면서 변할 수 있다.
 
-```text
-09:00  cases A, B, C
-10:00  case D 추가
-11:00  case B 수정
-```
+Dataset의 상태가 **09:00에 A·B·C**, **10:00에 D 추가**, **11:00에 B 수정**으로 달라졌다고 하자.
 
 Baseline은 09:30 snapshot을 쓰고 candidate는 11:30 snapshot을 쓰면 결과 차이가 application change 때문인지 dataset
 change 때문인지 섞인다.
@@ -346,21 +310,13 @@ Hosted experiment를 실행한 뒤 다음 순서로 본다.
 
 ### Level 1 · Aggregate
 
-```text
-baseline correctness
-candidate correctness
-```
+Aggregate 단계에서는 baseline과 candidate의 **correctness를 비교**한다.
 
 방향을 빠르게 확인한다.
 
 ### Level 2 · Item transition
 
-```text
-pass → fail
-fail → pass
-unchanged fail
-unchanged pass
-```
+각 case를 **PASS → FAIL**, **FAIL → PASS**, **계속 FAIL**, **계속 PASS**로 분류한다.
 
 특히 critical metadata가 붙은 `pass → fail`을 먼저 본다.
 
@@ -368,13 +324,7 @@ unchanged pass
 
 Regression item을 열고 묻는다.
 
-```text
-input이 같은가?
-expected output이 같은가?
-실제 application output은 어떻게 달라졌는가?
-어느 condition만 바뀌었는가?
-evaluator가 같은 rule을 사용했는가?
-```
+Input과 expected output이 같은지, application output과 변경 조건은 무엇인지, evaluator가 같은 rule을 사용했는지 확인한다.
 
 이때 trace는 dashboard 장식이 아니라 comparison 결과를 설명하는 diagnostic evidence가 된다.
 
@@ -382,23 +332,11 @@ evaluator가 같은 rule을 사용했는가?
 
 Experiment에는 최소한 다음 상태가 있다.
 
-```text
-application/task error
-evaluator error
-score missing
-valid output + low score
-valid output + high score
-```
+`application/task error`, `evaluator error`, `score missing`, 유효한 output의 low/high score는 서로 다른 상태다.
 
 다음 두 사건은 다르다.
 
-```text
-output을 평가했고 틀림
-→ valid score 0
-
-evaluator가 timeout
-→ evaluator error
-```
+평가를 마치고 틀린 output을 얻었다면 **유효한 `score=0`**이다. Evaluator timeout은 **`evaluator_error`**로 남겨야 한다.
 
 Evaluator error를 0으로 바꾸면 quality failure처럼 보인다. 반대로 실패 row를 평균에서 조용히 제외하면 coverage가 좋아
 보일 수 있다.
@@ -419,11 +357,7 @@ candidate가 case Y를 새로 깨뜨렸다.
 
 하지만 다음까지 자동으로 증명하지 않는다.
 
-```text
-production 전체 distribution에서도 반드시 개선됨
-관찰된 모든 차이의 내부 원인을 완전히 증명함
-future traffic에서도 같은 metric 유지
-```
+Experiment 성공이 **production 전체 분포의 개선**, 모든 관찰 차이의 내부 원인, future traffic의 동일한 성능을 보증하지는 않는다.
 
 Offline experiment는 production uncertainty의 일부를 줄이는 도구다. Production observation을 대체하지 않는다.
 
