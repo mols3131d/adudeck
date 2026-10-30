@@ -1,6 +1,7 @@
 # Langfuse Textbook Guide
 
-이 교본은 Langfuse 기능 목록보다 **실행을 관찰하고, 실패를 평가 가능한 사례로 보존하고, 변경을 비교해 release를 결정하는 과정**에 집중한다.
+이 교본은 Langfuse 기능 목록보다
+**실행을 관찰하고, 실패를 평가 가능한 사례로 보존하고, 변경을 비교해 release를 결정하는 과정**에 집중한다.
 
 학습 흐름은 다음과 같다.
 
@@ -69,7 +70,8 @@ Observe
 | **3. Live integration evidence** | Trace ingestion, auto generation, usage/latency, score, dataset provenance, experiment UI, prompt-version linkage | 실제 production 분포의 품질 |
 | **4. Production evidence** | 실제 failure 분포, latency/cost, 예외 경로, 사용자 의견 불일치, 평가 누락 차원 | 통제된 비교 실험의 인과 관계 |
 
-특히 **offline pass는 production success가 아니다.** 학습용 local test가 통과했다고 Langfuse Cloud나 provider를 실제로 호출한 것으로 설명하지 않는다.
+특히 **offline pass는 production success가 아니다.** 학습용 local test가 통과했다고 Langfuse Cloud나 provider를 실제로
+호출한 것으로 설명하지 않는다.
 
 ## 핵심 invariants
 
@@ -77,7 +79,8 @@ Observe
 
 ### 1. Application truth와 observability evidence는 다르다
 
-**Application/domain code**가 올바른 결과와 실패 의미를 결정한다. **Langfuse**는 실행을 관찰하고 evaluation evidence를 연결하며, 재사용할 case와 비교 결과를 관리한다.
+**Application/domain code**가 올바른 결과와 실패 의미를 결정한다. **Langfuse**는 실행을 관찰하고 evaluation evidence를
+연결하며, 재사용할 case와 비교 결과를 관리한다.
 
 ### 2. Auto instrumentation은 application meaning을 발명하지 않는다
 
@@ -91,15 +94,18 @@ support-turn
 `answer-generation`은 **OpenAI provider call 자체를 나타내는 generation observation**이다. 그 아래 별도의 provider-call
 child observation이 자동으로 하나 더 생긴다고 가정하지 않는다.
 
-하지만 wrapper는 request의 business 의미, retrieval step의 목적, correctness rule, release guardrail, 기록을 피해야 할 customer data를 스스로 정하지 못한다.
+하지만 wrapper는 request의 business 의미, retrieval step의 목적, correctness rule, release guardrail, 기록을 피해야 할
+customer data를 스스로 정하지 못한다.
 
 ### 3. `score=0`과 `score missing`은 다르다
 
-`score=0`은 **평가를 마쳤고 결과가 나쁨**, missing score나 evaluator error는 **평가가 완료되지 않음**을 뜻한다. 둘을 합치면 실험 결과를 잘못 해석한다.
+`score=0`은 **평가를 마쳤고 결과가 나쁨**, missing score나 evaluator error는 **평가가 완료되지 않음**을 뜻한다. 둘을
+합치면 실험 결과를 잘못 해석한다.
 
 ### 4. Aggregate와 item-level evidence를 함께 본다
 
-평균이 좋아졌다는 이유만으로 release하지 않는다. **Aggregate → changed items → critical regression → item trace → failure mechanism** 순서로 내려가 원인을 확인한다.
+평균이 좋아졌다는 이유만으로 release하지 않는다.
+**Aggregate → changed items → critical regression → item trace → failure mechanism** 순서로 내려가 원인을 확인한다.
 
 ### 5. Dataset은 로그 복사본이 아니다
 

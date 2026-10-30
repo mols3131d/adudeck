@@ -1,6 +1,8 @@
 # 7장 · Prompt Management: Prompt Version을 실행 Evidence와 연결하기
 
-Prompt는 production 동작을 바꾸는 **application artifact**다. 저장 여부보다 **어떤 prompt를 요청했고, 어떤 version/label이 선택됐으며, 실제 compiled input과 generation의 score·latency·cost가 무엇이었는지** 추적하는 것이 중요하다.
+Prompt는 production 동작을 바꾸는 **application artifact**다. 저장 여부보다 **어떤 prompt를 요청했고, 어떤
+version/label이 선택됐으며, 실제 compiled input과 generation의 score·latency·cost가 무엇이었는지** 추적하는 것이
+중요하다.
 
 > **Prompt selection → immutable version → compiled runtime input → generation → evaluation evidence를 연결한다.**
 
@@ -76,7 +78,8 @@ Prompt를 변경하면 새 **immutable version**이 생기지만, **label은 ver
 | 21 | `staging` | 검증 중인 candidate |
 | 22 | `latest` | 가장 최근에 생성된 version |
 
-Version은 **“과거에 무엇을 실행했는가?”**, label은 **“지금 어느 version을 선택할 것인가?”**에 답한다. 최신 version 22가 있어도 production은 20을 가리킬 수 있다. 새 version의 생성은 production 승인과 다르다.
+Version은 **“과거에 무엇을 실행했는가?”**, label은 **“지금 어느 version을 선택할 것인가?”**에 답한다. 최신 version 22가
+있어도 production은 20을 가리킬 수 있다. 새 version의 생성은 production 승인과 다르다.
 
 ## 3. 먼저 lab state를 안전하게 만든다
 
@@ -166,11 +169,13 @@ uv run python textbook/07-prompt-management/prompt_versioning.py \
   --version 21
 ```
 
-두 실행의 선택 기준은 다르다. `--label staging`은 **현재 pointer가 가리키는 version**, `--version 21`은 **immutable version 21**을 선택한다.
+두 실행의 선택 기준은 다르다. `--label staging`은 **현재 pointer가 가리키는 version**, `--version 21`은
+**immutable version 21**을 선택한다.
 
 ### Prediction
 
-`staging` label을 version 22로 이동하면 `--label staging`은 **22**를, `--version 21`은 계속 **21**을 선택해야 한다. 이것이 routing과 experiment reproducibility의 차이다.
+`staging` label을 version 22로 이동하면 `--label staging`은 **22**를, `--version 21`은 계속 **21**을 선택해야 한다.
+이것이 routing과 experiment reproducibility의 차이다.
 
 ## 6. Prompt object와 compiled input을 함께 전달한다
 
@@ -190,7 +195,8 @@ response = openai_client.responses.create(
 )
 ```
 
-`compiled`는 provider가 처리한 실제 runtime input이고, `langfuse_prompt`는 그 input의 Langfuse prompt version identity다. 둘을 함께 전달해야 다음 evidence chain을 만들 수 있다.
+`compiled`는 provider가 처리한 실제 runtime input이고, `langfuse_prompt`는 그 input의 Langfuse prompt version
+identity다. 둘을 함께 전달해야 다음 evidence chain을 만들 수 있다.
 
 ```text
 prompt version
@@ -206,7 +212,8 @@ Version만 있으면 "어떤 variable 값이 실제 input을 만들었는가?"�
 
 ## 7. Missing label은 성공처럼 바꾸지 않는다
 
-`staging`을 요청했지만 해당 label이 없다고 하자. Application이 조용히 `production`을 사용하면 호출은 성공해도 **검증 대상이 staging candidate에서 production으로 바뀐다.**
+`staging`을 요청했지만 해당 label이 없다고 하자. Application이 조용히 `production`을 사용하면 호출은 성공해도
+**검증 대상이 staging candidate에서 production으로 바뀐다.**
 
 이 lab은 missing label을 실패로 유지한다. 실행 성공보다 **선택한 version의 식별 정확성**이 중요하다.
 
@@ -214,7 +221,8 @@ Version만 있으면 "어떤 variable 값이 실제 input을 만들었는가?"�
 
 Prompt cache는 remote fetch 비용과 availability를 다룬다.
 
-Fresh cache는 저장된 prompt를 반환하고, stale cache는 SDK policy에 따라 오래된 값과 refresh 경로를 사용할 수 있다. Empty cache는 remote fetch가 필요하다.
+Fresh cache는 저장된 prompt를 반환하고, stale cache는 SDK policy에 따라 오래된 값과 refresh 경로를 사용할 수 있다. Empty
+cache는 remote fetch가 필요하다.
 
 **Cache 상태와 어떤 version을 사용했는가는 다른 질문**이다.
 
@@ -233,7 +241,8 @@ Fallback은 remote prompt를 얻지 못해도 application이 계속 실행되게
 Langfuse Python SDK는 fallback prompt client를 `is_fallback=True`로 표시하고, prompt name/version tracing context를 만들
 때 fallback이면 remote prompt identity를 기록하지 않는다.
 
-Remote Langfuse prompt object는 prompt name/version provenance를 generation에 연결할 수 있지만, **local fallback은 실행을 유지해도 같은 remote provenance를 남기지 않는다.** 두 경로의 evidence 의미가 다르다.
+Remote Langfuse prompt object는 prompt name/version provenance를 generation에 연결할 수 있지만,
+**local fallback은 실행을 유지해도 같은 remote provenance를 남기지 않는다.** 두 경로의 evidence 의미가 다르다.
 
 Fallback을 사용했다면 application metadata나 별도 telemetry로 그 사실을 추적할 필요가 있는지 결정한다.
 
@@ -241,7 +250,9 @@ Fallback을 사용했다면 application metadata나 별도 telemetry로 그 사�
 
 ## 10. Prompt ownership을 명시한다
 
-Prompt의 source of truth는 **Langfuse**, **Git (Langfuse는 배포·추적 역할)**, 또는 **종류별로 명시한 owner** 중 하나로 정할 수 있다. 문제는 Git의 version A와 Langfuse의 version B를 모두 canonical이라고 주장해, incident 때 무엇을 복원해야 하는지 알 수 없게 되는 경우다.
+Prompt의 source of truth는 **Langfuse**, **Git (Langfuse는 배포·추적 역할)**, 또는 **종류별로 명시한 owner** 중 하나로
+정할 수 있다. 문제는 Git의 version A와 Langfuse의 version B를 모두 canonical이라고 주장해, incident 때 무엇을 복원해야
+하는지 알 수 없게 되는 경우다.
 
 이 deck은 하나의 universal policy를 강제하지 않는다. 대신 **owner와 synchronization responsibility를 명시하라**고
 요구한다.
@@ -279,7 +290,9 @@ aggregate
 
 ## 12. `propagate_attributes(prompt=...)`와 direct linkage
 
-특정 generation 하나에 정확한 prompt를 연결한다면 **direct linkage**가 단순하다. 여러 downstream auto-instrumented generation이 하나의 prompt context를 공유한다면 **`propagate_attributes(prompt=prompt)`**가 유용할 수 있다. 선택의 기준은 편의보다 ownership과 실제 사용 범위다.
+특정 generation 하나에 정확한 prompt를 연결한다면 **direct linkage**가 단순하다. 여러 downstream auto-instrumented
+generation이 하나의 prompt context를 공유한다면 **`propagate_attributes(prompt=prompt)`**가 유용할 수 있다. 선택의
+기준은 편의보다 ownership과 실제 사용 범위다.
 
 ## 13. Credential-free contract test
 

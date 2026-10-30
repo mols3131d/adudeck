@@ -157,7 +157,8 @@ parser rewrite
 두 번째 실험도 release package 전체의 결과를 비교하는 데는 의미가 있을 수 있다. 하지만 어느 change가 차이를 만들었는지
 분리하기 어렵다.
 
-따라서 **제품 전체 구성 비교인지, 특정 변경 하나의 영향을 확인하는 controlled experiment인지** 구분해야 한다. 두 실험은 같은 causal claim을 뒷받침하지 않는다.
+따라서 **제품 전체 구성 비교인지, 특정 변경 하나의 영향을 확인하는 controlled experiment인지** 구분해야 한다. 두 실험은
+같은 causal claim을 뒷받침하지 않는다.
 
 ## 5. Langfuse local-data Experiment Runner
 
@@ -199,7 +200,8 @@ return Evaluation(
 
 여기서 중요한 것은 API 호출 성공이 아니라 역할 분리다.
 
-`task`는 application을 실행하고 `evaluator`는 output을 판정한다. `expected_output`과 correctness rule의 owner를 experiment runner로 혼동하지 않는다.
+`task`는 application을 실행하고 `evaluator`는 output을 판정한다. `expected_output`과 correctness rule의 owner를
+experiment runner로 혼동하지 않는다.
 
 ## 6. Hosted dataset에서는 version도 condition이다
 
@@ -320,7 +322,8 @@ Aggregate 단계에서는 baseline과 candidate의 **correctness를 비교**한�
 
 Regression item을 열고 묻는다.
 
-Input과 expected output이 같은지, application output과 변경 조건은 무엇인지, evaluator가 같은 rule을 사용했는지 확인한다.
+Input과 expected output이 같은지, application output과 변경 조건은 무엇인지, evaluator가 같은 rule을 사용했는지
+확인한다.
 
 이때 trace는 dashboard 장식이 아니라 comparison 결과를 설명하는 diagnostic evidence가 된다.
 
@@ -351,7 +354,8 @@ candidate가 case X를 고쳤다.
 candidate가 case Y를 새로 깨뜨렸다.
 ```
 
-Experiment 성공은 **production 전체 분포의 개선**, 모든 관찰 차이의 내부 원인, future traffic의 동일한 성능을 보증하지 않는다.
+Experiment 성공은 **production 전체 분포의 개선**, 모든 관찰 차이의 내부 원인, future traffic의 동일한 성능을 보증하지
+않는다.
 
 Offline experiment는 production uncertainty의 일부를 줄이는 도구다. Production observation을 대체하지 않는다.
 

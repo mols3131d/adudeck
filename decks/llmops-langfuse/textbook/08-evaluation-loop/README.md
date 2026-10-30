@@ -1,6 +1,7 @@
 # 8장 · Evaluation Loop: Production Evidence에서 Release Decision까지
 
-마지막 장에서는 trace, score, dataset version, experiment, prompt version을 연결해 **실제 release 결정을 내리는 근거**를 만든다.
+마지막 장에서는 trace, score, dataset version, experiment, prompt version을 연결해 **실제 release 결정을 내리는 근거**를
+만든다.
 
 ```text
 production observation
@@ -40,11 +41,13 @@ production observation
 | 강점 | 미처 예상하지 못한 failure 발견 | Known failure 재현과 candidate 변경 효과 비교 |
 | 한계 | Input, prompt, model, retrieval, 외부 조건을 통제하기 어려움 | Dataset이 production의 모든 입력 분포를 대표하지는 않음 |
 
-둘은 대체재가 아니다. **Production에서 실패를 발견하고 → offline에서 통제해 비교하고 → release 후 다시 production을 관찰한다.**
+둘은 대체재가 아니다.
+**Production에서 실패를 발견하고 → offline에서 통제해 비교하고 → release 후 다시 production을 관찰한다.**
 
 ## 2. Metric 이름보다 failure를 먼저 본다
 
-처음부터 `accuracy`, `quality`, `helpfulness`, `relevance`, `groundedness` 같은 metric 이름을 고르면 **무엇이 실패인지** 모호해지기 쉽다.
+처음부터 `accuracy`, `quality`, `helpfulness`, `relevance`, `groundedness` 같은 metric 이름을 고르면 **무엇이 실패인지**
+모호해지기 쉽다.
 
 Trace를 검토해 중요한 failure를 찾고, mechanism을 설명한 다음, **판정 가능한 질문**과 가장 단순한 evaluator를 정한다.
 
@@ -287,7 +290,8 @@ human reference
 
 B를 `0`점으로 바꾸면 infrastructure failure가 품질 실패로 보이고, 평균에서 조용히 제외하면 coverage 문제가 가려진다.
 
-따라서 **유효한 paired case의 quality**, baseline/candidate 각각의 evaluation coverage, paired coverage, application error·evaluator error·missing score 건수를 분리해 보고한다.
+따라서 **유효한 paired case의 quality**, baseline/candidate 각각의 evaluation coverage, paired coverage, application
+error·evaluator error·missing score 건수를 분리해 보고한다.
 
 ## 7. Baseline과 candidate 상태는 독립적이다
 
@@ -311,9 +315,11 @@ EvidenceRow(
 )
 ```
 
-각 variant는 **`scored`일 때만 score가 있어야 하며**, 그 correctness 값은 유한한 `[0, 1]` 범위여야 한다. 그 외 status에는 score를 붙이지 않는다.
+각 variant는 **`scored`일 때만 score가 있어야 하며**, 그 correctness 값은 유한한 `[0, 1]` 범위여야 한다. 그 외
+status에는 score를 붙이지 않는다.
 
-Code는 생성 시점에 `NaN`, `Inf`, 범위 밖 점수를 거부한다. Release decision도 음수·비유한 p95 latency를 거부한다. 잘못된 값을 `0`점으로 치환하거나 평균에서 조용히 제외하지 않는다.
+Code는 생성 시점에 `NaN`, `Inf`, 범위 밖 점수를 거부한다. Release decision도 음수·비유한 p95 latency를 거부한다. 잘못된
+값을 `0`점으로 치환하거나 평균에서 조용히 제외하지 않는다.
 
 ## 8. 평균은 같은 paired population에서 계산한다
 
@@ -322,9 +328,12 @@ Code는 생성 시점에 `NaN`, `Inf`, 범위 밖 점수를 거부한다. Releas
 | A | `1.0` | missing |
 | B | missing | `1.0` |
 
-각각의 평가된 값만 평균내면 둘 다 `1.0`처럼 보인다. 하지만 **양쪽에서 모두 평가된 case는 0개**이므로 품질 차이를 계산할 근거가 없다.
+각각의 평가된 값만 평균내면 둘 다 `1.0`처럼 보인다. 하지만 **양쪽에서 모두 평가된 case는 0개**이므로 품질 차이를 계산할
+근거가 없다.
 
-`release_gate.py`는 **`baseline.status == scored`이면서 `candidate.status == scored`인 paired population**에서만 평균을 계산한다. `baseline_coverage`, `candidate_coverage`, `paired_coverage`는 별도 필드로 보고한다. **Quality와 coverage는 다른 정보다.**
+`release_gate.py`는 **`baseline.status == scored`이면서 `candidate.status == scored`인 paired population**에서만 평균을
+계산한다. `baseline_coverage`, `candidate_coverage`, `paired_coverage`는 별도 필드로 보고한다.
+**Quality와 coverage는 다른 정보다.**
 
 ## 9. Regression은 before/after transition이다
 
@@ -334,7 +343,8 @@ Code는 생성 시점에 `NaN`, `Inf`, 범위 밖 점수를 거부한다. Releas
 | FAIL → FAIL | 기존 실패가 남아 있음 | `0.0 → 0.0`: `critical candidate failure` |
 | FAIL → PASS | 수정으로 개선됨 | `0.0 → 1.0`: improvement |
 
-Critical case가 candidate에서 실패했다는 사실만으로 regression이라고 부르면 안 된다. **새 변경이 실패를 만들었는지, 기존 실패를 아직 해결하지 못했는지** 구분해야 진단 방향이 달라진다.
+Critical case가 candidate에서 실패했다는 사실만으로 regression이라고 부르면 안 된다.
+**새 변경이 실패를 만들었는지, 기존 실패를 아직 해결하지 못했는지** 구분해야 진단 방향이 달라진다.
 
 ## 10. Release policy는 결과를 보기 전에 정의한다
 
@@ -432,7 +442,8 @@ code에서는 하나의 None으로 뭉갬
 | Candidate evaluator error | 2건 |
 | Paired coverage | `0.98` |
 
-평균은 개선됐지만 **critical case 100% pass**, **evaluation gap 0건**이라는 정책에는 실패한다. 결론은 **DO NOT RELEASE**다.
+평균은 개선됐지만 **critical case 100% pass**, **evaluation gap 0건**이라는 정책에는 실패한다. 결론은
+**DO NOT RELEASE**다.
 
 이때는 평균을 다시 계산하기보다 critical regression trace, evaluator error, coverage gap의 원인을 조사한다.
 
@@ -448,11 +459,14 @@ Information gain이 큰 순서를 사용할 수 있다.
 4. 큰 score delta가 난 paired item
 5. segment regression representative example
 
-Critical regression trace를 열어 **input·expected output·dataset version**이 같은지, **prompt/model/retrieval 조건**이 의도대로 통제됐는지 확인한다. 실제 prompt version linkage와 generation output의 차이, evaluator definition의 일치 여부도 추적한다.
+Critical regression trace를 열어 **input·expected output·dataset version**이 같은지, **prompt/model/retrieval 조건**이
+의도대로 통제됐는지 확인한다. 실제 prompt version linkage와 generation output의 차이, evaluator definition의 일치 여부도
+추적한다.
 
 ## 15. Aggregate, segment, example을 왕복한다
 
-Evaluation review는 **aggregate → segment → example**을 왕복한다. Aggregate는 전체 방향, segment는 category·failure mode별 편차, example은 실제 item trace의 실패 mechanism을 보여 준다.
+Evaluation review는 **aggregate → segment → example**을 왕복한다. Aggregate는 전체 방향, segment는 category·failure
+mode별 편차, example은 실제 item trace의 실패 mechanism을 보여 준다.
 
 | Segment | Score |
 | --- | ---: |
@@ -497,9 +511,12 @@ new production trace
 
 ## 17. 전체 loop에서 무엇이 남아야 하는가?
 
-각 도구의 evidence 역할은 [교본 안내의 핵심 invariants](../README.md#핵심-invariants)에 정리되어 있다. 마지막으로 확인할 것은 **연결 관계**다. Execution은 trace/observation과 generation에, 평가는 score와 variant별 상태에, 재현 조건은 dataset version과 prompt/model/application identity에, 행동 기준은 release policy에 남아야 한다.
+각 도구의 evidence 역할은 [교본 안내의 핵심 invariants](../README.md#핵심-invariants)에 정리되어 있다. 마지막으로 확인할
+것은 **연결 관계**다. Execution은 trace/observation과 generation에, 평가는 score와 variant별 상태에, 재현 조건은 dataset
+version과 prompt/model/application identity에, 행동 기준은 release policy에 남아야 한다.
 
-**Observe → Explain → Preserve → Change → Compare → Evaluate → Decide → Observe again.** 이 순환에서 근거가 끊긴 지점이 없는지 마지막 assessment로 점검한다.
+**Observe → Explain → Preserve → Change → Compare → Evaluate → Decide → Observe again.** 이 순환에서 근거가 끊긴 지점이
+없는지 마지막 assessment로 점검한다.
 
 ## 18. Final assessment
 

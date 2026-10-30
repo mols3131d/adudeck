@@ -25,7 +25,8 @@ Dataset의 역할은 production log를 복사하는 것이 아니다.
 
 Production trace 10만 건을 그대로 dataset에 복사하는 방식은 적절하지 않다.
 
-좋은 dataset은 **“이 변경이 과거의 critical failure를 되살리는가?”, “boundary condition과 대표 정상 case를 여전히 만족하는가?”**처럼 판정할 질문을 가진다.
+좋은 dataset은 **“이 변경이 과거의 critical failure를 되살리는가?”, “boundary condition과 대표 정상 case를 여전히
+만족하는가?”**처럼 판정할 질문을 가진다.
 
 그래서 dataset item은 **선택된 test case**다.
 
@@ -130,7 +131,8 @@ source_trace_id
 
 핵심 원리는 다음이다.
 
-**재현 조건과 expected behavior는 보존하고, 불필요한 raw production data는 제거한다.** 원본 evidence로 돌아갈 provenance link도 유지한다.
+**재현 조건과 expected behavior는 보존하고, 불필요한 raw production data는 제거한다.** 원본 evidence로 돌아갈 provenance
+link도 유지한다.
 
 ## 5. Source trace / observation 연결은 "왜 이 case가 존재하는가?"에 답한다
 
