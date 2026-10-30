@@ -113,9 +113,13 @@ assert callable(LangfuseSpan.score_trace)
 get_dataset_params = inspect.signature(Langfuse.get_dataset).parameters
 assert "version" in get_dataset_params
 
+create_dataset_item_params = inspect.signature(Langfuse.create_dataset_item).parameters
+assert "id" in create_dataset_item_params
+
 get_prompt_params = inspect.signature(Langfuse.get_prompt).parameters
 assert "version" in get_prompt_params
 assert "label" in get_prompt_params
+assert "cache_ttl_seconds" in get_prompt_params
 
 create_prompt_params = inspect.signature(Langfuse.create_prompt).parameters
 for parameter in ("name", "prompt", "labels", "type"):
