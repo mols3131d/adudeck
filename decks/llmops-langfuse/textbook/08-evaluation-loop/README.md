@@ -1,9 +1,6 @@
 # 8장 · Evaluation Loop: Production Evidence에서 Release Decision까지
 
-이제 각각의 Langfuse 기능을 따로 외우는 단계는 끝났다.
-
-마지막 장의 목표는 trace, score, dataset version, experiment, prompt version을 하나의
-**evidence-preserving improvement loop**로 연결하는 것이다.
+마지막 장에서는 trace, score, dataset version, experiment, prompt version을 연결해 **실제 release 결정을 내리는 근거**를 만든다.
 
 ```text
 production observation
@@ -19,9 +16,7 @@ production observation
 → production에서 다시 관찰
 ```
 
-좋은 loop의 기준은 feature 수가 아니다.
-
-> **"왜 이 변경을 배포했는가?"라는 질문에 evidence chain으로 답할 수 있는가?**
+목표는 기능을 많이 사용하는 것이 아니라 **“왜 이 변경을 배포했는가?”에 evidence chain으로 답하는 것**이다.
 
 ## 학습 목표
 
@@ -39,107 +34,27 @@ production observation
 
 ## 1. Online과 offline은 서로 다른 uncertainty를 줄인다
 
-### Online observation
+| 구분 | Online observation | Offline evaluation |
+| --- | --- | --- |
+| 무엇을 보는가 | 실제 사용자 입력, orchestration path, provider 동작, latency/cost, 예상 밖의 실패 | 고정된 dataset snapshot과 evaluator로 동일한 case를 반복 실행한 결과 |
+| 강점 | 미처 예상하지 못한 failure 발견 | Known failure 재현과 candidate 변경 효과 비교 |
+| 한계 | Input, prompt, model, retrieval, 외부 조건을 통제하기 어려움 | Dataset이 production의 모든 입력 분포를 대표하지는 않음 |
 
-Production은 실제 distribution을 보여 준다.
-
-```text
-real user input
-real orchestration path
-real provider behavior
-real latency / cost
-unexpected failure
-```
-
-강점:
-
-```text
-우리가 예상하지 못한 failure를 발견할 수 있음
-```
-
-한계:
-
-```text
-같은 input인가?
-같은 prompt인가?
-같은 model인가?
-같은 retrieval state인가?
-같은 external condition인가?
-```
-
-을 통제하기 어렵다.
-
-### Offline evaluation
-
-Dataset experiment는 같은 cases를 반복할 수 있게 한다.
-
-```text
-fixed dataset snapshot
-fixed evaluator contract
-controlled candidate
-repeatable comparison
-```
-
-강점:
-
-```text
-known behavior를 재현하고 change를 비교할 수 있음
-```
-
-한계:
-
-```text
-dataset
-≠ production distribution 전체
-```
-
-따라서 둘은 대체 관계가 아니다.
-
-```text
-production에서 discovery
-→ offline에서 controlled comparison
-→ release
-→ production에서 다시 discovery
-```
+둘은 대체재가 아니다. **Production에서 실패를 발견하고 → offline에서 통제해 비교하고 → release 후 다시 production을 관찰한다.**
 
 ## 2. Metric 이름보다 failure를 먼저 본다
 
-평가를 시작할 때 먼저 다음 단어를 고르는 것은 쉽다.
+처음부터 `accuracy`, `quality`, `helpfulness`, `relevance`, `groundedness` 같은 metric 이름을 고르면 **무엇이 실패인지** 모호해지기 쉽다.
 
-```text
-accuracy
-quality
-helpfulness
-relevance
-groundedness
-```
+Trace를 검토해 중요한 failure를 찾고, mechanism을 설명한 다음, **판정 가능한 질문**과 가장 단순한 evaluator를 정한다.
 
-하지만 metric 이름만으로는 무엇을 실패라고 부르는지 모호하다.
+| 단계 | 환불 정책 예시 |
+| --- | --- |
+| 관찰된 실패 | 올바른 정책 문서를 retrieval했지만 답변에서 eligibility를 반대로 설명함 |
+| 판정 질문 | 최종 output의 `eligible` 값이 expected policy outcome과 같은가? |
+| Evaluator | Structured deterministic equality check |
 
-더 좋은 순서는 다음이다.
-
-```text
-trace review
-→ 반복되거나 중요한 failure 발견
-→ failure mechanism 설명
-→ 판정 가능한 질문으로 변환
-→ 가장 단순한 신뢰 가능한 evaluator 선택
-```
-
-예:
-
-```text
-observed failure
-"올바른 환불 정책 문서를 retrieval했지만 답변이 eligibility를 반대로 말함"
-
-판정 질문
-"최종 output의 eligible 값이 expected policy outcome과 같은가?"
-
-evaluator
-structured deterministic equality check
-```
-
-`quality=0.7`보다 무엇을 고쳐야 하는지가 훨씬 명확하다.
+이렇게 정의해야 `quality=0.7`이라는 숫자보다 무엇을 고쳐야 하는지 분명해진다.
 
 ## 3. End-to-end worked example
 
@@ -365,53 +280,25 @@ human reference
 
 ## 6. `score=0`과 evaluation failure는 다른 사건이다
 
-다음 두 row를 비교한다.
+| Case | Application | Evaluator | 결과 |
+| --- | --- | --- | --- |
+| A | 정상 실행 | 정상 실행, 판정은 실패 | `score=0` (평가 완료) |
+| B | 정상 실행 | Timeout | `evaluator_error` (평가 미완료) |
 
-```text
-A
-application output 정상 생성
-evaluator 정상 실행
-result = fail
-score = 0
+B를 `0`점으로 바꾸면 infrastructure failure가 품질 실패로 보이고, 평균에서 조용히 제외하면 coverage 문제가 가려진다.
 
-B
-application output 정상 생성
-evaluator timeout
-result = unknown
-evaluator_error
-```
-
-B를 score 0으로 바꾸면 evaluation infrastructure failure가 quality failure처럼 보인다.
-
-반대로 B를 평균에서 조용히 제외하면 coverage가 좋아 보일 수 있다.
-
-그래서 최소한 다음을 분리한다.
-
-```text
-quality among valid comparable evaluations
-baseline evaluation coverage
-candidate evaluation coverage
-paired comparison coverage
-application error count
-evaluator error count
-score missing count
-```
+따라서 **유효한 paired case의 quality**, baseline/candidate 각각의 evaluation coverage, paired coverage, application error·evaluator error·missing score 건수를 분리해 보고한다.
 
 ## 7. Baseline과 candidate 상태는 독립적이다
 
-실제 comparison에서는 다음 상태가 가능하다.
+같은 case에서도 baseline과 candidate의 평가 상태가 다를 수 있다.
 
-```text
-case A
-baseline = scored 1.0
-candidate = evaluator_error
+| Case | Baseline | Candidate |
+| --- | --- | --- |
+| A | `scored 1.0` | `evaluator_error` |
+| B | `application_error` | `scored 1.0` |
 
-case B
-baseline = application_error
-candidate = scored 1.0
-```
-
-따라서 row 하나에 shared `status` 하나만 두면 충분하지 않다.
+따라서 row 하나에 shared `status`만 두면 한쪽의 실패를 표현할 수 없다.
 
 이 장의 code lab은 variant evidence를 독립적으로 모델링한다.
 
@@ -424,132 +311,41 @@ EvidenceRow(
 )
 ```
 
-각 variant의 invariant:
+각 variant는 **`scored`일 때만 score가 있어야 하며**, 그 correctness 값은 유한한 `[0, 1]` 범위여야 한다. 그 외 status에는 score를 붙이지 않는다.
 
-```text
-status == scored
-→ score가 반드시 존재
-
-status != scored
-→ score를 붙이지 않음
-```
-
-잘못된 state를 객체 생성 시점에 거부한다. `scored`의 correctness 값은 유한한 `[0, 1]` 범위여야 한다.
-`NaN`, `Inf` 또는 범위 밖 숫자는 성공한 평가의 evidence가 아니므로 객체 생성 시 에러가 난다.
-마찬가지로 p95 latency가 음수 또는 비유한 수라면 release decision 전에 명시적으로 거부한다.
-이를 0점이나 평균 계산에서 무시하는 row로 바꾸지 않는다.
+Code는 생성 시점에 `NaN`, `Inf`, 범위 밖 점수를 거부한다. Release decision도 음수·비유한 p95 latency를 거부한다. 잘못된 값을 `0`점으로 치환하거나 평균에서 조용히 제외하지 않는다.
 
 ## 8. 평균은 같은 paired population에서 계산한다
 
-다음 데이터가 있다고 하자.
+| Case | Baseline | Candidate |
+| --- | --- | --- |
+| A | `1.0` | missing |
+| B | missing | `1.0` |
 
-```text
-case A
-baseline = 1.0
-candidate = missing
+각각의 평가된 값만 평균내면 둘 다 `1.0`처럼 보인다. 하지만 **양쪽에서 모두 평가된 case는 0개**이므로 품질 차이를 계산할 근거가 없다.
 
-case B
-baseline = missing
-candidate = 1.0
-```
-
-각 side에서 존재하는 값만 따로 평균내면:
-
-```text
-baseline average = 1.0
-candidate average = 1.0
-```
-
-처럼 보인다.
-
-하지만 실제로 두 variant가 **같이 평가된 case는 0개**다.
-
-이 비교는 품질 delta를 말할 근거가 없다.
-
-그래서 `release_gate.py`는 평균을 다음 population에서만 계산한다.
-
-```text
-paired-scored population
-= baseline.status == scored
-AND candidate.status == scored
-```
-
-그리고 coverage는 별도로 남긴다.
-
-```text
-baseline_coverage
-candidate_coverage
-paired_coverage
-```
-
-Quality와 coverage를 섞지 않는다.
+`release_gate.py`는 **`baseline.status == scored`이면서 `candidate.status == scored`인 paired population**에서만 평균을 계산한다. `baseline_coverage`, `candidate_coverage`, `paired_coverage`는 별도 필드로 보고한다. **Quality와 coverage는 다른 정보다.**
 
 ## 9. Regression은 before/after transition이다
 
-다음을 구분한다.
+| Baseline → Candidate | 해석 | Code lab의 critical case |
+| --- | --- | --- |
+| PASS → FAIL | 새 regression | `1.0 → 0.0`: `critical regression` |
+| FAIL → FAIL | 기존 실패가 남아 있음 | `0.0 → 0.0`: `critical candidate failure` |
+| FAIL → PASS | 수정으로 개선됨 | `0.0 → 1.0`: improvement |
 
-```text
-baseline PASS
-candidate FAIL
-→ regression
-
-baseline FAIL
-candidate FAIL
-→ existing/continuing candidate failure
-
-baseline FAIL
-candidate PASS
-→ fix / improvement
-```
-
-따라서 critical case가 candidate에서 fail했다는 사실만으로 항상 "critical regression"이라고 부르면 안 된다.
-
-Code lab은:
-
-```text
-baseline 1.0 → candidate 0.0
-= critical regression
-
-baseline 0.0 → candidate 0.0
-= critical candidate failure
-```
-
-로 구분한다.
-
-이 용어 구분은 incident diagnosis에서 중요하다.
-
-```text
-새 변경이 문제를 만들었는가?
-아니면 이미 존재하던 failure를 아직 못 고쳤는가?
-```
-
-는 다른 질문이다.
+Critical case가 candidate에서 실패했다는 사실만으로 regression이라고 부르면 안 된다. **새 변경이 실패를 만들었는지, 기존 실패를 아직 해결하지 못했는지** 구분해야 진단 방향이 달라진다.
 
 ## 10. Release policy는 결과를 보기 전에 정의한다
 
-Candidate 결과를 본 뒤 threshold를 고르면 결과에 맞춰 기준을 움직이기 쉽다.
+결과를 본 뒤 threshold를 정하면 관측값에 맞춰 기준을 바꾸기 쉽다. 예를 들어 실험 **전에** 다음 정책을 합의한다.
 
-예:
+- Critical candidate case: 100% pass
+- Paired correctness: baseline보다 낮아지지 않을 것
+- 필수 evaluation gap: 0건
+- p95 latency: 1.6초 이하
 
-```text
-Release Policy
-
-- critical candidate cases: 100% pass
-- paired correctness: baseline보다 낮아지지 않음
-- required evaluation gaps: 0
-- p95 latency: 1.6s 이하
-```
-
-`1.6s`가 universal best practice라는 뜻은 아니다.
-
-핵심은:
-
-```text
-result 보기 전
-→ decision contract 정의
-```
-
-라는 순서다.
+`1.6s`는 보편적 권장값이 아니라 **이 예제에서 미리 정한 기준**이다.
 
 ## 11. Code lab: evidence-preserving release gate
 
@@ -628,40 +424,17 @@ code에서는 하나의 None으로 뭉갬
 
 ## 13. 평균이 올라도 release가 막힐 수 있다
 
-예:
+| 지표 | 관찰 결과 |
+| --- | --- |
+| Paired correctness | `0.88 → 0.91` |
+| p95 latency | `1.2s → 1.5s` |
+| Critical refund case | PASS → FAIL |
+| Candidate evaluator error | 2건 |
+| Paired coverage | `0.98` |
 
-```text
-paired correctness    0.88 → 0.91
-p95 latency           1.2s → 1.5s
-critical refund case  pass → fail
-candidate evaluator errors = 2
-paired coverage       0.98
-```
+평균은 개선됐지만 **critical case 100% pass**, **evaluation gap 0건**이라는 정책에는 실패한다. 결론은 **DO NOT RELEASE**다.
 
-평균만 보면 좋아 보인다.
-
-하지만 policy가:
-
-```text
-critical case must pass
-evaluation gaps = 0
-```
-
-이면 결론은:
-
-```text
-DO NOT RELEASE
-```
-
-이다.
-
-다음 action은 평균을 더 계산하는 것이 아니다.
-
-```text
-critical regression trace 조사
-evaluator errors 조사
-coverage gap 원인 조사
-```
+이때는 평균을 다시 계산하기보다 critical regression trace, evaluator error, coverage gap의 원인을 조사한다.
 
 ## 14. 어떤 trace를 먼저 열 것인가?
 
@@ -675,45 +448,20 @@ Information gain이 큰 순서를 사용할 수 있다.
 4. 큰 score delta가 난 paired item
 5. segment regression representative example
 
-Critical regression trace에서 확인한다.
-
-```text
-input은 같은가?
-dataset expected output은 같은가?
-dataset version은 같은가?
-prompt/model/retrieval condition은 의도대로 고정됐는가?
-실제 prompt version linkage는 맞는가?
-generation output은 어떻게 달라졌는가?
-evaluator definition은 같은가?
-```
+Critical regression trace를 열어 **input·expected output·dataset version**이 같은지, **prompt/model/retrieval 조건**이 의도대로 통제됐는지 확인한다. 실제 prompt version linkage와 generation output의 차이, evaluator definition의 일치 여부도 추적한다.
 
 ## 15. Aggregate, segment, example을 왕복한다
 
-좋은 evaluation review는 세 level을 오간다.
+Evaluation review는 **aggregate → segment → example**을 왕복한다. Aggregate는 전체 방향, segment는 category·failure mode별 편차, example은 실제 item trace의 실패 mechanism을 보여 준다.
 
-```text
-aggregate
-→ 전체 방향
+| Segment | Score |
+| --- | ---: |
+| Overall | 0.91 |
+| Refund | 0.98 |
+| Shipping | 0.93 |
+| Subscription | 0.61 |
 
-segment
-→ 특정 category/failure mode에서만 문제가 있는가?
-
-example
-→ 실제 item trace에서 mechanism이 무엇인가?
-```
-
-예:
-
-```text
-overall 0.91
-refund 0.98
-shipping 0.93
-subscription 0.61
-```
-
-Overall만 보면 subscription regression이 숨는다.
-
-Dataset metadata와 failure taxonomy가 query dimension이 되는 이유다.
+Overall만 보면 subscription의 낮은 성능이 가려진다. 그래서 dataset metadata와 failure taxonomy가 분석 축이 된다.
 
 ## 16. Evidence chain을 끊지 않는다
 
@@ -747,51 +495,11 @@ new production trace
 
 라고 물었을 때 chain을 거슬러 올라갈 수 있어야 한다.
 
-## 17. 이 deck의 최종 mental model
+## 17. 전체 loop에서 무엇이 남아야 하는가?
 
-기능 이름보다 evidence role로 기억한다.
+각 도구의 evidence 역할은 [교본 안내의 핵심 invariants](../README.md#핵심-invariants)에 정리되어 있다. 마지막으로 확인할 것은 **연결 관계**다. Execution은 trace/observation과 generation에, 평가는 score와 variant별 상태에, 재현 조건은 dataset version과 prompt/model/application identity에, 행동 기준은 release policy에 남아야 한다.
 
-```text
-Trace / Observation
-= execution evidence
-
-Generation
-= model/provider execution evidence
-
-Score
-= evaluation evidence
-
-Dataset Item
-= 반복할 case
-
-Dataset Version
-= comparison case-population identity
-
-Experiment
-= controlled comparison execution
-
-Prompt Version
-= application change identity의 한 종류
-
-Variant Evaluation State
-= 각 variant에서 평가가 실제로 완료됐는지에 대한 evidence
-
-Release Policy
-= evidence를 action으로 바꾸는 decision contract
-```
-
-전체 loop:
-
-```text
-Observe
-→ Explain
-→ Preserve
-→ Change
-→ Compare
-→ Evaluate
-→ Decide
-→ Observe again
-```
+**Observe → Explain → Preserve → Change → Compare → Evaluate → Decide → Observe again.** 이 순환에서 근거가 끊긴 지점이 없는지 마지막 assessment로 점검한다.
 
 ## 18. Final assessment
 
