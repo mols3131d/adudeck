@@ -23,18 +23,11 @@ Dataset의 역할은 production log를 복사하는 것이 아니다.
 
 다음 전략은 데이터가 많지만 학습 가치가 불분명하다.
 
-```text
-production trace 100,000개
-→ 전부 dataset으로 복사
-```
+Production trace 10만 건을 그대로 dataset에 복사하는 방식은 적절하지 않다.
 
 좋은 dataset은 질문을 가진다.
 
-```text
-이 변경이 과거의 critical failure를 다시 만들지 않는가?
-boundary condition을 여전히 만족하는가?
-대표적인 정상 case에서도 품질을 유지하는가?
-```
+Dataset의 질문은 명확해야 한다. **“이 변경이 과거의 critical failure를 되살리는가?”, “boundary condition과 대표 정상 case를 여전히 만족하는가?”**
 
 그래서 dataset item은 **선택된 test case**다.
 
@@ -60,19 +53,12 @@ answer
 
 Failure contract를 추출한다.
 
-```text
-input fact
-days_since_delivery = 10
-
-expected domain property
-eligible = true
-
-policy invariant
-policy_days = 14
-
-failure mode
-refund-eligibility
-```
+| 근거 | 값 |
+| --- | --- |
+| Input fact | `days_since_delivery=10` |
+| 기대 동작 | `eligible=true` |
+| 정책 불변식 | `policy_days=14` |
+| Failure mode | `refund-eligibility` |
 
 이렇게 바꾸면 다음 이점이 있다.
 
@@ -85,16 +71,11 @@ refund-eligibility
 
 가장 중요한 구조는 다음이다.
 
-```text
-input
-= application에 다시 넣을 조건
-
-expected_output
-= evaluator가 참고할 expected contract
-
-metadata
-= case를 설명하거나 grouping할 context
-```
+| 필드 | 역할 |
+| --- | --- |
+| `input` | Application에 다시 넣을 조건 |
+| `expected_output` | Evaluator가 사용할 expected contract |
+| `metadata` | Case의 설명과 grouping context |
 
 예:
 
@@ -151,12 +132,7 @@ source_trace_id
 
 핵심 원리는 다음이다.
 
-```text
-재현에 필요한 정보는 보존
-불필요한 raw production data는 제거
-expected behavior는 명시
-원본 evidence로 돌아갈 provenance는 유지
-```
+**재현 조건과 expected behavior는 보존하고, 불필요한 raw production data는 제거한다.** 원본 evidence로 돌아갈 provenance link도 유지한다.
 
 ## 5. Source trace / observation 연결은 "왜 이 case가 존재하는가?"에 답한다
 
@@ -173,13 +149,7 @@ dataset item
 
 하지만 provenance link가 있다고 해서 raw sensitive content를 dataset에 복사해도 된다는 뜻은 아니다.
 
-```text
-provenance
-= 원본 evidence를 추적할 link
-
-dataset input
-= 반복 실행에 필요한 최소 test contract
-```
+`provenance`는 원본 evidence를 찾아가는 link이고, `dataset input`은 반복 실행을 위한 최소 test contract다.
 
 둘의 책임을 분리한다.
 
@@ -336,32 +306,19 @@ item change history를 version으로 다루고, schema 자체는 같은 방식�
 
 ### 재현 가치
 
-```text
-이 failure가 다시 생기면 중요한가?
-향후 변경에서 회귀할 가능성이 있는가?
-```
+**재현 가치:** 다시 발생하면 중요한 실패인가? 향후 변경으로 회귀할 가능성이 있는가?
 
 ### 판정 가능성
 
-```text
-expected behavior를 설명할 수 있는가?
-evaluator가 관찰할 evidence가 있는가?
-```
+**판정 가능성:** expected behavior를 설명할 수 있고, evaluator가 관찰할 근거가 있는가?
 
 ### 안전한 보존
 
-```text
-PII / secret / confidential data를 제거하거나 synthetic form으로 바꿀 수 있는가?
-원본을 복사하지 않고도 failure condition을 보존할 수 있는가?
-```
+**안전한 보존:** PII·secret·confidential data를 제거하거나 synthetic form으로 바꾸면서도 실패 조건을 재현할 수 있는가?
 
 처음 dataset은 작아도 된다.
 
-```text
-대표 정상 case
-+ historical failure
-+ 중요한 boundary case
-```
+Dataset에는 대표 정상 case와 historical failure, 중요한 boundary case를 함께 포함한다.
 
 Production에서 실제 failure mode를 발견할 때 점진적으로 추가한다.
 
