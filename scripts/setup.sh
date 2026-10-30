@@ -26,6 +26,11 @@ if [[ -d "decks/ai-openai_sdk" ]]; then
   env -u VIRTUAL_ENV uv sync --project decks/ai-openai_sdk --locked
 fi
 
+if [[ -d "decks/systems-opentelemetry" ]]; then
+  echo "==> [setup] Syncing decks/systems-opentelemetry environment..."
+  env -u VIRTUAL_ENV uv sync --project decks/systems-opentelemetry --locked
+fi
+
 echo "==> [setup] Configuring git commit template..."
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git config --local commit.template .gitmessage

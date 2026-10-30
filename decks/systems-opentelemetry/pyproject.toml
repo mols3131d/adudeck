@@ -1,0 +1,10 @@
+[project]
+name = "adudeck-systems-opentelemetry"
+version = "0.1.0"
+description = "Hands-on OpenTelemetry learning deck."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "opentelemetry-api>=1.45,<2",
+  "opentelemetry-sdk>=1.45,<2",
+]

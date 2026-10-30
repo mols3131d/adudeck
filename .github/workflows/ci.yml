@@ -15,7 +15,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 12
     outputs:
       changed: ${{ steps.patch.outputs.changed }}
       tree_sha: ${{ steps.patch.outputs.tree_sha }}
@@ -34,6 +34,9 @@ jobs:
         env:
           MISE_GITHUB_TOKEN: ""
         run: mise run ci:fast
+
+      - name: Run OpenTelemetry external runtime acceptance
+        run: mise run test:opentelemetry-acceptance
 
       - name: Build validated tree patch
         id: patch

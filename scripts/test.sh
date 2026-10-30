@@ -9,7 +9,7 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 if [[ "$#" -gt 1 ]]; then
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|scripts]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts]" >&2
   exit 2
 fi
 
@@ -145,6 +145,21 @@ PY
   echo "==> [test:langfuse-deck] Locked SDK and textbook contract validation passed."
 }
 
+run_opentelemetry_deck() {
+  echo "==> [test:opentelemetry-deck] Validating locked core textbook evidence..."
+  env -u VIRTUAL_ENV uv run --project decks/systems-opentelemetry --locked \
+    python -m unittest discover -s decks/systems-opentelemetry/tests -p 'test_first_trace.py' -v
+  env -u VIRTUAL_ENV uv run --project decks/systems-opentelemetry --locked \
+    python -m unittest discover -s decks/systems-opentelemetry/tests -p 'test_textbook_examples.py' -v
+}
+
+run_opentelemetry_acceptance() {
+  echo "==> [test:opentelemetry-acceptance] Running Flask zero-code and OTLP/Collector end-to-end acceptance..."
+  env -u VIRTUAL_ENV uv run --project decks/systems-opentelemetry --locked \
+    python decks/systems-opentelemetry/tests/test_external_runtime.py
+  echo "==> [test:opentelemetry-acceptance] External runtime acceptance passed."
+}
+
 run_scripts() {
   echo "==> [test:scripts] Checking shell script syntax..."
   bash -n scripts/*.sh
@@ -164,6 +179,12 @@ case "$TARGET" in
   langfuse-deck)
     run_langfuse_deck
     ;;
+  opentelemetry-deck)
+    run_opentelemetry_deck
+    ;;
+  opentelemetry-acceptance)
+    run_opentelemetry_acceptance
+    ;;
   scripts)
     run_scripts
     ;;
@@ -172,11 +193,12 @@ case "$TARGET" in
     run_dataset_generator
     run_openai_sdk_deck
     run_langfuse_deck
+    run_opentelemetry_deck
     run_scripts
     echo "==> All test suites passed."
     ;;
   *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, scripts" >&2
+    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
     exit 1
     ;;
 esac

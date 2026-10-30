@@ -32,6 +32,12 @@ if [[ -d "decks/ai-openai_sdk" ]]; then
   env -u VIRTUAL_ENV uv sync --project decks/ai-openai_sdk --locked
 fi
 
+if [[ -d "decks/systems-opentelemetry" ]]; then
+  echo "==> [update] Updating decks/systems-opentelemetry dependencies and lockfile..."
+  env -u VIRTUAL_ENV uv lock --upgrade --project decks/systems-opentelemetry
+  env -u VIRTUAL_ENV uv sync --project decks/systems-opentelemetry --locked
+fi
+
 echo "==> [update] Updating rulesync external dependencies..."
 rulesync install
 
