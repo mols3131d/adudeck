@@ -205,6 +205,33 @@ class ReleaseGateTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "must not carry a score"):
             VariantEvidence(status="evaluator_error", score=0.0)
 
+    def test_nonfinite_or_out_of_range_quality_is_never_valid_scored_evidence(self) -> None:
+        for value in (float("nan"), float("inf"), float("-inf"), -0.01, 1.01):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "finite"):
+                VariantEvidence.scored(value)
+
+    def test_invalid_latency_cannot_be_approved(self) -> None:
+        rows = [
+            EvidenceRow(
+                "normal",
+                False,
+                VariantEvidence.scored(1.0),
+                VariantEvidence.scored(1.0),
+            )
+        ]
+        for latency in (float("nan"), float("inf"), float("-inf"), -0.1):
+            with self.subTest(latency=latency), self.assertRaisesRegex(ValueError, "latency"):
+                decide_release(rows, candidate_p95_latency_seconds=latency)
+
+    def test_invalid_policy_thresholds_are_rejected(self) -> None:
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(delta=value), self.assertRaisesRegex(ValueError, "finite"):
+                ReleasePolicy(min_correctness_delta=value)
+            with self.subTest(max_latency=value), self.assertRaisesRegex(ValueError, "finite"):
+                ReleasePolicy(max_p95_latency_seconds=value)
+        with self.assertRaisesRegex(ValueError, "nonnegative"):
+            ReleasePolicy(max_p95_latency_seconds=-1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
