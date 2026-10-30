@@ -1,165 +1,52 @@
 # Langfuse
 
-Langfuse를 단순한 LLM 로그 UI가 아니라 **production execution을 관찰하고, 중요한 실패를 평가 가능한 사례로 보존하고,
-변경 전후를 비교해 다시 production으로 돌려보내는 AI engineering loop**로 배운다.
+이 deck은 Langfuse를 **LLM 실행을 관찰하고 실패를 재현 가능한 평가 사례로 바꿔, 변경의 효과를 검증하는 도구**로 배운다.
 
 ```text
-LLM application
-→ trace / observation
-→ inspect failure
-→ score
-→ dataset
-→ experiment
-→ compare
-→ improve
-→ production observation
+실행 관찰 → 실패 진단 → 평가 기준 정의 → Dataset 보존
+→ Baseline/Candidate 비교 → Release 결정 → 다시 관찰
 ```
 
-이 deck은 current Langfuse Python SDK의 **v4 / OpenTelemetry / observations-first** model을 기준으로 한다. 오래된
-`Langfuse().trace()`, `start_span()`, `start_generation()` 중심 예제는 historical context로만 보고 core learning path로
-사용하지 않는다.
+학습 기준은 **Langfuse Python SDK v4 · OpenTelemetry · observations-first** 모델이다.
+구형 `Langfuse().trace()`, `start_span()`, `start_generation()` 중심 예제는 현재 기본 학습 경로로 사용하지 않는다.
 
-교본을 처음 시작한다면 먼저 [Textbook Guide](textbook/README.md)를 읽는다. 이 guide는 장별 순서뿐 아니라 prediction,
-observation, validation level, 누적 checkpoint와 final assessment 기준을 설명한다.
+**처음이라면 [교본 안내](textbook/README.md) → [0장](textbook/00-ai-engineering-loop/README.md) 순서로 시작한다.**
+각 장은 개념을 이해한 뒤 결과를 예측하고, 코드를 실행해 evidence를 확인하도록 구성했다.
 
-## Goal
+## 학습 목표와 선수 지식
 
-이 deck을 마치면 다음을 할 수 있어야 한다.
+완료 후에는 다음을 직접 설명하고 실습할 수 있어야 한다.
 
-- Langfuse가 관찰하는 execution evidence와 application이 소유하는 correctness/domain truth를 구분한다.
-- trace, observation, generation, session의 관계를 설명하고 Python application을 직접 instrument한다.
-- observation name, input/output, metadata, tags, user/session context를 설계한다.
-- OpenAI integration이 자동으로 기록하는 provider evidence와 직접 instrument해야 하는 application meaning을 구분한다.
-- evaluator의 결과를 올바른 trace/observation target의 score로 연결한다.
-- `score=0`, `score missing`, evaluator error, application error를 구분한다.
-- production failure를 privacy-aware dataset item으로 만들고 source evidence와 연결한다.
-- dataset version, evaluator, application condition을 통제해 baseline/candidate experiment를 비교한다.
-- aggregate metric이 숨기는 item-level regression을 찾아 trace까지 내려가 진단한다.
-- prompt version/label/cache/fallback의 의미를 설명하고 실제 generation과 prompt version을 연결한다.
-- deterministic evaluator, LLM-as-a-Judge, human review의 역할과 신뢰 경계를 설명한다.
-- baseline/candidate evaluation state와 coverage를 독립적으로 보존해 release decision을 만든다.
-- online observation과 offline evaluation을 하나의 반복 가능한 improvement loop로 연결한다.
+- **관찰 설계:** trace, observation, generation, session의 관계를 이해하고 Python application에 계측을 추가한다. 안정적인 observation 이름, input/output, metadata, tags, user/session context를 설계한다.
+- **책임 구분:** provider 자동 계측과 application 의미, domain truth, evaluation evidence를 분리한다.
+- **평가:** trace/observation에 올바르게 score를 연결하고 `score=0`, missing score, evaluator error, application error를 구분한다. Deterministic evaluator, LLM-as-a-Judge, human review의 역할과 한계를 설명한다.
+- **실패 보존과 비교:** privacy-aware dataset item과 source provenance를 만들고, dataset version 및 evaluator 조건을 고정해 baseline/candidate를 비교한다. Aggregate에 숨은 item-level regression을 trace로 조사한다.
+- **변경 식별과 배포 판단:** prompt version/label/cache/fallback을 구분하고 실제 generation과 연결한다. 각 variant의 evaluation state, coverage, paired quality를 보존해 release decision을 내린다.
+- **반복 개선:** online observation과 offline evaluation을 연결하고 다음 production observation에서 새 실패를 찾는다.
 
-## Prerequisites
+필요한 사전 지식은 Python의 함수·context manager·decorator·dataclass, 환경 변수와 dependency 설치, JSON과 간단한 검증, `input → model → output` 흐름이다. OpenTelemetry와 OpenAI SDK 경험은 필수가 아니다.
 
-- Python 함수, context manager, decorator, dataclass 정도를 읽고 작은 코드를 수정할 수 있다.
-- environment variable과 Python dependency 설치의 기본 개념을 안다.
-- LLM API 호출이 `input → model → output`을 만든다는 흐름을 이해한다.
-- JSON object와 간단한 deterministic validation을 읽을 수 있다.
+## 학습 순서
 
-OpenTelemetry와 OpenAI SDK 경험은 도움이 되지만 필수 prerequisite는 아니다. 필요한 mechanism은 deck 안에서 먼저
-설명한다.
+| 장 | 핵심 질문 | 실습에서 확인할 것 |
+| --- | --- | --- |
+| [0. AI Engineering Loop](textbook/00-ai-engineering-loop/README.md) | 왜 trace만으로 개선이 끝나지 않는가? | failure → evaluation → reusable case |
+| [1. First Trace](textbook/01-first-trace/README.md) | Current context는 trace 구조를 어떻게 만드는가? | nested / detached observation |
+| [2. Trace Design](textbook/02-trace-design/README.md) | 나중에 찾고 평가하기 쉬운 trace는? | operation name / run identity |
+| [3. OpenAI Integration](textbook/03-openai-integration/README.md) | 자동 계측과 application 책임의 경계는? | application span / provider generation |
+| [4. Scores](textbook/04-scores/README.md) | 무엇을 평가하고 어디에 score를 붙이는가? | score target / missing score |
+| [5. Datasets](textbook/05-datasets/README.md) | 실패를 안전하게 다시 실행하려면? | minimal payload / provenance |
+| [6. Experiments](textbook/06-experiments/README.md) | 같은 조건에서 변경 효과를 어떻게 비교하는가? | pinned snapshot / item regression |
+| [7. Prompt Management](textbook/07-prompt-management/README.md) | 실제 사용된 prompt version을 어떻게 증명하는가? | label / version / generation linkage |
+| [8. Evaluation Loop](textbook/08-evaluation-loop/README.md) | 어떤 근거로 release를 결정하는가? | paired evidence / release gate |
 
-## Learning scope
+각 개념의 자세한 역할, 학습 방법, 검증 수준, 누적 checkpoint와 최종 평가 기준은 [교본 안내](textbook/README.md)에서 확인한다.
 
-Core path:
+**범위 밖:** self-hosting/Kubernetes, Langfuse의 ClickHouse/PostgreSQL 내부 구조, 모든 framework integration, 심화 LLM judge 통계·모델 선택, annotation workforce 운영, custom dashboard, OpenTelemetry Collector 심화, provider별 cost optimization.
 
-```text
-AI engineering loop
-→ first trace
-→ trace design
-→ provider integration
-→ evaluation scores
-→ datasets
-→ experiments
-→ prompt management
-→ evaluation/release loop
-```
+## 실행과 검증
 
-현재 core scope가 아닌 것:
-
-- Langfuse self-hosting/Kubernetes 운영
-- ClickHouse/PostgreSQL 등 내부 storage architecture
-- 모든 framework integration 사용법
-- LLM-as-a-Judge의 심화 통계/모델 선택 연구
-- annotation workforce 운영
-- custom dashboard 설계
-- OpenTelemetry Collector 심화 구성
-- provider별 cost optimization
-
-## Learning path
-
-| Unit | 핵심 질문 | Material | Hands-on evidence |
-| --- | --- | --- | --- |
-| 0. AI Engineering Loop | 왜 trace만 보는 것으로는 개선 loop가 닫히지 않는가? | [0장](textbook/00-ai-engineering-loop/README.md) | failure → evaluation → reusable case reasoning |
-| 1. First Trace | current context는 trace topology를 어떻게 만드는가? | [1장](textbook/01-first-trace/README.md) | nested vs detached observation |
-| 2. Trace Design | 나중에 읽고 평가할 수 있는 trace는 어떻게 설계하는가? | [2장](textbook/02-trace-design/README.md) | stable names vs run identity |
-| 3. OpenAI Integration | provider 자동 계측과 application 의미의 경계는 어디인가? | [3장](textbook/03-openai-integration/README.md) | explicit root + auto generation contract |
-| 4. Scores | 실행을 어떤 질문으로 평가하고 어디에 score를 붙이는가? | [4장](textbook/04-scores/README.md) | trace vs observation score, no-score semantics |
-| 5. Datasets | production failure를 어떻게 안전하고 재현 가능한 case로 만드는가? | [5장](textbook/05-datasets/README.md) | payload allowlist + source provenance |
-| 6. Experiments | 같은 case population에서 baseline/candidate를 어떻게 비교하는가? | [6장](textbook/06-experiments/README.md) | pinned dataset snapshot + item regression |
-| 7. Prompt Management | prompt identity를 generation/evaluation evidence와 어떻게 연결하는가? | [7장](textbook/07-prompt-management/README.md) | bootstrap + label/version + exact linkage |
-| 8. Evaluation Loop | evidence를 어떻게 release decision으로 바꾸고 production으로 되돌리는가? | [8장](textbook/08-evaluation-loop/README.md) | paired evidence + regression-aware release gate |
-
-## 핵심 mental model
-
-Langfuse를 application source of truth로 오해하지 않는다.
-
-```text
-application / domain code
-= 무엇이 올바른지 결정
-= business state와 failure semantics를 소유
-
-Langfuse
-= 무엇이 실행되었는지 관찰
-= evaluation evidence를 execution과 연결
-= 중요한 사례를 축적
-= controlled change를 비교
-```
-
-Evidence role도 분리한다.
-
-```text
-Trace / Observation
-= execution evidence
-
-Generation
-= model/provider execution evidence
-
-Score
-= evaluation evidence
-
-Dataset Item
-= 반복할 case
-
-Dataset Version
-= comparison case-population identity
-
-Experiment
-= controlled comparison execution
-
-Prompt Version
-= application change identity의 한 종류
-
-Variant Evaluation State
-= 각 variant에서 평가가 실제로 완료됐는지에 대한 evidence
-
-Release Policy
-= evidence를 action으로 바꾸는 decision contract
-```
-
-## 학습 방식
-
-각 장은 가능한 한 다음 흐름을 따른다.
-
-```text
-질문
-→ mechanism / mental model
-→ worked example
-→ 실행 전 prediction
-→ learner-visible evidence
-→ 중요한 condition 하나를 변경
-→ re-observe
-→ misconception / failure boundary
-→ transfer / assessment
-```
-
-API 문법을 외우는 것보다 **어떤 state와 evidence가 어디에서 생기고, 무엇이 바뀌면 결과가 어떻게 달라지는지** 설명하는
-것을 우선한다.
-
-## Locked local validation
-
-Repository root에서:
+Repository root에서 다음 중 하나를 실행한다.
 
 ```bash
 mise run test:langfuse-deck
@@ -167,142 +54,23 @@ mise run test:langfuse-deck
 bash scripts/test.sh langfuse-deck
 ```
 
-이 target은 `decks/llmops-langfuse/pyproject.toml`과 deck-local [`uv.lock`](uv.lock)을 사용한다.
+이 target은 `decks/llmops-langfuse/pyproject.toml`과 [deck-local `uv.lock`](uv.lock)을 사용해
+`uv run --project decks/llmops-langfuse --locked` 환경에서 검사한다. Repository root의 우연한 dependency에 의존하지 않는다.
 
-```text
-env -u VIRTUAL_ENV
-uv run --project decks/llmops-langfuse --locked ...
-```
+검증하는 것은 다음 두 층이다.
 
-따라서 repository root Python environment가 우연히 test를 통과시키는 구조가 아니다.
+1. **설치된 SDK 계약:** Langfuse client, `get_client`, `propagate_attributes`, `Evaluation`, observation/score, `create_dataset_item`, `get_dataset(version=...)`, `run_experiment`, `get_prompt(label=..., version=...)`, `create_prompt`, `langfuse.openai.OpenAI`와 Responses API 표면
+2. **교본 테스트:** Unit 1–8의 context, trace 설계, provider 계측, score semantics, dataset payload, hosted experiment와 snapshot, prompt linkage·bootstrap, paired evaluation·release gate
 
-Credential 없이 다음 두 층을 검증한다.
+실제 Langfuse Cloud와 OpenAI API를 사용하는 **live lab은 별도 단계**다. 그때 trace tree, generation·usage·latency, score, hosted dataset provenance, experiment 결과, prompt-version linkage를 직접 관찰한다. Credential-free CI는 이러한 Cloud 동작이나 production 개선 효과를 증명하지 않는다. API key와 customer data를 repository에 기록하지 말고, dataset·prompt 변경은 별도 학습용 Langfuse project에서 실습한다.
 
-### Installed SDK contract
+## 버전과 출처
 
-실제 locked environment에서 다음 public surface를 import/inspect한다.
+이 교본의 **2026-10-02 작성·검토 기준**은 Langfuse Python SDK `4.16.0`(2026-09-30 출시)이었다. 이는 당시 검토한 재현 기준이며 현재 최신 버전이라는 뜻은 아니다.
 
-```text
-Langfuse client
-get_client / propagate_attributes / Evaluation
-observation + score surface
-create_dataset_item
-get_dataset(version=...)
-run_experiment
-get_prompt(label=..., version=...)
-create_prompt
-langfuse.openai.OpenAI
-Responses API create surface
-```
+- 학습자 Python 계약: 3.10+ / repository CI: Python 3.14.6
+- Langfuse: `langfuse>=4.16,<5` / OpenTelemetry 기반 SDK v4
+- OpenAI: `openai>=3.19.2,<4` / Responses API
+- `langfuse.openai`를 사용하므로 OpenAI package도 별도 dependency로 명시하고 lock에 고정한다.
 
-### Teaching contracts
-
-- Unit 1: nesting/context variation
-- Unit 2: stable naming/correlation attributes
-- Unit 3: application span과 provider-call ownership
-- Unit 4: score target과 no-score semantics
-- Unit 5: exact dataset payload/provenance contract
-- Unit 6: equal aggregate regression + hosted dataset version pinning
-- Unit 7: compiled prompt linkage + label/version selection + bounded bootstrap
-- Unit 8: independent variant states + paired comparison + regression semantics + release gate
-
-2026-10-02의 merge-readiness run에서는 Python 3.14.6의 새 deck-local virtual environment를 만들고 lock에서
-dependencies를 설치한 뒤 위 SDK smoke와 Unit 1–8 tests가 모두 통과했다. Repository `ci/validated`도 같은 validated
-tree에서 성공했다.
-
-## Live labs
-
-Locked local validation과 live integration evidence는 같은 수준이 아니다.
-
-실제 Langfuse project 또는 OpenAI provider를 사용하면 다음을 추가로 관찰할 수 있다.
-
-```text
-Unit 1–2
-Cloud trace tree / propagated attributes
-
-Unit 3
-OpenAI generation, usage, latency, provider error evidence
-
-Unit 4
-trace/observation scores in Langfuse
-
-Unit 5
-hosted dataset item + source link
-
-Unit 6
-hosted dataset snapshot + Experiment Runner UI
-
-Unit 7
-prompt label/version + generation linkage
-
-Unit 8
-experiment evidence를 실제 release policy로 해석
-```
-
-이 live tier는 credential, project state, provider 비용을 요구하므로 deterministic merge gate와 분리한다. Live API key와
-customer data는 repository에 기록하지 않는다.
-
-## Build state
-
-2026-10-30 기준으로 0–8 textbook scope가 구현돼 있으며, 이전 HEAD의 locked validation은 통과했다.
-현재 PR의 신규 수정 커밋은 별도 CI 확인과 최종 통합 리뷰가 필요하다.
-
-구현되어 있는 검증 및 구성:
-
-- 0–8장 primary textbook learning path
-- Units 1–8 hands-on teaching artifacts
-- deck-local `uv.lock`
-- declared Langfuse/OpenAI dependency environment에서 `--locked` validation
-- installed Langfuse/OpenAI public API smoke
-- Unit 6 hosted dataset snapshot pinning contract
-- Unit 7 prompt bootstrap + mutable label / immutable version comparison
-- Unit 8 independent baseline/candidate evaluation state와 paired comparison semantics
-- repository deterministic CI validation entrypoint (최신 HEAD의 성공 여부는 GitHub Checks에서 확인)
-
-Merge completion claim에 포함하지 않는 것:
-
-- 실제 Langfuse Cloud ingestion/rendering을 이번 CI가 증명했다는 주장
-- 실제 OpenAI provider call이 이번 CI에서 성공했다는 주장
-- production workload distribution에서 품질이 개선됐다는 주장
-
-따라서 **구성 완료 ≠ 최신 PR의 merge-ready 판정**이다. Live/cloud evidence는 교본이 명시적으로 분리해
-가르치는 상위 validation tier이며, 이번 deterministic CI가 실행했다고 주장하지 않는다.
-
-## Dependency contract
-
-현재 core path가 직접 사용하는 dependency:
-
-```toml
-langfuse>=4.16,<5
-openai>=3.19.2,<4
-```
-
-`langfuse.openai`는 OpenAI package를 별도로 요구하므로 둘을 deck `pyproject.toml`에 명시하고 `uv.lock`으로 해석 결과를
-고정한다.
-
-## Version baseline
-
-작성/최종 merge-readiness 검토 기준일: **2026-10-02**
-
-- Python learner contract: 3.10+
-- repository validation runtime: Python 3.14.6
-- Langfuse Python SDK reviewed baseline: `4.16.0` — 2026-09-30 latest release
-- Langfuse Python SDK v4: OpenTelemetry 기반, observations-first model
-- OpenAI SDK dependency contract: `openai>=3.19.2,<4`
-- OpenAI provider example: Responses API
-
-Version-sensitive API는 blog/tutorial보다 current SDK reference/source와 locked runtime evidence를 우선한다.
-
-## Source hierarchy
-
-기술 contract는 다음 순서로 확인한다.
-
-1. [Langfuse Python SDK reference](https://python.reference.langfuse.com/)
-2. [Langfuse current documentation](https://langfuse.com/docs)
-3. [Langfuse Python SDK source/releases](https://github.com/langfuse/langfuse-python)
-4. [Langfuse Academy](https://langfuse.com/academy)
-5. [Langfuse Workshop](https://github.com/langfuse/langfuse-workshop)
-6. [OpenAI API documentation](https://platform.openai.com/docs)
-7. [Langfuse examples](https://github.com/langfuse/langfuse-examples)
-
-Source가 충돌하면 current SDK/reference, source contract, locked runtime evidence를 우선한다.
+Version-sensitive 내용은 블로그보다 [Langfuse Python SDK Reference](https://python.reference.langfuse.com/), [공식 문서](https://langfuse.com/docs), [SDK source·releases](https://github.com/langfuse/langfuse-python), locked runtime evidence를 우선해 확인한다. 보충 학습 자료로 [Langfuse Academy](https://langfuse.com/academy), [Workshop](https://github.com/langfuse/langfuse-workshop), [Examples](https://github.com/langfuse/langfuse-examples), [OpenAI API 문서](https://platform.openai.com/docs)를 활용한다.
