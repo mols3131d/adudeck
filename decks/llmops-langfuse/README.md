@@ -244,9 +244,10 @@ customer data는 repository에 기록하지 않는다.
 
 ## Build state
 
-2026-10-02 기준으로 **정의된 0–8 textbook scope는 strict local textbook/runtime gate를 통과한 상태**다.
+2026-10-30 기준으로 0–8 textbook scope가 구현돼 있으며, 이전 HEAD의 locked validation은 통과했다.
+현재 PR의 신규 수정 커밋은 별도 CI 확인과 최종 통합 리뷰가 필요하다.
 
-완료된 merge gate:
+구현되어 있는 검증 및 구성:
 
 - 0–8장 primary textbook learning path
 - Units 1–8 hands-on teaching artifacts
@@ -256,7 +257,7 @@ customer data는 repository에 기록하지 않는다.
 - Unit 6 hosted dataset snapshot pinning contract
 - Unit 7 prompt bootstrap + mutable label / immutable version comparison
 - Unit 8 independent baseline/candidate evaluation state와 paired comparison semantics
-- repository deterministic CI validation
+- repository deterministic CI validation entrypoint (최신 HEAD의 성공 여부는 GitHub Checks에서 확인)
 
 Merge completion claim에 포함하지 않는 것:
 
@@ -264,8 +265,8 @@ Merge completion claim에 포함하지 않는 것:
 - 실제 OpenAI provider call이 이번 CI에서 성공했다는 주장
 - production workload distribution에서 품질이 개선됐다는 주장
 
-즉 이 deck은 **학습 자료와 locked local runtime contract의 merge-ready 상태**이며, live/cloud evidence는 교본이
-명시적으로 분리해 가르치는 상위 validation tier다.
+따라서 **구성 완료 ≠ 최신 PR의 merge-ready 판정**이다. Live/cloud evidence는 교본이 명시적으로 분리해
+가르치는 상위 validation tier이며, 이번 deterministic CI가 실행했다고 주장하지 않는다.
 
 ## Dependency contract
 
