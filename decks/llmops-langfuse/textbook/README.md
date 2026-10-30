@@ -1,9 +1,8 @@
 # Langfuse Textbook Guide
 
-이 디렉터리는 Langfuse 기능 목록을 외우는 자료가 아니라, **production execution을 관찰하고 평가 가능한 evidence로
-바꾸며, 변경 전후를 비교해 release decision까지 연결하는 AI engineering loop**를 배우기 위한 교본이다.
+이 교본은 Langfuse 기능 목록보다 **실행을 관찰하고, 실패를 평가 가능한 사례로 보존하고, 변경을 비교해 release를 결정하는 과정**에 집중한다.
 
-교본 전체에서 사용하는 가장 중요한 흐름은 다음이다.
+학습 흐름은 다음과 같다.
 
 ```text
 Observe
@@ -16,33 +15,18 @@ Observe
 → Observe again
 ```
 
-Langfuse의 각 기능은 이 loop에서 맡는 evidence role로 이해한다.
+각 기능은 loop에서 맡는 **evidence 역할**로 이해한다.
 
-```text
-Trace / Observation
-= execution evidence
-
-Generation
-= model/provider execution evidence
-
-Score
-= evaluation evidence
-
-Dataset Item
-= 반복할 case
-
-Dataset Version
-= test-set condition identity
-
-Experiment
-= controlled comparison execution
-
-Prompt Version
-= application change identity의 한 종류
-
-Release Policy
-= evidence를 action으로 바꾸는 decision contract
-```
+| 개념 | 어떤 근거를 남기는가 |
+| --- | --- |
+| Trace / Observation | Application 실행 |
+| Generation | Model/provider 호출 |
+| Score | 평가 결과 |
+| Dataset Item | 다시 검증할 case |
+| Dataset Version | 비교 대상 집합의 조건 |
+| Experiment | 통제된 변경 비교 |
+| Prompt Version | 변경된 application 조건의 식별자 중 하나 |
+| Release Policy | 평가 근거를 행동으로 바꾸는 기준 |
 
 ## 이 교본을 읽는 순서
 
@@ -62,91 +46,30 @@ Release Policy
 
 ## 학습 방법
 
-각 장에서 코드를 바로 실행하기 전에 prediction을 먼저 만든다.
+각 장에서는 다음 순서로 실습한다.
 
-```text
-1. Target
-   무엇을 이해하려는가?
+1. **Target:** 무엇을 이해할지 정한다.
+2. **Predict:** 예상 trace, score, ID, state를 기록한다.
+3. **Run:** 최소 실험을 실행한다.
+4. **Observe:** stdout, Langfuse UI, test 결과에서 실제 evidence를 찾는다.
+5. **Interpret:** current context와 data flow로 원인을 설명한다.
+6. **Vary:** 중요한 조건 하나를 바꾼다.
+7. **Re-observe:** 바뀐 결과와 유지된 invariant를 비교한다.
 
-2. Predict
-   어떤 trace / score / ID / state가 보여야 하는가?
+**Command 성공은 학습 완료의 증거가 아니다.** 예상과 관찰의 차이를 설명할 수 있어야 한다.
 
-3. Run
-   최소한의 실험을 실행한다.
+## 검증 결과를 읽는 법
 
-4. Observe
-   stdout, Langfuse UI, test result 중 필요한 evidence만 본다.
+서로 다른 검증 수준을 같은 성공으로 취급하지 않는다.
 
-5. Interpret
-   왜 이런 결과가 나왔는지 current context와 data flow로 설명한다.
+| 수준 | 직접 확인하는 근거 | 증명하지 못하는 것 |
+| --- | --- | --- |
+| **1. Credential-free teaching contract** | 교본 코드의 control flow, payload, application ownership, comparison/release 로직 | 실제 SDK 또는 Cloud 동작 |
+| **2. Installed SDK contract** | Langfuse/OpenAI import, public API, wrapper·experiment signature, prompt/dataset/score 표면 | Live project에서의 실행 성공 |
+| **3. Live integration evidence** | Trace ingestion, auto generation, usage/latency, score, dataset provenance, experiment UI, prompt-version linkage | 실제 production 분포의 품질 |
+| **4. Production evidence** | 실제 failure 분포, latency/cost, 예외 경로, 사용자 의견 불일치, 평가 누락 차원 | 통제된 비교 실험의 인과 관계 |
 
-6. Vary
-   한 가지 중요한 조건만 바꾼다.
-
-7. Re-observe
-   무엇이 바뀌었고 무엇이 invariant인지 설명한다.
-```
-
-단순히 command가 성공했다는 것은 학습 완료의 evidence가 아니다.
-
-## Evidence level을 구분한다
-
-이 deck에는 서로 다른 validation level이 함께 존재한다. 같은 수준으로 말하지 않는다.
-
-### Level 1 · Credential-free teaching contract
-
-각 chapter의 local test가 주로 검증하는 것:
-
-```text
-teaching code의 control flow
-payload shape
-application ownership boundary
-comparison/release logic
-```
-
-이 test가 통과해도 실제 Langfuse SDK나 Cloud 동작이 증명되는 것은 아니다.
-
-### Level 2 · Installed SDK contract
-
-Deck dependency를 실제로 설치한 환경에서 확인할 것:
-
-```text
-Langfuse/OpenAI import
-public API surface
-wrapper method availability
-experiment API signatures
-prompt/dataset/score surface
-```
-
-이 단계는 version-sensitive API drift를 잡는다.
-
-### Level 3 · Live integration evidence
-
-실제 Langfuse project와 필요한 provider credential을 사용해 확인할 것:
-
-```text
-trace ingestion
-auto-instrumented generation
-usage / latency evidence
-score attachment
-dataset provenance link
-experiment UI
-prompt-version linkage
-```
-
-### Level 4 · Production evidence
-
-실제 workload에서만 알 수 있는 것:
-
-```text
-실제 failure distribution
-real latency / cost
-unexpected orchestration path
-real user disagreement
-missing evaluation dimensions
-```
-
-Offline pass는 production success와 동의어가 아니다.
+특히 **offline pass는 production success가 아니다.** 학습용 local test가 통과했다고 Langfuse Cloud나 provider를 실제로 호출한 것으로 설명하지 않는다.
 
 ## 핵심 invariants
 
@@ -154,15 +77,7 @@ Offline pass는 production success와 동의어가 아니다.
 
 ### 1. Application truth와 observability evidence는 다르다
 
-```text
-application / domain code
-= 무엇이 올바른지 결정
-
-Langfuse
-= 무엇이 실행되었는지 관찰
-= evaluation evidence를 execution과 연결
-= reusable cases와 comparison evidence를 관리
-```
+**Application/domain code**가 올바른 결과와 실패 의미를 결정한다. **Langfuse**는 실행을 관찰하고 evaluation evidence를 연결하며, 재사용할 case와 비교 결과를 관리한다.
 
 ### 2. Auto instrumentation은 application meaning을 발명하지 않는다
 
@@ -176,67 +91,28 @@ support-turn
 `answer-generation`은 **OpenAI provider call 자체를 나타내는 generation observation**이다. 그 아래 별도의 provider-call
 child observation이 자동으로 하나 더 생긴다고 가정하지 않는다.
 
-하지만 wrapper는 다음을 스스로 알 수 없다.
-
-```text
-왜 이 request가 business 상 중요한가
-retrieval step의 의미
-correctness rule
-release guardrail
-어떤 customer data를 기록하면 안 되는가
-```
+하지만 wrapper는 request의 business 의미, retrieval step의 목적, correctness rule, release guardrail, 기록을 피해야 할 customer data를 스스로 정하지 못한다.
 
 ### 3. `score=0`과 `score missing`은 다르다
 
-```text
-score = 0
-→ 평가를 수행했고 결과가 나쁨
-
-score missing / evaluator error
-→ 평가 자체가 완료되지 않음
-```
-
-둘을 합치면 experiment 결과를 해석할 수 없게 된다.
+`score=0`은 **평가를 마쳤고 결과가 나쁨**, missing score나 evaluator error는 **평가가 완료되지 않음**을 뜻한다. 둘을 합치면 실험 결과를 잘못 해석한다.
 
 ### 4. Aggregate와 item-level evidence를 함께 본다
 
-```text
-average ↑
-```
-
-만으로 release를 결정하지 않는다.
-
-```text
-aggregate
-→ changed items
-→ critical regression
-→ item trace
-→ failure mechanism
-```
-
-순서로 내려간다.
+평균이 좋아졌다는 이유만으로 release하지 않는다. **Aggregate → changed items → critical regression → item trace → failure mechanism** 순서로 내려가 원인을 확인한다.
 
 ### 5. Dataset은 로그 복사본이 아니다
 
 Production trace에서 중요한 failure condition을 추출해 **작고 판정 가능한 case**로 보존한다.
 
-```text
-raw production data
-≠ reusable evaluation case
-```
+Raw production data는 reusable evaluation case와 같지 않다.
 
 Dataset versioning도 정확히 이해한다. 현재 Langfuse dataset version은 item 변경 시점의 dataset state를
 **timestamp 기반 version**으로 추적한다. Dataset schema 변화는 같은 방식의 item-version snapshot으로 간주하지 않는다.
 
 ### 6. Prompt version과 label은 다르다
 
-```text
-version
-= immutable history identity
-
-label
-= 특정 version을 가리키는 mutable pointer
-```
+`version`은 **immutable history identity**, `label`은 특정 version을 가리키는 **mutable pointer**다.
 
 `latest`와 `production`은 같은 의미가 아니다. 요청한 label이 없으면 Langfuse가 조용히 `production`이나 `latest`로
 fallback한다고 가정하지 않는다.
