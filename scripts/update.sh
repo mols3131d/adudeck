@@ -38,6 +38,12 @@ if [[ -d "decks/systems-opentelemetry" ]]; then
   env -u VIRTUAL_ENV uv sync --project decks/systems-opentelemetry --locked
 fi
 
+if [[ -d "decks/llmops-langfuse" ]]; then
+  echo "==> [update] Updating decks/llmops-langfuse dependencies and lockfile..."
+  env -u VIRTUAL_ENV uv lock --upgrade --project decks/llmops-langfuse
+  env -u VIRTUAL_ENV uv sync --project decks/llmops-langfuse --locked
+fi
+
 echo "==> [update] Updating rulesync external dependencies..."
 rulesync install
 

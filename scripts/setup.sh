@@ -31,6 +31,11 @@ if [[ -d "decks/systems-opentelemetry" ]]; then
   env -u VIRTUAL_ENV uv sync --project decks/systems-opentelemetry --locked
 fi
 
+if [[ -d "decks/llmops-langfuse" ]]; then
+  echo "==> [setup] Syncing decks/llmops-langfuse environment..."
+  env -u VIRTUAL_ENV uv sync --project decks/llmops-langfuse --locked
+fi
+
 echo "==> [setup] Configuring git commit template..."
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git config --local commit.template .gitmessage
