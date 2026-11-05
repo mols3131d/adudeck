@@ -3,14 +3,17 @@
   "sources": {
     "mols3131d/mols-agent-assets": {
       "requestedRef": "main",
-      "resolvedRef": "6daae9c25d7f4a33ec3c0abcfb0fa259f559b720",
-      "resolvedAt": "2026-11-05T13:40:15.194Z",
+      "resolvedRef": "0390e4dc714b762fb7e173bcbc3ec71db436453f",
+      "resolvedAt": "2026-11-05T14:18:03.017Z",
       "skills": {
         "text-humanize-korean": {
           "integrity": "sha256-4cfb7bff27a8888f8c7bb690b6e1f6cf31a9226a112dec746d36d4eebc49c79b"
         },
         "technical-document-fidelity": {
           "integrity": "sha256-ae0cd88ac490bb23e52d909f030750e1177f6f59fa6c3749d6f2bef2edb01a78"
+        },
+        "mols-project-task-command-design": {
+          "integrity": "sha256-6b30c7c1f22fbfcac45454415d4fee4cbaadb082a337a533f55f572b2b9458dc"
         },
         "mols-mermaid-diagram": {
           "integrity": "sha256-da671d353ab39b2bbd5ec6675e7c0bf67e2937c5bf1f71a028b4b74923edf76e"
@@ -25,13 +28,16 @@
           "integrity": "sha256-f3f3de0ae4d899fe029748440d537b2a0624074e238a575dce7565916efa5c9f"
         },
         "mols-documentation": {
-          "integrity": "sha256-1f7ec4eb7ee2c3597e0fda64c6a224e58e0cf1bb3c4be33c53e5a5cae3dff8dc"
+          "integrity": "sha256-f111a389bc9273a95416c05318698560b29f216281d972eab654d8c511b7cca7"
+        },
+        "mols-dev-env-bootstrap-design": {
+          "integrity": "sha256-9eeacfa3e79ac9f5002177d910734e82c66f458bf8d2f54bae6fc050d4ea291d"
         },
         "mols-coding-context": {
           "integrity": "sha256-af62134c63221d4f34da41d3ead4f2fe7559887e7615b7a3bec92831731cfa5d"
         },
         "mols-coding-context-python": {
-          "integrity": "sha256-e2798e4258fa49212fffb3df22e12879e8b4e9644ad25736ec07f650818cbec4"
+          "integrity": "sha256-177924aaeeff96a304ceae61e3e59ead1a2d31711d7bd8e9ba4dde9043ae134b"
         },
         "mols-code-comprehension-refactor": {
           "integrity": "sha256-98d64024af13225b0b1764712e11cb66233d461062c31dabb65fc26b50366073"
@@ -43,13 +49,13 @@
           "integrity": "sha256-d1e45b38bab766af738f50b2828ce615eacf2ec4d63b5c8cd9b83b31344161b5"
         },
         "mols-chatbot-bootstrap": {
-          "integrity": "sha256-bbd2c76d95263bc4beb579ff727219a39f3ad922f3339c00254c1f902a3c7687"
+          "integrity": "sha256-9e184ecb2175c262ea243d0c5b3861b6aa3a2b39275402433c016e0488917cea"
         },
         "mols-agent-asset": {
-          "integrity": "sha256-ba10320d7fadba56e9619c4336d3d6adb57c52fcd2f2a45b8347ffe5d8b84d59"
+          "integrity": "sha256-c95e805777264c3cb5c8687dc0e4499d939fa005d205ab56622dd4276b1ce427"
         },
         "mols-agent-asset-find": {
-          "integrity": "sha256-6ace67d927da8eedcdd359593ddcbd7a80d97a2fa9cab42288f634116382aef6"
+          "integrity": "sha256-4c409ebc900adf04d6db6c053b14256e3f8427cd631ab73f4333bc17e1abe1a2"
         },
         "guidance-context": {
           "integrity": "sha256-c159b50eafb82b34b4c7473cf89c87d34ec4428b72c58541e258608f80ef2f08"
@@ -65,11 +71,13 @@
         "mols-code-comprehension-refactor",
         "mols-coding-context",
         "mols-coding-context-python",
+        "mols-dev-env-bootstrap-design",
         "mols-documentation",
         "mols-loops",
         "mols-markdown-maintenance",
         "mols-mermaid-chart",
         "mols-mermaid-diagram",
+        "mols-project-task-command-design",
         "technical-document-fidelity",
         "text-humanize-korean"
       ],
