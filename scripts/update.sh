@@ -31,14 +31,16 @@ for proj in tools/*/pyproject.toml decks/[!_]*/pyproject.toml; do
   fi
 done
 
-if [[ -d "decks/llmops-langfuse" ]]; then
-  echo "==> [update] Updating decks/llmops-langfuse dependencies and lockfile..."
-  env -u VIRTUAL_ENV uv lock --upgrade --project decks/llmops-langfuse
-  env -u VIRTUAL_ENV uv sync --project decks/llmops-langfuse --locked
-fi
-
 echo "==> [update] Updating rulesync external dependencies..."
 rulesync install --update
+if [[ -f "rulesync.lock" && -f ".agents/route/skills.jsonl" ]]; then
+  uv run python - <<'PY'
+import json, pathlib, re
+ref = json.loads(pathlib.Path("rulesync.lock").read_text())["sources"]["mols3131d/mols-agent-assets"]["resolvedRef"]
+p = pathlib.Path(".agents/route/skills.jsonl")
+p.write_text(re.sub(r"(https://raw\.githubusercontent\.com/mols3131d/mols-agent-assets/)[0-9a-f]+/", rf"\g<1>{ref}/", p.read_text()))
+PY
+fi
 
 echo "==> [update] Regenerating agent projections..."
 rulesync generate

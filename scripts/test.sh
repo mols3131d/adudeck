@@ -4,10 +4,6 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-if command -v mise >/dev/null 2>&1; then
-  eval "$(mise env -s bash 2>/dev/null)" || true
-fi
-
 usage() {
   echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
   echo "       scripts/test.sh --ci-scope [<base-ref>|--stdin]" >&2
@@ -24,6 +20,7 @@ resolve_ci_scope_from_stream() {
   local reason=""
   local file_count=0
   local file
+  local deck_dir
 
   while IFS= read -r file; do
     [[ -z "$file" ]] && continue
@@ -48,7 +45,19 @@ resolve_ci_scope_from_stream() {
         add_otel=true
         otel_acceptance=true
         ;;
-      README.md|CHATBOT.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/data_engineering-apache_airflow/*)
+      README.md|CHATBOT.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/computer-science/*|decks/data_engineering-apache_airflow/*)
+        ;;
+      decks/*/*)
+        deck_dir="${file#decks/}"
+        deck_dir="decks/${deck_dir%%/*}"
+        if [[ ! -f "${deck_dir}/pyproject.toml" && ! -d "${deck_dir}/tests" && "$file" == *.md ]]; then
+          :
+        else
+          broaden=true
+          otel_acceptance=true
+          reason="unclassified deck path (${file})"
+          break
+        fi
         ;;
       *)
         broaden=true
@@ -95,8 +104,18 @@ if [[ "${1:-}" == "--ci-scope" ]]; then
     printf 'test_targets=all\notel_acceptance=true\nscope_reason=merge-base with %s unavailable (fail-safe full scope)\n' "$base_ref"
     exit 0
   fi
-  resolve_ci_scope_from_stream "diff against ${base_ref}" < <(git diff --name-only "${merge_base}...HEAD")
+  resolve_ci_scope_from_stream "diff against ${base_ref}" < <(
+    {
+      git -c core.quotePath=false diff --name-only "$merge_base" HEAD
+      git -c core.quotePath=false diff --name-only HEAD
+      git -c core.quotePath=false ls-files --others --exclude-standard
+    } | sort -u
+  )
   exit 0
+fi
+
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise env -s bash 2>/dev/null)" || true
 fi
 
 if [[ "$#" -eq 0 ]]; then
@@ -265,7 +284,7 @@ run_scripts() {
   grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
-  scope_out="$(printf 'docs/automation.md\n.rulesync/rules/overview.md\nrulesync.lock\n' | bash scripts/test.sh --ci-scope --stdin)"
+  scope_out="$(printf 'docs/automation.md\n.rulesync/rules/overview.md\nrulesync.lock\ndecks/computer-science/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
   grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
@@ -281,9 +300,22 @@ run_scripts() {
   grep -Fxq "test_targets=all" <<<"$scope_out"
   grep -Fxq "otel_acceptance=true" <<<"$scope_out"
 
-  scope_out="$(printf 'decks/unclassified-new-deck/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
+  scope_out="$(printf 'decks/unclassified-new-deck/lab.py\n' | bash scripts/test.sh --ci-scope --stdin)"
   grep -Fxq "test_targets=all" <<<"$scope_out"
   grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+
+  scope_out="$(printf 'unclassified-root-file.txt\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=all" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+
+  scope_out="$(
+    git -c core.quotePath=false ls-files \
+      | grep -Ev '^(mise\.toml|pyproject\.toml|uv\.lock|scripts/|\.github/workflows/)' \
+      | bash scripts/test.sh --ci-scope --stdin
+  )"
+  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+  grep -Fq "scope_reason=routed from " <<<"$scope_out"
 
   echo "==> [test:scripts] Shell script syntax and CI scope routing passed."
 }

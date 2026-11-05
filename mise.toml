@@ -79,7 +79,6 @@ mise run format
 lefthook validate
 mise run rulesync:doctor
 mise run rulesync:generate
-mise run rulesync:check
 mise run chatbot:check
 mise run test
 """

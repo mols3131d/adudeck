@@ -132,7 +132,7 @@ jobs:
 
   status:
     needs: [prepare, persist]
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}
     permissions:
       statuses: write
     runs-on: ubuntu-slim
