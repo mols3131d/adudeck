@@ -28,24 +28,18 @@ rulesync install --frozen
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
 sh .rulesync/scripts/project-root-agents.sh
+python .rulesync/scripts/project-chatbot-routes.py
 """
 
 [tasks."rulesync:check"]
-description = "Check frozen Skills, Copilot Rules, and the root AGENTS.md projection"
+description = "Check frozen Skills, Copilot Rules, root AGENTS.md, and chatbot routes"
 run = """
 rulesync install --frozen
 rulesync generate --check
 rulesync generate --check --targets copilot --features rules
 sh .rulesync/scripts/project-root-agents.sh --check
+python .rulesync/scripts/project-chatbot-routes.py --check
 """
-
-[tasks."chatbot:check"]
-description = "Check chatbot routing metadata"
-run = '''
-rulesync install --frozen
-uv run python .rulesync/skills/.curated/mols-chatbot-bootstrap/scripts/generate_routes.py --repo . --skills-root .rulesync/skills --output-dir .agents/route --kinds both --check
-uv run python -c "import json,pathlib; d=json.load(open('rulesync.lock'))['sources']['mols3131d/mols-agent-assets']; e={r['name']:r['source'] for r in map(json.loads,pathlib.Path('.agents/route/skills.jsonl').read_text().splitlines()[1:]) if r['source'].startswith('https://raw.githubusercontent.com/mols3131d/mols-agent-assets/')}; assert set(e)==set(d['skills']) and all('/'+d['resolvedRef']+'/' in s and s.endswith('/skills/'+n+'/SKILL.md') for n,s in e.items())"
-'''
 
 [tasks.format]
 description = "Auto-format repository-owned text formats"
@@ -79,6 +73,5 @@ mise run format
 lefthook validate
 mise run rulesync:doctor
 mise run rulesync:generate
-mise run chatbot:check
 mise run test
 """

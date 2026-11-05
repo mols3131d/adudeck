@@ -278,6 +278,8 @@ run_opentelemetry_acceptance() {
 run_scripts() {
   echo "==> [test:scripts] Checking shell script syntax and CI scope routing..."
   bash -n scripts/*.sh
+  sh -n .rulesync/scripts/project-root-agents.sh
+  python -m py_compile .rulesync/scripts/project-chatbot-routes.py
 
   local scope_out
   scope_out="$(printf '' | bash scripts/test.sh --ci-scope --stdin)"

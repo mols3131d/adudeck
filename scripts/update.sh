@@ -33,21 +33,12 @@ done
 
 echo "==> [update] Updating rulesync external dependencies..."
 rulesync install --update
-if [[ -f "rulesync.lock" && -f ".agents/route/skills.jsonl" ]]; then
-  uv run python - <<'PY'
-import json, pathlib, re
-ref = json.loads(pathlib.Path("rulesync.lock").read_text())["sources"]["mols3131d/mols-agent-assets"]["resolvedRef"]
-p = pathlib.Path(".agents/route/skills.jsonl")
-p.write_text(re.sub(r"(https://raw\.githubusercontent\.com/mols3131d/mols-agent-assets/)[0-9a-f]+/", rf"\g<1>{ref}/", p.read_text()))
-PY
-fi
 
 echo "==> [update] Regenerating agent projections..."
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
-if [[ -f ".rulesync/scripts/project-root-agents.sh" ]]; then
-  sh .rulesync/scripts/project-root-agents.sh
-fi
+sh .rulesync/scripts/project-root-agents.sh
+python .rulesync/scripts/project-chatbot-routes.py
 
 echo "==> [update] Refreshing git hooks with lefthook..."
 lefthook install
