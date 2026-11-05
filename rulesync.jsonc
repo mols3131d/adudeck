@@ -31,7 +31,9 @@
         "mols-coding-context-python",
         "mols-documentation",
         "text-humanize-korean",
-        "mols-code-comprehension-refactor"
+        "mols-code-comprehension-refactor",
+        "mols-project-task-command-design",
+        "mols-dev-env-bootstrap-design"
       ]
     }
   ],
