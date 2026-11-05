@@ -66,5 +66,5 @@ streaming event generation은 실제 deck에서 필요해질 때 추가한다.
 repository root에서 package 설치 경로와 CLI까지 함께 검증한다.
 
 ```bash
-mise run test:dataset-generator
+mise run test dataset-generator
 ```

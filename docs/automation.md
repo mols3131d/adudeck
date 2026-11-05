@@ -29,7 +29,8 @@ upgrade하지 않는다. 의도적으로 repository-managed tool pin, dependency
 갱신할 때만 `mise run update`를 사용한다.
 
 `ci:fast`는 format 이후 Rulesync projection을 생성·검증하고 테스트를 실행한다. 필요한 단계만 실행할 때는
-`mise run format`, `mise run test`, `mise run test:scripts` 또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
+`mise run format`, `mise run format:check`, `mise run test` (특정 대상만 검증할 때는 `mise run test <target>`)
+또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
 
 multi-step 구현은 `scripts/`가 소유하므로 필요하면 직접 호출할 수 있다.
 
