@@ -4,7 +4,7 @@
     "mols3131d/mols-agent-assets": {
       "requestedRef": "main",
       "resolvedRef": "6daae9c25d7f4a33ec3c0abcfb0fa259f559b720",
-      "resolvedAt": "2026-09-14T04:58:29.120Z",
+      "resolvedAt": "2026-11-05T13:40:15.194Z",
       "skills": {
         "text-humanize-korean": {
           "integrity": "sha256-4cfb7bff27a8888f8c7bb690b6e1f6cf31a9226a112dec746d36d4eebc49c79b"
@@ -72,7 +72,8 @@
         "mols-mermaid-diagram",
         "technical-document-fidelity",
         "text-humanize-korean"
-      ]
+      ],
+      "skillsPath": "src/rulesync/.rulesync/skills"
     }
   }
 }
