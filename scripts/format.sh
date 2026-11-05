@@ -35,22 +35,25 @@ if [[ "$CHECK_MODE" == true ]]; then
   echo "==> [format:check] Checking Markdown formatting..."
   rumdl fmt --check --exclude "$MARKDOWN_EXCLUDES" .
 
-  echo "==> [format:check] Checking JSON / JSONC formatting..."
-  biome format .
+  echo "==> [format:check] Checking JSON / JSONC formatting and lint..."
+  biome check .
 
-  echo "==> [format:check] Checking TOML formatting..."
+  echo "==> [format:check] Checking TOML formatting and lint..."
   tombi format --check .
+  tombi lint --error-on-warnings .
 
   echo "==> All format checks passed."
 else
   echo "==> [format] Formatting Markdown..."
   rumdl fmt --exclude "$MARKDOWN_EXCLUDES" .
 
-  echo "==> [format] Formatting JSON / JSONC..."
+  echo "==> [format] Formatting and checking JSON / JSONC..."
   biome format --write .
+  biome check .
 
-  echo "==> [format] Formatting TOML..."
+  echo "==> [format] Formatting and linting TOML..."
   tombi format .
+  tombi lint --error-on-warnings .
 
   echo "==> Formatting complete."
 fi

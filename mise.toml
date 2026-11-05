@@ -28,84 +28,34 @@ rulesync install --frozen
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
 sh .rulesync/scripts/project-root-agents.sh
+python .rulesync/scripts/project-chatbot-routes.py
 """
 
 [tasks."rulesync:check"]
-description = "Check frozen Skills, Copilot Rules, and the root AGENTS.md projection"
+description = "Check frozen Skills, Copilot Rules, root AGENTS.md, and chatbot routes"
 run = """
 rulesync install --frozen
 rulesync generate --check
 rulesync generate --check --targets copilot --features rules
 sh .rulesync/scripts/project-root-agents.sh --check
+python .rulesync/scripts/project-chatbot-routes.py --check
 """
-
-[tasks."chatbot:check"]
-description = "Check chatbot routing metadata"
-run = '''
-rulesync install --frozen
-uv run python .rulesync/skills/.curated/mols-chatbot-bootstrap/scripts/generate_routes.py --repo . --skills-root .rulesync/skills --output-dir .agents/route --kinds both --check
-uv run python -c "import json,pathlib; d=json.load(open('rulesync.lock'))['sources']['mols3131d/mols-agent-assets']; e={r['name']:r['source'] for r in map(json.loads,pathlib.Path('.agents/route/skills.jsonl').read_text().splitlines()[1:]) if r['source'].startswith('https://raw.githubusercontent.com/mols3131d/mols-agent-assets/')}; assert set(e)==set(d['skills']) and all('/'+d['resolvedRef']+'/' in s and s.endswith('/skills/'+n+'/SKILL.md') for n,s in e.items())"
-'''
-
-[tasks."format:markdown"]
-description = "Auto-format repository-owned Markdown with rumdl"
-run = '''rumdl fmt --exclude "AGENTS.md,**/AGENTS.md,AGENTS.override.md,**/AGENTS.override.md,.github/copilot-instructions.md,.github/instructions/**,.github/skills/**,.agents/**,.codex/**" .'''
-
-[tasks."format:json"]
-description = "Auto-format JSON and JSONC with Biome"
-run = "biome format --write ."
-
-[tasks."format:toml"]
-description = "Auto-format TOML with Tombi"
-run = "tombi format ."
 
 [tasks.format]
 description = "Auto-format repository-owned text formats"
 run = "bash scripts/format.sh"
 
-[tasks."check:json"]
-description = "Check JSON and JSONC with Biome"
-run = "biome check ."
-
-[tasks."lint:toml"]
-description = "Lint TOML with Tombi"
-run = "tombi lint --error-on-warnings ."
-
-[tasks."test:smoke"]
-description = "Run the minimal local runtime smoke test"
-run = "bash scripts/test.sh smoke"
-
-[tasks."test:dataset-generator"]
-description = "Run dataset generator unit tests and CLI smoke test"
-run = "bash scripts/test.sh dataset-generator"
-
-[tasks."test:langfuse-deck"]
-description = "Run Langfuse deck credential-free contract tests"
-run = "bash scripts/test.sh langfuse-deck"
-
-[tasks."test:scripts"]
-description = "Validate repository shell script syntax"
-run = "bash scripts/test.sh scripts"
-
-[tasks."test:opentelemetry-deck"]
-description = "Validate locked OpenTelemetry textbook evidence across Units 2, 3, 4, 6, and 8"
-run = "bash scripts/test.sh opentelemetry-deck"
+[tasks."format:check"]
+description = "Check repository-owned text formatting without writing"
+run = "bash scripts/format.sh --check"
 
 [tasks."test:opentelemetry-acceptance"]
 description = "Run Flask zero-code and OTLP/Collector end-to-end textbook acceptance"
 run = "bash scripts/test.sh opentelemetry-acceptance"
 
 [tasks.test]
-description = "Run all repository test suites"
-run = "bash scripts/test.sh all"
-
-[tasks."git:setup"]
-description = "Configure repository-local Git defaults"
-run = "git config --local commit.template .gitmessage"
-
-[tasks."hooks:install"]
-description = "Install repository Git hooks"
-run = "lefthook install"
+description = "Run repository tests (default: all; or target name)"
+run = "bash scripts/test.sh"
 
 [tasks.setup]
 description = "Set up the local workspace"
@@ -123,7 +73,5 @@ mise run format
 lefthook validate
 mise run rulesync:doctor
 mise run rulesync:generate
-mise run rulesync:check
-mise run chatbot:check
 mise run test
 """

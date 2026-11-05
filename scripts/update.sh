@@ -20,39 +20,25 @@ echo "==> [update] Updating root Python dependencies and lockfile..."
 uv lock --upgrade
 uv sync --locked
 
-if [[ -d "tools/dataset_generator" ]]; then
-  echo "==> [update] Updating tools/dataset_generator dependencies and lockfile..."
-  env -u VIRTUAL_ENV uv lock --upgrade --project tools/dataset_generator
-  env -u VIRTUAL_ENV uv sync --project tools/dataset_generator --locked
-fi
-
-if [[ -d "decks/ai-openai_sdk" ]]; then
-  echo "==> [update] Updating decks/ai-openai_sdk dependencies and lockfile..."
-  env -u VIRTUAL_ENV uv lock --upgrade --project decks/ai-openai_sdk
-  env -u VIRTUAL_ENV uv sync --project decks/ai-openai_sdk --locked
-fi
-
-if [[ -d "decks/systems-opentelemetry" ]]; then
-  echo "==> [update] Updating decks/systems-opentelemetry dependencies and lockfile..."
-  env -u VIRTUAL_ENV uv lock --upgrade --project decks/systems-opentelemetry
-  env -u VIRTUAL_ENV uv sync --project decks/systems-opentelemetry --locked
-fi
-
-if [[ -d "decks/llmops-langfuse" ]]; then
-  echo "==> [update] Updating decks/llmops-langfuse dependencies and lockfile..."
-  env -u VIRTUAL_ENV uv lock --upgrade --project decks/llmops-langfuse
-  env -u VIRTUAL_ENV uv sync --project decks/llmops-langfuse --locked
-fi
+for proj in tools/*/pyproject.toml decks/[!_]*/pyproject.toml; do
+  if [[ -f "$proj" ]]; then
+    proj_dir="$(dirname "$proj")"
+    if [[ -f "$proj_dir/uv.lock" ]]; then
+      echo "==> [update] Updating $proj_dir dependencies and lockfile..."
+      env -u VIRTUAL_ENV uv lock --upgrade --project "$proj_dir"
+      env -u VIRTUAL_ENV uv sync --project "$proj_dir" --locked
+    fi
+  fi
+done
 
 echo "==> [update] Updating rulesync external dependencies..."
-rulesync install
+rulesync install --update
 
 echo "==> [update] Regenerating agent projections..."
 rulesync generate
 rulesync generate --targets agentsmd,copilot --features rules
-if [[ -f ".rulesync/scripts/project-root-agents.sh" ]]; then
-  sh .rulesync/scripts/project-root-agents.sh
-fi
+sh .rulesync/scripts/project-root-agents.sh
+python .rulesync/scripts/project-chatbot-routes.py
 
 echo "==> [update] Refreshing git hooks with lefthook..."
 lefthook install

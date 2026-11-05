@@ -16,25 +16,15 @@ eval "$(mise env -s bash 2>/dev/null)" || true
 echo "==> [setup] Syncing root Python environment with uv..."
 uv sync --locked
 
-if [[ -d "tools/dataset_generator" ]]; then
-  echo "==> [setup] Syncing tools/dataset_generator environment..."
-  env -u VIRTUAL_ENV uv sync --project tools/dataset_generator --locked
-fi
-
-if [[ -d "decks/ai-openai_sdk" ]]; then
-  echo "==> [setup] Syncing decks/ai-openai_sdk environment..."
-  env -u VIRTUAL_ENV uv sync --project decks/ai-openai_sdk --locked
-fi
-
-if [[ -d "decks/systems-opentelemetry" ]]; then
-  echo "==> [setup] Syncing decks/systems-opentelemetry environment..."
-  env -u VIRTUAL_ENV uv sync --project decks/systems-opentelemetry --locked
-fi
-
-if [[ -d "decks/llmops-langfuse" ]]; then
-  echo "==> [setup] Syncing decks/llmops-langfuse environment..."
-  env -u VIRTUAL_ENV uv sync --project decks/llmops-langfuse --locked
-fi
+for proj in tools/*/pyproject.toml decks/[!_]*/pyproject.toml; do
+  if [[ -f "$proj" ]]; then
+    proj_dir="$(dirname "$proj")"
+    if [[ -f "$proj_dir/uv.lock" ]]; then
+      echo "==> [setup] Syncing $proj_dir environment with uv..."
+      env -u VIRTUAL_ENV uv sync --project "$proj_dir" --locked
+    fi
+  fi
+done
 
 echo "==> [setup] Configuring git commit template..."
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -44,7 +34,8 @@ fi
 echo "==> [setup] Installing git hooks with lefthook..."
 lefthook install
 
-echo "==> [setup] Installing frozen rulesync dependencies..."
+echo "==> [setup] Installing frozen rulesync dependencies and local skill projections..."
 rulesync install --frozen
+rulesync generate
 
 echo "==> Environment setup successfully completed!"

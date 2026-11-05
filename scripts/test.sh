@@ -4,16 +4,129 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
+usage() {
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
+  echo "       scripts/test.sh --ci-scope [<base-ref>|--stdin]" >&2
+}
+
+resolve_ci_scope_from_stream() {
+  local source_label="$1"
+  local broaden=false
+  local otel_acceptance=false
+  local add_dataset=false
+  local add_openai=false
+  local add_langfuse=false
+  local add_otel=false
+  local reason=""
+  local file_count=0
+  local file
+  local deck_dir
+
+  while IFS= read -r file; do
+    [[ -z "$file" ]] && continue
+    file_count=$((file_count + 1))
+    case "$file" in
+      mise.toml|pyproject.toml|uv.lock|scripts/*|.github/workflows/*)
+        broaden=true
+        otel_acceptance=true
+        reason="shared infrastructure changed (${file})"
+        break
+        ;;
+      tools/dataset_generator/*)
+        add_dataset=true
+        ;;
+      decks/ai-openai_sdk/*)
+        add_openai=true
+        ;;
+      decks/llmops-langfuse/*)
+        add_langfuse=true
+        ;;
+      decks/systems-opentelemetry/*)
+        add_otel=true
+        otel_acceptance=true
+        ;;
+      README.md|CHATBOT.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/computer-science/*|decks/data_engineering-apache_airflow/*)
+        ;;
+      decks/*/*)
+        deck_dir="${file#decks/}"
+        deck_dir="decks/${deck_dir%%/*}"
+        if [[ ! -f "${deck_dir}/pyproject.toml" && ! -d "${deck_dir}/tests" && "$file" == *.md ]]; then
+          :
+        else
+          broaden=true
+          otel_acceptance=true
+          reason="unclassified deck path (${file})"
+          break
+        fi
+        ;;
+      *)
+        broaden=true
+        otel_acceptance=true
+        reason="unclassified path (${file})"
+        break
+        ;;
+    esac
+  done
+
+  if [[ "$broaden" == true ]]; then
+    printf 'test_targets=all\notel_acceptance=true\nscope_reason=%s\n' "$reason"
+    return 0
+  fi
+
+  local targets=(smoke)
+  [[ "$add_dataset" == true ]] && targets+=(dataset-generator)
+  [[ "$add_openai" == true ]] && targets+=(openai-sdk-deck)
+  [[ "$add_langfuse" == true ]] && targets+=(langfuse-deck)
+  [[ "$add_otel" == true ]] && targets+=(opentelemetry-deck)
+  targets+=(scripts)
+
+  if [[ "$file_count" -eq 0 ]]; then
+    reason="no changed files (${source_label})"
+  else
+    reason="routed from ${file_count} changed file(s) (${source_label})"
+  fi
+
+  printf 'test_targets=%s\notel_acceptance=%s\nscope_reason=%s\n' "${targets[*]}" "$otel_acceptance" "$reason"
+}
+
+if [[ "${1:-}" == "--ci-scope" ]]; then
+  if [[ "$#" -ne 2 ]]; then
+    usage
+    exit 2
+  fi
+  if [[ "$2" == "--stdin" ]]; then
+    resolve_ci_scope_from_stream "stdin"
+    exit 0
+  fi
+  base_ref="$2"
+  merge_base="$(git merge-base "$base_ref" HEAD 2>/dev/null || true)"
+  if [[ -z "$merge_base" ]]; then
+    printf 'test_targets=all\notel_acceptance=true\nscope_reason=merge-base with %s unavailable (fail-safe full scope)\n' "$base_ref"
+    exit 0
+  fi
+  resolve_ci_scope_from_stream "diff against ${base_ref}" < <(
+    {
+      git -c core.quotePath=false diff --name-only "$merge_base" HEAD
+      git -c core.quotePath=false diff --name-only HEAD
+      git -c core.quotePath=false ls-files --others --exclude-standard
+    } | sort -u
+  )
+  exit 0
+fi
+
 if command -v mise >/dev/null 2>&1; then
   eval "$(mise env -s bash 2>/dev/null)" || true
 fi
 
-if [[ "$#" -gt 1 ]]; then
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts]" >&2
-  exit 2
+if [[ "$#" -eq 0 ]]; then
+  if [[ -n "${CI_TEST_TARGETS:-}" ]]; then
+    read -r -a REQUESTED_TARGETS <<<"$CI_TEST_TARGETS"
+  else
+    REQUESTED_TARGETS=(all)
+  fi
+else
+  REQUESTED_TARGETS=("$@")
 fi
-
-TARGET="${1:-all}"
 
 run_smoke() {
   echo "==> [test:smoke] Running minimal local runtime smoke test..."
@@ -28,10 +141,8 @@ run_dataset_generator() {
   echo "==> [test:dataset-generator] Running CLI smoke test..."
   local tmp_dir
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "${tmp_dir:-}"' EXIT
+  trap 'rm -rf "${tmp_dir:-}"' RETURN
   env -u VIRTUAL_ENV uv run --project tools/dataset_generator --locked adudeck-data generate ecommerce --output "$tmp_dir" --users 2 --products 2 --orders 2 --seed 1
-  rm -rf "$tmp_dir"
-  trap - EXIT
   echo "==> [test:dataset-generator] Dataset generator tests passed."
 }
 
@@ -165,44 +276,108 @@ run_opentelemetry_acceptance() {
 }
 
 run_scripts() {
-  echo "==> [test:scripts] Checking shell script syntax..."
+  echo "==> [test:scripts] Checking shell script syntax and CI scope routing..."
   bash -n scripts/*.sh
-  echo "==> [test:scripts] Shell script syntax passed."
+  sh -n .rulesync/scripts/project-root-agents.sh
+  python -m py_compile .rulesync/scripts/project-chatbot-routes.py
+
+  local scope_out
+  scope_out="$(printf '' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
+  scope_out="$(printf 'docs/automation.md\n.rulesync/rules/overview.md\nrulesync.lock\ndecks/computer-science/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
+  scope_out="$(printf 'decks/llmops-langfuse/README.md\ntools/dataset_generator/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke dataset-generator langfuse-deck scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
+  scope_out="$(printf 'decks/systems-opentelemetry/tests/test_first_trace.py\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke opentelemetry-deck scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+
+  scope_out="$(printf 'docs/README.md\nmise.toml\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=all" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+
+  scope_out="$(printf 'decks/unclassified-new-deck/lab.py\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=all" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+
+  scope_out="$(printf 'unclassified-root-file.txt\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=all" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+
+  scope_out="$(
+    git -c core.quotePath=false ls-files \
+      | grep -Ev '^(mise\.toml|pyproject\.toml|uv\.lock|scripts/|\.github/workflows/)' \
+      | bash scripts/test.sh --ci-scope --stdin
+  )"
+  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=true" <<<"$scope_out"
+  grep -Fq "scope_reason=routed from " <<<"$scope_out"
+
+  echo "==> [test:scripts] Shell script syntax and CI scope routing passed."
 }
 
-case "$TARGET" in
-  smoke)
-    run_smoke
-    ;;
-  dataset-generator)
-    run_dataset_generator
-    ;;
-  openai-sdk-deck)
-    run_openai_sdk_deck
-    ;;
-  langfuse-deck)
-    run_langfuse_deck
-    ;;
-  opentelemetry-deck)
-    run_opentelemetry_deck
-    ;;
-  opentelemetry-acceptance)
-    run_opentelemetry_acceptance
-    ;;
-  scripts)
-    run_scripts
-    ;;
-  all)
-    run_smoke
-    run_dataset_generator
-    run_openai_sdk_deck
-    run_langfuse_deck
-    run_opentelemetry_deck
-    run_scripts
-    echo "==> All test suites passed."
-    ;;
-  *)
-    echo "Error: Unknown test target '$TARGET'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
-    exit 1
-    ;;
-esac
+run_smoke_flag=false
+run_dataset_flag=false
+run_openai_flag=false
+run_langfuse_flag=false
+run_otel_flag=false
+run_otel_acceptance_flag=false
+run_scripts_flag=false
+run_all_flag=false
+
+for target in "${REQUESTED_TARGETS[@]}"; do
+  case "$target" in
+    smoke)
+      run_smoke_flag=true
+      ;;
+    dataset-generator)
+      run_dataset_flag=true
+      ;;
+    openai-sdk-deck)
+      run_openai_flag=true
+      ;;
+    langfuse-deck)
+      run_langfuse_flag=true
+      ;;
+    opentelemetry-deck)
+      run_otel_flag=true
+      ;;
+    opentelemetry-acceptance)
+      run_otel_acceptance_flag=true
+      ;;
+    scripts)
+      run_scripts_flag=true
+      ;;
+    all)
+      run_all_flag=true
+      run_smoke_flag=true
+      run_dataset_flag=true
+      run_openai_flag=true
+      run_langfuse_flag=true
+      run_otel_flag=true
+      run_scripts_flag=true
+      ;;
+    *)
+      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
+      exit 1
+      ;;
+  esac
+done
+
+[[ "$run_smoke_flag" == true ]] && run_smoke
+[[ "$run_dataset_flag" == true ]] && run_dataset_generator
+[[ "$run_openai_flag" == true ]] && run_openai_sdk_deck
+[[ "$run_langfuse_flag" == true ]] && run_langfuse_deck
+[[ "$run_otel_flag" == true ]] && run_opentelemetry_deck
+[[ "$run_otel_acceptance_flag" == true ]] && run_opentelemetry_acceptance
+[[ "$run_scripts_flag" == true ]] && run_scripts
+
+if [[ "$run_all_flag" == true ]]; then
+  echo "==> All test suites passed."
+fi

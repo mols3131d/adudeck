@@ -4,7 +4,7 @@
     {
       "label": "adudeck: bootstrap",
       "type": "shell",
-      "command": "mise install && mise run setup",
+      "command": "mise run setup",
       "options": {
         "cwd": "${workspaceFolder}"
       },
