@@ -382,6 +382,23 @@ one source line
 이 slice에서는 assignment, pipeline, function까지 한꺼번에 설명하지 않는다. recurring teaching pattern과 argument mental
 model이 실제로 잘 작동하는지 먼저 검증한다.
 
+첫 increment의 acceptance는 **최종 `argc/argv` 경계에 대한 예측·설명·수정**이다. 관찰 도구의 출력만 재현했다고
+통과시키지 않는다.
+
+| Probe class | 학습자가 예측할 상태 | 관찰할 증거 |
+| --- | --- | --- |
+| Whitespace | 기본 `IFS`에서 `$value`와 `"$value"`의 field 수 차이 | `value='a b'`의 정확한 argv |
+| Empty | `$empty`의 field 제거와 `"$empty"`의 빈 argument 보존 | argument 개수와 빈 문자열의 존재 |
+| Glob | unquoted pathname pattern과 quoted literal의 차이 | 격리된 fixture의 matches와 final fields |
+| Repair / transfer | 깨지는 unquoted 전달을 수정하는 근거 | 다른 입력에서도 argument vector가 유지되는지 설명 |
+
+학습자는 예측 전에 shell context(기본 `IFS`, glob fixture, 필요한 환경값)를 확인한 뒤 source line의
+final argv를 **실행 전에** 적는다. 관찰·설명 후 잘못된 quoting을 수정하고 새로운 입력으로 transfer한다.
+정확한 pathname match 순서가 중요하면 fixture 및 locale을 고정한다.
+
+이것은 curriculum acceptance contract다. 실제 설명, worked example, 문제, 실행 fixture, 평가 rubric과
+runtime matrix는 첫 build increment에서 해당 material owner와 함께 작성한다.
+
 ## Portability Validation Model
 
 portable claim은 한 command의 성공으로 결정하지 않는다.
