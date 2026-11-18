@@ -8,7 +8,7 @@ derived projection이며 직접 편집하지 않는다.
 ```text
 .rulesync/
 ├── rules/     # portable repository rules
-├── scripts/   # root AGENTS projection helper
+├── scripts/   # root AGENTS and chatbot route projection helpers
 └── skills/    # portable agent skills
 ```
 
@@ -37,7 +37,7 @@ mise run rulesync:check
 
 - `doctor` — configuration을 strict mode로 진단한다.
 - `install` — external dependency를 resolve하고 lockfile을 갱신한다.
-- `generate` — frozen lock을 소비해 Skills와 Rule projections를 생성한다.
-- `check` — frozen Skills, Copilot Rules, root `AGENTS.md` projection을 확인한다.
+- `generate` — frozen lock을 소비해 Skills, Rule projections, chatbot route metadata를 생성·동기화한다.
+- `check` — frozen Skills, Copilot Rules, root `AGENTS.md`, chatbot route projection을 확인한다.
 
 Rulesync는 active development 동안 mise의 GitHub backend에서 current latest release를 사용한다.
