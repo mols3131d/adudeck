@@ -61,8 +61,8 @@
    예측하게 한다.
 3. `String` / `&str`, `Vec<T>`, `Option<T>`, `Result<T, E>`, `match` / `?`를 단순 API 암기가 아닌 데이터·실패 흐름으로
    다룬다.
-4. 작은 텍스트 파서 또는 레코드 정규화 라이브러리를 구현한다. 정상·빈 입력·파싱 실패·경계값 테스트를 만든다. 잘못된 UTF-8 테스트는 입력을 `&[u8]`로 받는 경우에만 넣는다.
-   Rust `&str`은 이미 유효한 UTF-8을 보장한다.
+4. 작은 텍스트 파서 또는 레코드 정규화 라이브러리를 구현한다. 정상·빈 입력·파싱 실패·경계값 테스트를 만든다. 잘못된
+   UTF-8 테스트는 입력을 `&[u8]`로 받는 경우에만 넣는다. Rust `&str`은 이미 유효한 UTF-8을 보장한다.
 5. 컴파일이 거절된 예제를 agent에게 수정하게 하되, **왜 오류인지**를 학습자가 설명하도록 한다.
 
 권장 단원별 과제: 소유권 이동 추적, 빌림 충돌 디버깅, 실패 형태 예측, 파서 테스트 설계, 서로 다른 API 설계 비교.
@@ -267,8 +267,8 @@ binding보다 빠를 수도 있다 [S9]. 개선 폭이 측정 노이즈에 묻�
 
 - 웹의 공식 안내·릴리스 노트와 PR #36의 README를 대조한 **문헌 조사**다. 이 보고서에서는 crate를 빌드하거나 패키지를
   설치·테스트하지 않았다.
-- 버전은 2026-11-18 재검증 시점의 snapshot이다. 새 교본의 코드 작성 직전에 `rustc --version`, `python --version`, `cargo tree`,
-  `maturin --version` 및 공식 지원 범위를 다시 확인한다.
+- 버전은 2026-11-18 재검증 시점의 snapshot이다. 새 교본의 코드 작성 직전에 `rustc --version`, `python --version`,
+  `cargo tree`, `maturin --version` 및 공식 지원 범위를 다시 확인한다.
 - 특정 PyO3 문서의 `main` 브랜치 내용과 배포 릴리스가 다를 수 있다. 배포 릴리스 기준으로 튜토리얼 코드를 컴파일한 결과만
   정상 동작 근거로 삼는다.
 - Benchmark와 agentic coding 효율성은 측정하지 않았다. 이 단계에서 성능 향상이나 작업 효율을 수치로 주장할 근거가 없다.
@@ -298,10 +298,12 @@ binding보다 빠를 수도 있다 [S9]. 개선 폭이 측정 노이즈에 묻�
 - [S17] [PyO3 Type Conversions](https://pyo3.rs/main/conversions/tables) — 타입 변환·비용·예외 매핑
 - [S18] [maturin Project Layout](https://www.maturin.rs/project_layout) — Python/Rust 혼합 구조
 - [S19] [pyperf Documentation](https://pyperf.readthedocs.io/en/latest/) — 반복 Python benchmark
-- [S20] [Rust 1.100.0 release announcement](https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/) — 2026-11-12 stable release
+- [S20] [Rust 1.100.0 release announcement](https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/) — 2026-11-12 stable
+  release
 - [S21] [maturin v1.16.0 release](https://github.com/PyO3/maturin/releases/tag/v1.16.0) — 2026-10-29 release
 - [S22] [PyO3 v0.30.1 changelog](https://pyo3.rs/v0.30.1/changelog) — Python/Rust 지원 범위
-- [S23] [Rust 2024 Cargo resolver](https://doc.rust-lang.org/stable/edition-guide/rust-2024/cargo-resolver.html) — resolver 3, workspace 예외
+- [S23] [Rust 2024 Cargo resolver](https://doc.rust-lang.org/stable/edition-guide/rust-2024/cargo-resolver.html) —
+  resolver 3, workspace 예외
 - [S24] [PyO3 0.30.1 Parallelism](https://pyo3.rs/v0.30.1/parallelism) — `Python::detach` 및 GIL 경계
 - [S25] [PyO3 0.30.1 Building and Distribution](https://pyo3.rs/v0.30.1/building-and-distribution) — `abi3`/`abi3t`
 - [S26] [maturin Bindings](https://www.maturin.rs/bindings) — Python 3.14t와 3.15+ wheel 선택
