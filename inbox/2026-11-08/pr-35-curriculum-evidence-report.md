@@ -9,6 +9,10 @@
 - 범위: **조사와 최소 curriculum repair 권고**. 기존 교본/README 수정, 실습 작성, 리뷰 스레드 resolve, 병합은 수행하지
   않음.
 
+> **후속 상태 (2026-11-18):** 이 문서는 11월 8일 시점의 역사적 조사·권고를 보존한다. 네 가지 커리큘럼 지적은
+> [11월 18일 연구·수정 보고서](../2026-11-18/pr-35-research-review.md)와 deck README에서 후속 교정됐다.
+> 아래의 **NOT MERGE-READY** 판정은 과거 revision에 적용된 것으로, 현재 PR의 병합 상태 판정이 아니다.
+
 ## 판정
 
 **조사 결과: 네 가지 merge blocker가 여전히 유효하다. 수정 후 짧은 재검증이 필요하며, 현 시점에는 NOT MERGE-READY다.**
@@ -28,7 +32,7 @@ POSIX.1-2024와 deployed shell을 구분하는 방침, argv/status/fd/state ment
 
 - **언어 의미의 기준**:
   [The Open Group POSIX.1-2024, Shell Command Language](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html),
-  특히 ``2.6` 및 ``2.9.4`.
+  특히 `§2.6` 및 `§2.9.4`.
 - **검색 가능한 동일 개정판 참고 사본**:
   [posix.fail, 2024 Shell Command Language](https://posix.fail/spec/posix/2024/utilities/V3_chap02.html),
   [Utility Conventions](https://posix.fail/spec/posix/2024/basedefs/V1_chap12.html). 이 호스트는 공식 발행처가 아니라
@@ -77,7 +81,7 @@ constructive alignment도 학습 목표·활동·평가를 연결하도록 권�
 
 ## 발견 2 — `case`/`for`의 선택 입력과 exit status를 혼동 (Blocker)
 
-POSIX.1-2024 Shell Command Language ``2.9.4.2–2.9.4.6`는 다음을 구분한다.
+POSIX.1-2024 Shell Command Language `§2.9.4.2–2.9.4.6`는 다음을 구분한다.
 
 | Construct | 다음 실행 경로를 결정하는 입력 | 실행 결과로서의 status |
 | --- | --- | --- |
@@ -106,7 +110,7 @@ POSIX.1-2024 Shell Command Language ``2.9.4.2–2.9.4.6`는 다음을 구분한�
 ## 발견 3 — Tilde expansion의 누락 (Blocker)
 
 POSIX.1-2024
-``2.6`의 ordinary word expansion 첫 단계에는 **tilde, parameter, command, arithmetic** 확장이 함께 명시된다. 그 뒤 적용 가능한 field splitting, pathname expansion, quote removal로 이어진다. 현재 README의 반복 model은 tilde를 제외하므로 `~/file`
+`§2.6`의 ordinary word expansion 첫 단계에는 **tilde, parameter, command, arithmetic** 확장이 함께 명시된다. 그 뒤 적용 가능한 field splitting, pathname expansion, quote removal로 이어진다. 현재 README의 반복 model은 tilde를 제외하므로 `~/file`
 같은 흔한 사례를 모델로 설명할 수 없다.
 
 권고하는 **입문자용 개념도**:
@@ -121,7 +125,7 @@ ordinary source word (quote/context controls applicability)
 ```
 
 이는 **모든 shell grammar context에서 무조건 실행되는 파이프라인이 아니다**. `case`의 word, assignment, redirection,
-special parameter `"$@"` 등은 서로 다른 경계를 갖는다. 특히 POSIX.1-2024 ``2.6`은 특정 unquoted brace 구문에 대해 구현
+special parameter `"$@"` 등은 서로 다른 경계를 갖는다. 특히 POSIX.1-2024 `§2.6`은 특정 unquoted brace 구문에 대해 구현
 정의의 추가 expansion 가능성도 열어 놓으므로, 위 그림은 학습을 위한 대표 모델로 기술하고 exhaustive algorithm이라
 주장하지 않는다.
 
@@ -136,7 +140,7 @@ fixture와 실제 사용자 홈 경로를 구분한다.
 ## 발견 4 — Arithmetic expansion의 unit owner 부재 (Blocker)
 
 README Learning Scope와 mental model은 `$((expression))`을 포함하지만 Planned Units 어디에서도 이를 가르칠 책임을
-지정하지 않았다. POSIX.1-2024 ``2.6.4`에서 arithmetic expansion은 값을 계산해 결과를 대체한다. 특히 Unit 4의
+지정하지 않았다. POSIX.1-2024 `§2.6.4`에서 arithmetic expansion은 값을 계산해 결과를 대체한다. 특히 Unit 4의
 counter/iteration 설명에서 선행 개념 없이 사용될 위험이 있다.
 
 가장 작은 수정은 두 단계 소유권이다.
@@ -167,7 +171,7 @@ OPTIONS/OPERANDS 계약을 확인하거나, 현재 디렉터리의 상대 파일
 ## Issue 8 / 배포 지원성의 추가 경계
 
 POSIX.1-2024
-``2.9.4.3`의 `case`는 `;&` terminator도 정의한다. 하지만 이번 초급 curriculum의 교정은 `case`의 **pattern-based selection** 이해에 필요한 수준이므로, 기존 `;;` 중심으로 시작한다. 새 문법을 가르친다는 이유만으로 최초 runnable baseline의 지원성을 가정하지 않는다. 이는 기존 `pipefail`, `$'...'`의
+`§2.9.4.3`의 `case`는 `;&` terminator도 정의한다. 하지만 이번 초급 curriculum의 교정은 `case`의 **pattern-based selection** 이해에 필요한 수준이므로, 기존 `;;` 중심으로 시작한다. 새 문법을 가르친다는 이유만으로 최초 runnable baseline의 지원성을 가정하지 않는다. 이는 기존 `pipefail`, `$'...'`의
 “표준 소속과 deployed feature adoption을 분리한다”는 원칙과 일치한다.
 
 ## 현재 GitHub 리뷰 상태와 잔여 작업
@@ -213,9 +217,9 @@ semantic disposition이 정리되고, final-head CI와 integration 증거가 확
 ### 규범 / 기술
 
 - [POSIX.1-2024 Shell Command Language — 공식](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html):
-  ``2.6`, ``2.6.1`, ``2.6.4`, ``2.9.3`, ``2.9.4`.
+  `§2.6`, `§2.6.1`, `§2.6.4`, `§2.9.3`, `§2.9.4`.
 - [POSIX.1-2024 Utility Conventions — 공식](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html):
-  `12.2 Guideline 10 및 utility별 예외 경계.
+  `§12.2`, Guideline 10 및 utility별 예외 경계.
 - [동일 개정판 열람용 사본: Shell](https://posix.fail/spec/posix/2024/utilities/V3_chap02.html),
   [Utility](https://posix.fail/spec/posix/2024/basedefs/V1_chap12.html). *Unofficial mirror; 공식 규범의 대체물은 아님.*
 
