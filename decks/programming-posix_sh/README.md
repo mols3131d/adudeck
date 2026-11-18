@@ -273,7 +273,9 @@ Unit 1에서 익힌 pattern 기초를 재사용하되, `case` selection을 pathn
 counter update와 반복 상태 추적에 적용한다.
 
 핵심 invariant는 **caller의 argument vector를 필요 이상으로 다시 split/glob하지 않고 보존한다**는 것이다. empty,
-whitespace, glob, leading-dash argument를 포함한다.
+whitespace, glob, leading-dash argument를 포함한다. 단, shell의 quoting은 argument boundary를 보존할 뿐
+utility의 option parsing을 변경하지 않는다. `--` 지원 여부 또는 적절한 `./` pathname prefix는 개별 utility
+contract에 따라 판단한다.
 
 pipeline-fed loop가 parent variable을 업데이트한다고 가정하는 portability trap도 이전 execution-environment model과
 연결한다.
