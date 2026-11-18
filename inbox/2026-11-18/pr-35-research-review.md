@@ -162,6 +162,73 @@ printf '<%s>\n' "$@"
 - Repository `.rulesync/skills/adudeck-deck-curriculum/SKILL.md`, `.rulesync/skills/adudeck-textbook/SKILL.md`,
   `docs/VISON.md`, `docs/decks.md` 및 PR #35 review thread.
 
+## 2026-11-18 후속 계획과 리뷰·개선 실행 기록
+
+현재 PR #35의 책임은 **연구와 커리큘럼 foundation**이다. textbook chapter 및 playground의 실제 구현은
+이 foundation이 정리된 후 별도 소규모 increment로 진행한다. 두 작업의 acceptance를 혼동하지 않는다.
+
+### 단계별 계획
+
+| 단계 | 책임과 산출물 | Gate |
+| --- | --- | --- |
+| P1 · 조사 신뢰성 | 기존 문서의 POSIX 조항, 시간상 오래된 판단, evidence hierarchy 검토 | 잘못된 표준 분류·broken reference가 없음 |
+| P2 · 커리큘럼 인계 | O1–O11 coverage와 첫 calibration slice의 예측·관찰·수정 기준 확정 | outcome, unit owner, 관찰 가능한 evidence가 연결됨 |
+| P3 · 리뷰 → 개선 반복 | 발견을 증거로 검증하고 최소 수정, 같은 acceptance를 재검토 | 새로운 material blocker가 없고 변경 사항이 수렴 |
+| P4 · PR 최종화 | review thread, 최신 branch status, `main` 차이 및 CI 확인 | HEAD 기준 성공·통합 위험 및 잔여 판단 명시 |
+| P5 · 다음 build increment | O1/O2를 위한 첫 source → argv 학습 번들·격리된 fixture·평가 | 실제 설명/예측/관찰/repair/transfer가 완성된 뒤 merge gate 별도 적용 |
+
+### 검토 1: 연구 문서와 출처의 정확성
+
+- POSIX.1-2024 §2.6, §2.6.1, §2.9.4.2–2.9.4.6을 2024 표기된 열람 사본과 재대조했다.
+  공식 The Open Group URL이 HTTP 403이어서 원문 열람은 mirror에 한정했다.
+- 2026-11-08 조사 보고서의 섹션 번호가 ` ``2.6` ` 형식으로 깨진 구간을 확인했다.
+- **개선:** 2026-11-08 보고서의 표준 조항 표기 12건과 12.2 Guideline 10 표기를 수정했다.
+  해당 보고서가 현재 PR 판단이 아니라 *2026-11-08 당시의 역사적 평가*임도 명시했다.
+- **재검토:** 깨진 POSIX 조항 패턴은 0건, 보고서의 상태 안내와 링크는 유지됐다.
+
+### 검토 2: 첫 calibration slice의 평가 가능성
+
+- 기존 README는 `predict → observe → explain → repair → transfer` 순서를 선언했지만,
+  학습자에게 **어떤 입력/상태를 예측해야 하는지**에 대한 구체적인 수용 예시가 부족했다.
+- **개선:** First Calibration Slice에 whitespace, empty, glob, repair/transfer 네 가지 probe class를
+  명시하고, `argc/argv`를 실행 전에 예측하고 관찰하게 하는 acceptance contract를 추가했다.
+  기본 `IFS`, glob fixture, 필요한 환경값과 정확한 glob 순서의 locale 경계도 명시했다.
+- **재검토:** README에는 Unit 0–7 총 8개, observable outcome 11개와 coverage row 11개,
+  calibration probe row 4개가 유지된다. `case`/`for` 구분과 tilde 책임도 유지했다.
+- **scope 유지:** 표는 추후 작성할 textbook·playground의 수용 기준이지 해당 artefact가 이미
+  구현·실행되었다는 주장이 아니다.
+
+### 검토 3: 좁은 런타임 관찰의 추가 반증
+
+2026-11-18 현재 사용 가능한 로컬 바이너리로 작은 probe를 실행했다.
+이는 연구 evidence이며 repository CI·정적 분석과 독립적이다.
+
+| Shell | 이 환경의 식별 정보 | 관찰 |
+| --- | --- | --- |
+| `dash` | Debian package 0.5.12-12 | argc 3, quoted/unquoted tilde 차이, arithmetic 5 |
+| `bash --posix` | GNU Bash 5.2.37 | 동일한 세 인자 경계 및 결과 |
+| `busybox ash` | BusyBox 1.37.0 | 동일한 세 인자 경계 및 결과 |
+
+예상한 값은 `HOME='/tmp/space dir'`로 고정한 `~/x`, `"~/x"`, `"$((2 + 3))"` 세 argument였다.
+세 셸 모두 `argc=3`, `</tmp/space dir/x>`, `<~/x>`, `<5>`를 보였다. 추가로
+`case` no-match, `for` no-items, 실행된 branch 없는 `if`의 결과 exit status는 이 세 로컬 셸에서 모두 0이었다.
+
+**한계:** 여기에는 모든 locale·POSIX 구현·실제 배포 `/bin/sh` 정책이 포함되지 않는다.
+관찰 결과를 표준의 대체물이나 무제한 portability claim으로 해석하지 않는다.
+
+### 다음 build increment의 인계 조건
+
+1. Unit 1 전체를 한 번에 작성하지 않는다. ordinary command argument에서의 quoting/expansion과
+   exact `argc/argv` 예측만 첫 slice로 둔다.
+2. 실행 전에 whitespace, empty, glob 입력의 예상 `argc/argv`를 적고,
+   실제 인자 경계를 노출하는 관찰을 배치한다. 하나의 broken quoting case를 repair하고
+   다른 입력으로 transfer한다.
+3. 교본은 개념·worked example·예측·오개념 반례·checkpoint를 담당하고,
+   playground는 격리된 fixture 및 재현 가능한 observation을 담당한다.
+4. 사용한 `sh` 구현/버전, ShellCheck 버전(사용한다면), fixture, `IFS`, locale를 기록한다.
+   테스트 통과는 **그 대상 환경의 관찰**이며 universal POSIX conformance 증명이 아니다.
+5. 본 PR의 acceptance를 넘어서는 새 chapter·playground 작성은 후속 incremental PR에서 관리한다.
+
 ## 최종 경계
 
 이 문서는 공개 자료의 **독자적 분석 및 인용 링크**만 기록한다. raw third-party text, account data, credential, private
