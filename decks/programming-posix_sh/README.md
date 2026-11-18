@@ -35,7 +35,7 @@ execution environment를 구성하고, command의 exit status를 다음 control 
 다룬다.
 
 - shell script의 실행 경계, comment, simple command
-- word, quoting, parameter expansion, command substitution, arithmetic expansion
+- word, quoting, tilde/parameter/command/arithmetic expansion
 - field splitting과 pathname expansion이 final argument vector에 미치는 영향
 - ordinary argument context와 assignment context의 차이
 - shell variable, exported environment, command environment
@@ -111,15 +111,16 @@ ordinary command argument를 배울 때는 다음 흐름을 관찰한다.
 
 ```text
 source word
-→ parameter / command / arithmetic expansion
-→ field splitting
-→ pathname expansion
+→ tilde / parameter / command / arithmetic expansion (as applicable)
+→ field splitting (when applicable)
+→ pathname expansion (when applicable)
 → quote removal
 → final argv fields
 ```
 
-이것은 모든 grammar context에 똑같이 적용되는 보편 공식이 아니다. assignment와 redirection 같은 context는 필요한
-unit에서 차이를 추가한다.
+이것은 모든 grammar context에 똑같이 적용되는 보편 공식이 아니다. quoting과 word context에 따라 적용 단계가
+달라지고, tilde expansion의 결과는 field splitting과 pathname expansion을 위해 quoted된 것처럼 취급한다. assignment와
+redirection 같은 context는 필요한 unit에서 차이를 추가한다.
 
 ### 2. Status to Control Flow
 
@@ -131,6 +132,8 @@ command execution
 ```
 
 exit status는 조건문에서 갑자기 등장하는 boolean 대체물이 아니다. 첫 command부터 같은 상태로 관찰한다.
+다만 `case`는 shell pattern matching, `for`는 expanded item list로 실행 경로를 정한다. 두 construct도 결과
+exit status를 갖지만 **선택 입력**은 exit status가 아니다.
 
 ### 3. File Descriptors to Data Flow
 
@@ -169,12 +172,12 @@ mutation
    boundary를 보존한다.
 3. assignment context와 ordinary argument context를 구분하고 shell variable, exported environment, temporary command
    environment의 관계를 설명한다.
-4. `$#`, `$?`, `"$@"`, `shift`를 이용해 script/function argument를 보존하면서 처리한다.
+4. `$#`, `"$@"`, `shift`를 이용해 script/function argument를 보존하면서 처리한다.
 5. redirection과 pipeline을 fd 0/1/2 및 exit-status data flow로 설명하고 redirection order를 추적한다.
 6. current shell과 subshell의 state mutation을 구분하고 pipeline-dependent variable persistence에 의존하는 script를
    고친다.
-7. `if`, `case`, `for`, `while`, `until`, `&&`, `||`를 exit-status 기반 control flow로 작성하고 실제 실행 순서를
-   추적한다.
+7. `if`, `while`, `until`, `&&`, `||`에서 exit status가 실행 경로를 결정하는 방식과 `case`의 pattern matching,
+   `for`의 item-list iteration을 구분하고 각 construct의 실행 순서와 결과 exit status를 추적한다.
 8. POSIX function의 positional parameters, shared shell state, 반환 status를 설명하고 common extension인 `local`에
    의존하지 않는 작은 function을 작성한다.
 9. `sh -n`, execution trace, ShellCheck, selected multi-shell execution이 각각 어떤 evidence를 주고 무엇을 증명하지
@@ -225,14 +228,18 @@ script 실행 경계, `#!/bin/sh`, comment, simple command, `printf`, 첫 exit s
 
 - literal word
 - single/double/unquoted form
+- basic tilde expansion (`~`, `~/path`)과 quoting에 따른 차이
 - parameter expansion
 - `$(...)` command substitution
+- arithmetic expansion (`$((...))`)의 값과 argument field
 - field splitting
-- pathname expansion
+- pathname expansion 및 shell pattern 기초 (`*`, `?`, `[...]`)
 - final `argc/argv` prediction
 - command substitution이 trailing newline을 보존하지 않는 boundary
 
-assignment context까지 섞지 않고 argument model을 먼저 안정시킨다.
+assignment context까지 섞지 않고 argument model을 먼저 안정시킨다. `HOME`이 unset이면 tilde expansion 결과를
+보장하지 않으며, 여기서는 ordinary argument에서의 기본 tilde와 단순 정수 연산에 집중한다. Assignment-specific
+tilde semantics는 Unit 2, arithmetic expansion을 이용한 counter 응용은 Unit 4에서 다룬다.
 
 ### Unit 2 · Variables, Environments, Redirection, and Pipelines
 
@@ -249,16 +256,21 @@ Unit 1의 model에 grammar/execution context를 추가한다.
 
 pipeline 안의 state mutation이 caller에 남는다고 가정하지 않는 portable rule을 명시한다.
 
-### Unit 3 · Decisions Are Exit Status
+### Unit 3 · Decisions, Patterns, and Resulting Status
 
-`$?`, `test` / `[ ]`, `if`, `case`, `&&`, `||`, `!`를 같은 status model로 연결한다.
+`$?`, `test` / `[ ]`, `if`, `&&`, `||`, `!`에서는 command의 exit status가 조건과 단락 평가에
+어떻게 쓰이는지 추적한다. 반면 `case`는 expanded word를 shell pattern과 비교하여 clause를 고른다.
+Unit 1에서 익힌 pattern 기초를 재사용하되, `case` selection을 pathname expansion과 동일한 동작으로 설명하지 않는다.
+각 construct가 최종적으로 반환하는 status와 다음 실행 경로를 고르는 입력을 분리해 관찰한다.
 
 `&&`와 `||`가 POSIX shell에서는 동일 precedence와 left associativity를 가진다는 점을 tracing으로 확인한다. 복잡한
 `[ ... -a ... -o ... ]`보다 command-level composition을 선호한다.
 
 ### Unit 4 · Repetition and Script Arguments
 
-`for`, `while`, `until`, `break`, `continue`, `shift`, `"$@"`를 사용한다.
+`for`, `while`, `until`, `break`, `continue`, `shift`, `"$@"`를 사용한다. `for`는 item list를
+순회한다는 점을 `while`/`until`의 exit-status 조건과 구분하고, Unit 1의 arithmetic expansion (`$((...))`)을
+counter update와 반복 상태 추적에 적용한다.
 
 핵심 invariant는 **caller의 argument vector를 필요 이상으로 다시 split/glob하지 않고 보존한다**는 것이다. empty,
 whitespace, glob, leading-dash argument를 포함한다.
@@ -302,6 +314,25 @@ requirements
 → evidence
 → bounded portability claim
 ```
+
+## Outcome Development and Assessment Coverage
+
+각 outcome은 학습할 unit과 그 성취를 관찰할 평가 증거를 함께 갖는다. 아래는 **curriculum-level coverage**이며
+실제 평가 문항, 채점 기준, playground implementation은 후속 교본 작업에서 구체화한다.
+
+| Outcome | Develop | Assess · 관찰 가능한 증거 |
+| --- | --- | --- |
+| O1 · exact argv | Unit 1 | quoting/expansion의 최종 `argc/argv` 예측 및 관찰값 설명 |
+| O2 · quoting/field boundary | Unit 1 | empty/whitespace/glob argument가 깨진 예제를 수정하고 이유 설명 |
+| O3 · assignment/environment | Unit 2 | assignment와 ordinary word context, export/temporary environment 상태 추적 |
+| O4 · positional arguments | Unit 2, Unit 4, Unit 5 | `"$@"`, `$#`, `shift`를 활용한 wrapper/function의 argument-vector 보존 |
+| O5 · fd/pipeline | Unit 2 | redirection 순서별 fd 0/1/2 연결과 pipeline/status 추적 |
+| O6 · shell/subshell state | Unit 2, Unit 4 | pipeline 안의 state mutation에 의존하는 버그 설명 및 수정 |
+| O7 · control-flow mechanism | Unit 3, Unit 4 | status/pattern/item list의 결정 입력과 resulting status를 구분해 실행 추적 |
+| O8 · function/state | Unit 5 | function positional parameters, shared state, `return` 동작 추적 및 수정 |
+| O9 · evidence limits | Unit 6 | POSIX text, `sh -n`, ShellCheck, runtime 비교의 증거 범위 판별 |
+| O10 · portability repair | Unit 6, Unit 7 | Bash/platform assumption 수정과 검증 범위를 제한한 portability claim |
+| O11 · independent synthesis | Unit 7 | 요구사항·argv/fd/state/failure/cleanup 계약부터 구현·검증 증거까지 제시 |
 
 ## Practice Model
 
@@ -383,6 +414,8 @@ implementation matrix는 portability의 증명서보다 **잘못된 가정을 �
 - assignment context, pipeline subshell state, `&&`/`||` precedence, function scope를 unit responsibility에 반영했다.
 - pedagogy reference와 dialect authority를 분리했다.
 - first calibration slice를 ordinary argument context 하나로 더 좁혔다.
+- curriculum review 결과 tilde/arithmetic expansion의 unit 책임, control-flow 선택 입력의 차이,
+  outcome development/assessment coverage를 명시했다.
 - textbook chapter와 playground는 아직 구현하지 않았다.
 
 다음 build increment는 전체 Unit 0이나 Unit 1을 한 번에 채우는 것이 아니라, 위 calibration slice를 실제 설명·worked
