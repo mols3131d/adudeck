@@ -169,13 +169,31 @@ Python C-extension 사용. 해당 조건은 가설이며 실제 실험으로 확
 **제안**이며 완성된 프로그램이나 확정 API가 아니다. 동일 소스를 세 덱 사이에 복제하거나 shared framework를
 선제 제작할 필요는 없다.
 
-예시 계약: 입력은 `key<TAB>integer` 형식의 여러 줄 문자열이고, 출력은 입력 순서를 보존하는
-`(key, integer)` 레코드 목록이다. 빈 입력은 빈 목록, 잘못된 정수 또는 구분자 누락은 오류이며, Unicode key를
-그대로 보존한다. 텍스트 정규화나 중복 key 처리는 필요가 확인되기 전까지 자동으로 추가하지 않는다.
+**비교 실험용 계약 초안(R2/R3의 시작 시 확정할 제안):** 입력은 문자열이며 각 줄이
+`key<TAB>integer`인 레코드의 목록이다. `integer`는 **ASCII 10진수 부호 있는 64비트 정수**이고,
+출력은 순서를 보존하는 `(key, integer)` 목록이다. 이는 CSV 규격이 아니라 비교 가능한 최소 사례다.
+Rust `&str` 입력은 이미 올바른 UTF-8임을 전제한다. Python `str`의 단독 surrogate 등 Rust로 직접
+변환할 수 없는 입력은 구현 단계에서 명시적으로 거부하고 오류를 검증한다.
+
+| 입력/동작 | 초안에서 선택하는 경계 | 공통 동작 검증 예 |
+| --- | --- | --- |
+| 빈 문자열 | 레코드 없는 결과 | `"" → []` |
+| 레코드 구분 | LF(`\\n`)만 허용, 맨 끝의 LF 하나는 종료 문자로 처리 | `"a\\t1\\n" → [("a", 1)]` |
+| 필드 구분 | 각 레코드에 **정확히 1개**의 TAB, key는 비어 있지 않음 | `"가\\t-2"` 허용, `"\\t1"` / `"a\\t1\\tx"` 거부 |
+| 정수 문법 | `-?(0|[1-9][0-9]*)` 및 signed 64-bit 범위; 공백·`+` 부호·leading zero 허용하지 않음 | `"a\\t0"`, `"a\\t-1"` 허용, `"a\\t01"` 거부 |
+| 순서/중복 | key를 정규화하지 않고 중복 key를 원순서대로 보존 | `"a\\t1\\na\\t2"`는 레코드 두 개 |
+| 오류 | 누락 구분자·빈 중간 줄·CRLF·잘못된 정수·범위 초과를 거부 | Rust는 구분 가능한 오류로 반환, Python 공개 API에서는 제안된 malformed-input 오류를 `ValueError`로 일관 매핑 |
+
+테스트에서 역슬래시는 이스케이프 표기이며 실제 데이터에서는 TAB/LF 바이트를 사용한다. Python에서는
+정수 범위 제한과 문법 검증이 자동으로 일치하지 않으므로, `int()`만 호출하는 baseline은 이 계약을
+만족한다고 볼 수 없다. `str::parse::<i64>()`만으로도 명시한 모든 lexical 조건을 충족하지 않으므로 Rust
+쪽 역시 입력 검증을 별도로 해야 한다. 실제 구현 전에 malformed-input 오류 종류와 Python 인자 타입 처리까지
+승인하여 **동일한 테스트 집합**을 Python-only와 Rust-backed API에 적용한다. 이 테이블은 아직 구현되거나
+테스트된 계약이 아니며, 최종 API 소유자는 제작할 학습 덱이다.
 
 | 덱 | 연구 질문 | 최소 실습과 관찰 | 완료 판단 |
 | --- | --- | --- | --- |
-| Rust 입문 | 누가 `String`을 소유하고 어느 순간 move/borrow가 일어나는가? | 파서 구현 전 lifetime·ownership 예측, `Option`/`Result` 오류 흐름 설명, 정상·실패 단위 테스트 | 소유권 오류의 원인 설명과 `cargo test` / `cargo clippy` 성공 |
+| Rust 입문 | 누가 `String`을 소유하고 어느 순간 move/borrow가 일어나는가? | 첫 slice는 소유권과 차용의 상태 추적; 이후 파서 통합 과제에서 `Option`/`Result` 및 정상·실패 테스트 적용 | 소유권 오류의 원인 설명과 `cargo test` / `cargo clippy` 성공 |
 | Rust 심화 | 데이터 규모와 allocation에 따라 어떤 구현이 나은가? | owned/borrowed 표현, 할당 감소, profiling·반복 benchmark; 먼저 정확성 동등성 확보 | 입력 크기별 성능과 유지보수 trade-off 설명 |
 | Python 연동 | Python 사용자의 실제 호출 비용이 줄어드는가? | Python baseline, PyO3 변환, maturin wheel, Python 통합 테스트, 단건/배치 성능 비교 | 오류·출력 계약 일치, 새 환경 wheel import, 결과 재현 |
 
