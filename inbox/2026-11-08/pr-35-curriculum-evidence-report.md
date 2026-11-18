@@ -109,9 +109,9 @@ POSIX.1-2024 Shell Command Language `§2.9.4.2–2.9.4.6`는 다음을 구분한
 
 ## 발견 3 — Tilde expansion의 누락 (Blocker)
 
-POSIX.1-2024
-`§2.6`의 ordinary word expansion 첫 단계에는 **tilde, parameter, command, arithmetic** 확장이 함께 명시된다. 그 뒤 적용 가능한 field splitting, pathname expansion, quote removal로 이어진다. 현재 README의 반복 model은 tilde를 제외하므로 `~/file`
-같은 흔한 사례를 모델로 설명할 수 없다.
+POSIX.1-2024 `§2.6`의 ordinary word expansion 첫 단계에는 **tilde, parameter, command, arithmetic** 확장이 함께
+명시된다. 그 뒤 적용 가능한 field splitting, pathname expansion, quote removal로 이어진다. 현재 README의 반복 model은
+tilde를 제외하므로 `~/file` 같은 흔한 사례를 모델로 설명할 수 없다.
 
 권고하는 **입문자용 개념도**:
 
@@ -170,9 +170,10 @@ OPTIONS/OPERANDS 계약을 확인하거나, 현재 디렉터리의 상대 파일
 
 ## Issue 8 / 배포 지원성의 추가 경계
 
-POSIX.1-2024
-`§2.9.4.3`의 `case`는 `;&` terminator도 정의한다. 하지만 이번 초급 curriculum의 교정은 `case`의 **pattern-based selection** 이해에 필요한 수준이므로, 기존 `;;` 중심으로 시작한다. 새 문법을 가르친다는 이유만으로 최초 runnable baseline의 지원성을 가정하지 않는다. 이는 기존 `pipefail`, `$'...'`의
-“표준 소속과 deployed feature adoption을 분리한다”는 원칙과 일치한다.
+POSIX.1-2024 `§2.9.4.3`의 `case`는 `;&` terminator도 정의한다. 하지만 이번 초급 curriculum의 교정은 `case`의
+**pattern-based selection** 이해에 필요한 수준이므로, 기존 `;;` 중심으로 시작한다. 새 문법을 가르친다는 이유만으로 최초
+runnable baseline의 지원성을 가정하지 않는다. 이는 기존 `pipefail`, `$'...'`의 “표준 소속과 deployed feature adoption을
+분리한다”는 원칙과 일치한다.
 
 ## 현재 GitHub 리뷰 상태와 잔여 작업
 
