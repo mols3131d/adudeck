@@ -17,23 +17,24 @@ class PlainState(TypedDict):
     summary: str
 
 
-def seed(state: State) -> dict[str, list[str]]:
+def seed(state) -> dict[str, list[str]]:
     return {"events": ["seed"]}
 
 
-def left(state: State) -> dict[str, list[str]]:
+def left(state) -> dict[str, list[str]]:
     return {"events": ["left"]}
 
 
-def right(state: State) -> dict[str, list[str]]:
+def right(state) -> dict[str, list[str]]:
     return {"events": ["right"]}
 
 
-def join(state: State) -> dict[str, str]:
+def join(state) -> dict[str, str]:
     return {"summary": ", ".join(sorted(state["events"]))}
 
 
 def build_graph(*, with_reducer: bool):
+    # Node input annotation을 고정하지 않아 두 State schema에 재사용한다.
     builder = StateGraph(State if with_reducer else PlainState)
     builder.add_node("seed", seed)
     builder.add_node("left", left)

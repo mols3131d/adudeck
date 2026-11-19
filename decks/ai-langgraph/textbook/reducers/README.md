@@ -57,6 +57,15 @@ result: ["seed", "left", "right"]  (순서 보장 아님)
 순서가 업무 의미를 가진다면 각 update에 명시적 정렬 key를 포함하는 등 별도 설계가 필요하다.
 `operator.add`만으로 의미 있는 실행 순서를 보장하지 않는다.
 
+## node 입력 스키마에 대한 주의
+
+이번 파일은 동일 node 함수를 `State`와 `PlainState` 두 그래프에 재사용한다.
+LangGraph는 node의 첫 인자 타입 annotation을 입력 스키마로 읽을 수 있다.
+node 인자에 `State`를 고정하면 `PlainState` 그래프의 같은 key `events`가
+서로 다른 채널 타입으로 충돌할 수 있다. 그래서 두 상태를 비교하는 **이 실습의 재사용 함수**에는
+입력 annotation을 생략하고 `StateGraph(...)`에서 상태 스키마를 명시한다.
+이는 전체 앱에서 타입 annotation을 생략하라는 권장이 아니다.
+
 ## fan-in의 의미
 
 `builder.add_edge(["left", "right"], "join")`은 **양쪽 node가 완료된 뒤**
