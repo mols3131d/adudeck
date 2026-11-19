@@ -3,7 +3,8 @@
 Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계하고, checkpoint·resume·human-in-the-loop
 실행을 관찰·검증하기 위한 학습 덱이다.
 
-현재 작업 중인 **active** deck이다. 아래 6단계는 전체 학습 계약이며, 실제 구현은 검토된 학습 단위부터 점진적으로 추가한다.
+현재 작업 중인 **active** deck이다. 아래 6단계는 전체 학습 계약이며, 실제 구현은 검토된 학습 단위부터 점진적으로
+추가한다.
 
 ## 목표와 선행 지식
 
