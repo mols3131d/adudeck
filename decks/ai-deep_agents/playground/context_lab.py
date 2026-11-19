@@ -85,5 +85,52 @@ def run_lab() -> dict[str, object]:
     }
 
 
+def run_large_result_lab() -> dict[str, object]:
+    """Evict an oversized *tool result* into a virtual StateBackend file."""
+    from deepagents.middleware.filesystem import FilesystemMiddleware
+    from langchain_core.tools import tool
+
+    original = "alpha:120ms, beta:260ms, error delta:3%; " * 180
+
+    @tool
+    def large_report(topic: str) -> str:
+        """Return a deliberately oversized synthetic report for context inspection."""
+        if topic != "synthetic":
+            raise ValueError("Only a synthetic report is available.")
+        return original
+
+    model = RecordingFakeModel(responses=[
+        AIMessage(content="", tool_calls=[
+            tool_call("large_report", "big-report-1", {"topic": "synthetic"})
+        ]),
+        AIMessage(content="Large report inspection complete."),
+    ])
+    backend = StateBackend()
+    agent = create_deep_agent(
+        model=model,
+        backend=backend,
+        tools=[large_report],
+        # Deliberately low for teaching; the SDK default is much higher.
+        middleware=[FilesystemMiddleware(backend=backend, tool_token_limit_before_evict=50)],
+    )
+    result = agent.invoke({
+        "messages": [{"role": "user", "content": "Inspect a synthetic large report."}]
+    })
+    tool_message = next(
+        msg for msg in result["messages"]
+        if isinstance(msg, ToolMessage) and msg.tool_call_id == "big-report-1"
+    )
+    saved_files = (result.get("files") or {}).keys()
+    return {
+        "original_chars": len(original),
+        "tool_message_chars": len(str(tool_message.content)),
+        "artifact_paths": sorted(path for path in saved_files if path.startswith("/large_tool_results/")),
+        "tool_message_excerpt": str(tool_message.content)[:160],
+    }
+
+
 if __name__ == "__main__":
-    print(json.dumps(run_lab(), indent=2, ensure_ascii=False))
+    print(json.dumps({
+        "thread_and_store": run_lab(),
+        "large_result": run_large_result_lab(),
+    }, indent=2, ensure_ascii=False))

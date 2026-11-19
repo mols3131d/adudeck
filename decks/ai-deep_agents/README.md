@@ -98,31 +98,17 @@ LangGraph runtime 내부 구현과 production infrastructure는 기본 범위에
 각 단위에서 **어떤 기능이 구성만 되어 있는지**, **실제로 호출되었는지**, **결과가 저장·공유되었는지**를
 별개로 기록한다. 특히 planning이나 subagent가 반드시 사용된다고 가정하지 않는다.
 
-## 첫 제작 단위: 좁은 조사 agent의 실행 경계
+## 첫 calibration slice의 검증 계약
 
-첫 calibration slice는 **사용자 정의 read-only 도구 하나를 추가한 조사·요약 agent**로 제한한다.
-Deep Agent가 별도로 제공하는 내장 filesystem·위임 도구의 존재는 비교 대상에 포함한다.
-질문은 “동일한 입력과 고정된 도구 결과에서 기본 agent와 Deep Agent가 어떤 도구·상태 경계를 노출하는가?”다.
+기본 `create_agent`와 `create_deep_agent`에 같은 가상 fixture와 사용자 정의 read-only 도구를
+주고, **도구 노출 → 모델 요청 → 도구 실행 → 결과/상태 변경**을 구분한다.
+`TodoListMiddleware`를 추가한 planning 시나리오는 scripted model의 행동 시나리오도
+다르므로 구성 차이만으로 모델이 계획을 선택했다고 추론하지 않는다.
 
-1. **계약 조사(credential 불필요):** 설치 대상 SDK 버전을 결정하고 `create_agent`,
-   `create_deep_agent`, `TodoListMiddleware`, `StateBackend`, filesystem 권한 API의 지원 여부와
-   기본 구성을 문서·소스에서 확인한다. 그 결과를 구현 전제와 분리해 남긴다.
-2. **통제된 입력·도구:** 예를 들어 “두 가상 서비스의 응답 특성을 비교해 요약하라”는 입력과
-   `lookup_fixture(service: str)`라는 단일 read-only 도구를 사용한다. 서비스별 응답은
-   코드에 적은 짧은 가상 데이터로 고정하며 외부 네트워크 호출이나 실데이터를 사용하지 않는다.
-3. **점진 비교:** 같은 모델·입력·도구로 (A) 기본 `create_agent`, (B) 기본 `create_deep_agent`,
-   (C) `TodoListMiddleware`를 추가한 Deep Agent를 비교한다. tool schema 노출은 구성 검사로,
-   tool 호출·계획 변경은 실제 event/trace로 확인한다.
-4. **실패 경계:** `StateBackend`로 host 파일 접근을 피하고, 내장 filesystem 도구의 쓰기 거부를
-   작은 음성 사례로 확인한다. 사용자 정의 도구에 동일 규칙이 적용된다고 주장하지 않는다.
-5. **해석과 평가:** A/B/C마다 구성상 사용 가능한 도구, 실제 호출 순서·입출력, state·파일 변화,
-   최종 응답을 같은 양식으로 기록한다. 어떤 실행에서 tool이나 planning이 호출되지 않으면
-   그 자체를 관찰로 남기고, 모델의 선택을 결정론적인 계약으로 해석하지 않는다.
-
-SDK 객체 생성·도구 노출에 대한 정적 검증과 **실제 LLM 호출 기반 실행 검증**을 구분한다.
-실행 검증에는 tool-calling 지원 모델 및 provider credential(또는 동등하게 검증된 대체 모델)이 필요하다.
-credential을 repository에 기록하지 않으며, 사용 가능한 환경이 마련되기 전에는 실행 성공을 주장하지 않는다.
-첫 단위가 검증되기 전에는 subagent·memory·sandbox 실행으로 범위를 넓히지 않는다.
+실습 02~05는 첫 단위의 관찰 패턴을 state/backend, subagent, skills/memory,
+permissions/HITL에 적용한다. 큰 도구 결과 offloading은 **임시 state 파일**에 쓰는
+작은 검증으로 관찰하고, thread 및 namespace의 지속성은 별도로 판단한다.
+모든 기본 실습은 실제 SDK runtime을 실행하며, 모델의 응답만 결정론적으로 고정한다.
 
 ## 수용 기준과 안전 경계
 
@@ -131,8 +117,8 @@ credential을 repository에 기록하지 않으며, 사용 가능한 환경이 �
 - 정상 실행뿐 아니라 권한 거부 또는 도구 실패의 관찰과 해석이 있어야 한다.
 - 기본 실습에는 unrestricted host filesystem, 임의 shell 실행, 외부 쓰기 권한을 주지 않는다.
 - 인증 정보, 개인 데이터, 외부 자료 원문, 실행 중 생성한 장기 memory를 Git에 저장하지 않는다.
-- 버전과 dependency는 첫 실행 코드 작성 시 실제 테스트한 조합으로 결정·기록한다. 이 README만으로는
-  실행 가능성이나 전체 덱 완성을 주장하지 않는다.
+- CI는 `deepagents==0.7.40`을 사용해 실제 SDK graph/middleware 도구 경로를 실행한다.
+  외부 provider 호출·운영 환경의 durable persistence·보안 공격 저항성은 CI 수용 범위가 아니다.
 
 ## 공식 자료
 

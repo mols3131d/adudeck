@@ -42,6 +42,25 @@
 검증한 것이 아니다. 데이터베이스나 durable store를 선택하기 전까지 재실행 후 보관을
 약속하면 안 된다.
 
+## 큰 도구 결과는 언제 파일로 이동하는가?
+
+도구가 수천 자의 보고서를 한 번에 돌려주면 그 원문이 모두 모델 context에 남을 필요는 없다.
+Deep Agents의 `FilesystemMiddleware`는 설정한 `tool_token_limit_before_evict`를 넘는
+**tool 결과**를 backend 파일로 보관하고, 모델 메시지에는 축약된 미리보기와 파일 경로를
+남길 수 있다. 원문이 필요한 때는 `read_file`로 다시 읽는 방식이다.
+
+`context_lab.py`의 `run_large_result_lab()`는 매우 낮은 교육용 한계값 50을 설정한 뒤
+가상의 대량 지표를 반환한다. `artifact_paths`에 `/large_tool_results/...` 경로가 생기고,
+`tool_message_chars`가 `original_chars`보다 작은지 확인한다. 모델의 선택은 고정해
+두었지만 이 축약·쓰기 동작은 실제 SDK middleware가 수행한다.
+
+- 이 파일은 현재 `StateBackend`에만 저장되므로 **같은 thread의 임시 파일**이다.
+  큰 결과를 external store로 영구 보관했다는 의미가 아니다.
+- 이 실험은 **텍스트 도구 결과**의 offloading이다. 이미지를 포함한 binary/media
+  offloading은 별도 기능과 backend 경계를 가진다.
+- 기본 production 한계값을 50으로 권장하는 것이 아니다. 오직 메커니즘을 작게 재현하려는
+  제어된 설정이며, 실제 임계값과 내부 파일명은 SDK 버전에 따라 달라질 수 있다.
+
 ## 실습: 먼저 예측하고 세 번의 호출을 관찰하라
 
 ```bash
@@ -61,6 +80,8 @@ uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
    서로 다른 namespace를 지정하면 무엇이 달라질까?
 3. `InMemorySaver`를 제거하거나 thread A의 마지막 조회에 새로운 ID를 넣으면
    어떤 관찰이 달라질지 예측하라. 실제 변경을 했다면 되돌리고 다시 테스트한다.
+4. `large_result`의 `artifact_paths`를 읽고, 왜 이를 외부 파일 보관이나
+   장기 memory라고 말하면 안 되는지 설명하라.
 
 ## 오개념과 고장 경계
 

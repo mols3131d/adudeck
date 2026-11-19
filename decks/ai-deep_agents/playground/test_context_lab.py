@@ -2,7 +2,7 @@
 
 import unittest
 
-from context_lab import run_lab
+from context_lab import run_lab, run_large_result_lab
 
 
 class ContextLabTests(unittest.TestCase):
@@ -22,6 +22,13 @@ class ContextLabTests(unittest.TestCase):
     def test_store_backend_is_visible_across_threads(self) -> None:
         self.assertIn("shared across threads", self.evidence["thread_b_reads"]["shared"]["content"])
         self.assertNotIn("only thread A", self.evidence["thread_b_reads"]["scratch"]["content"])
+
+    def test_large_tool_result_is_offloaded_to_thread_file(self) -> None:
+        evidence = run_large_result_lab()
+        self.assertGreater(evidence["original_chars"], 3000)
+        self.assertLess(evidence["tool_message_chars"], evidence["original_chars"])
+        self.assertEqual(len(evidence["artifact_paths"]), 1)
+        self.assertTrue(evidence["artifact_paths"][0].startswith("/large_tool_results/"))
 
     def test_failed_read_has_observable_error(self) -> None:
         missing = self.evidence["thread_b_reads"]["scratch"]
