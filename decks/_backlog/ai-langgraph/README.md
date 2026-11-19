@@ -1,6 +1,7 @@
 # LangGraph
 
-Python에서 **명시적인 state와 control flow**를 가진 장기 실행 workflow를 설계하고, checkpoint·resume·human-in-the-loop 동작을 관찰·검증하기 위한 학습 덱이다.
+Python에서 **명시적인 state와 control flow**를 가진 장기 실행 workflow를 설계하고, checkpoint·resume·human-in-the-loop
+동작을 관찰·검증하기 위한 학습 덱이다.
 
 현재는 후속 학습을 준비하는 **backlog**다. 교본과 실행 코드는 아직 작성하지 않았다.
 
@@ -14,7 +15,8 @@ Python에서 **명시적인 state와 control flow**를 가진 장기 실행 work
 - deterministic step과 모델·도구 호출 step을 조합하며 실패·재시도·중복 실행 경계를 설명한다.
 - 작은 graph를 테스트해 최종 결과뿐 아니라 중간 state transition을 검증한다.
 
-**선행 지식:** Python 함수·타입(`TypedDict` 등)·테스트, 일반적인 상태 전이와 분기. 모델·tool calling의 기본 지식은 있으면 유익하지만 LangChain 패키지 학습 자체가 필수 전제는 아니다.
+**선행 지식:** Python 함수·타입(`TypedDict` 등)·테스트, 일반적인 상태 전이와 분기. 모델·tool calling의 기본 지식은
+있으면 유익하지만 LangChain 패키지 학습 자체가 필수 전제는 아니다.
 
 ## 학습 범위와 순서
 
@@ -27,13 +29,15 @@ Python에서 **명시적인 state와 control flow**를 가진 장기 실행 work
 | 5. Interrupt·실패 복구 | 승인·재시도·중복 실행은 무엇을 바꾸는가? | 의도적 중단과 side effect의 안전 조건을 설명한다 |
 | 6. 결합·검증 | 언제 graph가 단순 agent loop보다 필요한가? | 작은 stateful workflow를 구현·테스트한다 |
 
-**첫 제작 단위:** provider 없이 두세 개의 deterministic node와 조건 분기를 가진 `StateGraph`를 작성해 입력→node update→최종 state를 예측하고 관찰한다. Persistence와 interrupt는 그 state 모델이 확립된 후 추가한다.
+**첫 제작 단위:** provider 없이 두세 개의 deterministic node와 조건 분기를 가진 `StateGraph`를 작성해 입력→node
+update→최종 state를 예측하고 관찰한다. Persistence와 interrupt는 그 state 모델이 확립된 후 추가한다.
 
 ## 완료 기준과 범위 밖
 
 graph의 상태 전이·종료·복원 경로를 실행 전에 설명하고, 정상·중단·재개·실패 조건을 검증 가능한 사례로 남긴다.
 
-LangChain의 일반적인 model/tool integration과 `create_agent` 사용법, Deep Agents의 planning·filesystem·subagent harness, LangSmith의 managed deployment 운영 전체는 각 별도 주제다.
+LangChain의 일반적인 model/tool integration과 `create_agent` 사용법, Deep Agents의 planning·filesystem·subagent harness,
+LangSmith의 managed deployment 운영 전체는 각 별도 주제다.
 
 ## 작성 시 확인할 사항
 
