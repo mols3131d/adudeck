@@ -218,7 +218,13 @@ run_langchain_deck() {
     python "$lab_dir/test_trace_and_recovery.py"
   env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
     python "$lab_dir/trace_and_recovery.py"
-  echo "==> [test:langchain-deck] All four LangChain learning slices validated."
+  echo "==> [test:langchain-deck] Running safe live-provider boundary checks..."
+  local live_lab_dir="decks/ai-langchain/playground/05-live-provider"
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    python "$live_lab_dir/test_live_agent.py"
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 --with langchain-openai==1.8.2 \
+    python -c 'from langchain_openai import ChatOpenAI; assert callable(ChatOpenAI)'
+  echo "==> [test:langchain-deck] All offline LangChain learning slices and live safety checks validated."
 }
 
 run_langfuse_deck() {

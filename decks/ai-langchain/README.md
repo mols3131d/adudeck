@@ -43,6 +43,7 @@ uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground
 | 4. State·context·middleware | [02. 상태와 수명](textbook/02-state-context/README.md) · [실습](playground/02-state-context/state_context.py) | thread별 상태 분리, run별 context, hook 전후 개수를 예측한다 |
 | 5. Structured output | [03. 스키마와 검증](textbook/03-structured-output/README.md) · [실습](playground/03-structured-output/structured_response.py) | 검증 성공·수정·거부의 세 경로를 구별한다 |
 | 6. 실행 추적과 검증 | [04. 관찰과 오류 경계](textbook/04-observation-verification/README.md) · [실습](playground/01-agent-loop/trace_and_recovery.py) | stream 단계와 middleware 오류 상태를 확인하고 증거의 한계를 설명한다 |
+| 선택. 실제 provider | [05. OpenAI 연동](textbook/05-live-provider/README.md) · [승인된 실행](playground/05-live-provider/live_agent.py) | API key와 명시적 opt-in을 거쳐 tool 선택을 관찰한다. 자동 테스트로 provider 결과를 가정하지 않는다 |
 
 각 단계에는 교본, 설명이 있는 실행 예제, 예측·비교·디버깅 문제 및 검사 가능한 assertion이 있다.
 한 단계의 예제 출력을 복사하는 것만으로는 다음 단계의 학습 결과를 충족하지 않는다.
@@ -64,11 +65,15 @@ structured output은 schema 검증을 제공할 뿐 **최종 답변의 사실성
 - **실행 검증 범위:** fake의 고정 응답을 입력으로 사용하는 실제 LangChain Python runtime에서
   모델 호출·도구 호출·상태 누적·middleware·structured output·stream 제어를 검사한다.
   `scripts/test.sh langchain-deck`는 각 실행 경로와 테스트를 자동으로 실행한다.
-- **검증하지 않는 범위:** live provider API, 모델의 tool 선택 정확도, 생성 내용의 사실성,
+- **선택 가능한 live 실습:** [05. 실제 provider 연동](textbook/05-live-provider/README.md)은
+  명시적 `--execute`와 `OPENAI_API_KEY`가 있어야 외부 요청을 시작한다. 환경 확인·도구 호출 ID
+  검증용 코드를 제공하지만 **실제 provider 요청을 자동 실행하거나 검증 완료로 표시하지 않는다**.
+- **검증하지 않는 범위:** live provider의 실제 모델 판단 품질, 생성 내용의 사실성,
   외부 도구의 네트워크 부작용, 실제 운영 환경에서의 장기 저장과 distributed trace.
   해당 항목을 fake 테스트 성공으로 대체하거나 검증됐다고 주장하지 않는다.
 - **의존성:** `pyproject.toml`의 직접 의존성은 `langchain==1.5.2`. 실행 명령도 동일하게
-  고정한다. 아직 전이 의존성을 고정한 lockfile은 없으므로 완전한 환경 재현성은 보장하지 않는다.
+  고정한다. 선택적 live 연동은 `langchain-openai==1.8.2`를 사용한다.
+  아직 전이 의존성을 고정한 lockfile은 없으므로 완전한 환경 재현성은 보장하지 않는다.
 - **안전:** API key, 개인정보, prompt 원문과 민감한 provider 응답/trace를 Git에 기록하지 않는다.
 
 ## 완료 기준과 제외
