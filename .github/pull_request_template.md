@@ -29,13 +29,13 @@ Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으�
 
 ### Self-review
 
-- Reviewed HEAD: [<short SHA>](COMMIT_URL)
+- Reviewed HEAD: <full SHA>
 
 <!--
 Push마다 Self-review 체크를 초기화하고 직전 Reviewed HEAD 이후 변경을 검토한다.
 첫 리뷰, 기존 SHA가 없는 경우, base가 변경된 경우에는 현재 전체 PR diff를 검토한다.
 변경분이 전체 diff의 Goal과 Boundaries에 미치는 영향도 확인한다.
-위 불릿의 링크 텍스트는 짧은 SHA로, 링크 주소는 현재 HEAD의 전체 SHA를 가리키는 commit URL로 교체한다.
+위 불릿의 `<full SHA>`를 리뷰한 현재 HEAD의 전체 commit SHA로 교체한다. GitHub가 SHA를 자동 링크 처리한다.
 SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
 -->
 
