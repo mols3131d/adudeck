@@ -198,7 +198,13 @@ run_langchain_deck() {
     env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
       python "$lab_dir/first_agent.py" --scenario "$scenario"
   done
-  echo "==> [test:langchain-deck] Agent-loop assertions and scenarios passed."
+  echo "==> [test:langchain-deck] Running state/context/middleware checks..."
+  local state_lab_dir="decks/ai-langchain/playground/02-state-context"
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    python "$state_lab_dir/test_state_context.py"
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    python "$state_lab_dir/state_context.py"
+  echo "==> [test:langchain-deck] Agent-loop and state/context assertions passed."
 }
 
 run_langfuse_deck() {
