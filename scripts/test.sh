@@ -192,7 +192,8 @@ run_langgraph_deck() {
     cd decks/ai-langgraph
     env -u VIRTUAL_ENV uv run --locked python -m unittest discover -s tests -v
     # 교본의 학습자 진입점도 실제 실행해 출력/복구 경로를 확인한다.
-    for module in       textbook.state_flow.flow       textbook.reducers.parallel_updates       textbook.checkpoints.checkpoints       textbook.interrupts.approval; do
+    for module in       textbook.state_flow.flow       textbook.reducers.parallel_updates       textbook.checkpoints.checkpoints       textbook.interrupts.approval \
+      textbook.integration.workflow; do
       env -u VIRTUAL_ENV uv run --locked python -m "$module"
     done
   )

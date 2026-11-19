@@ -3,8 +3,8 @@
 Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계하고, checkpoint·resume·human-in-the-loop
 실행을 관찰·검증하기 위한 학습 덱이다.
 
-현재 작업 중인 **active** deck이다. 아래 6단계는 전체 학습 계약이며, 실제 구현은 검토된 학습 단위부터 점진적으로
-추가한다.
+현재 작업 중인 **active** deck이다. 아래 6단계의 기초 교본·실습을 구현했으며, 각 단위의 실행·평가 결과를 통해
+내용을 계속 개선한다. 별도 모델·서비스 운영은 이 범위에 포함하지 않는다.
 
 ## 목표와 선행 지식
 
@@ -52,9 +52,9 @@ Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계
 - **반례:** `classify`가 전체 state를 돌려줘야 한다고 가정하거나, 조건부 edge가 이전 `branch`
   값을 읽는다고 예측한 경우를 구별한다.
 
-첫 단위는 reducer·checkpointer·interrupt 없이 동작하도록 만든다. 이후 서로 다른 node가
-같은 key를 갱신하는 병렬 사례, `InMemorySaver`를 이용한 checkpoint 사례, interrupt 후 재실행
-사례를 **각각** 추가한다. 구현 시에는 예측 → 실행 → state 비교 → 반례 설명을 한 묶음으로 검토한다.
+첫 단위에서는 reducer·checkpointer·interrupt를 사용하지 않는다. 뒤 단위에서 병렬 병합,
+checkpoint, interrupt를 각각 관찰한 뒤 [종합 실습](textbook/integration/README.md)에서
+하나의 workflow에 결합한다. 각 단위에서 예측 → 실행 → state 비교 → 반례 설명을 검토한다.
 
 ## 정확성 경계와 완료 기준
 
@@ -86,6 +86,7 @@ uv run python textbook/state_flow/flow.py
 uv run python textbook/reducers/parallel_updates.py
 uv run python textbook/checkpoints/checkpoints.py
 uv run python textbook/interrupts/approval.py
+uv run python textbook/integration/workflow.py
 uv run python -m unittest discover -s tests -v
 ```
 
@@ -101,7 +102,7 @@ uv run python -m unittest discover -s tests -v
 | 2~3. 병렬 병합·reducer | [교본 + 실습](textbook/reducers/README.md) | `tests/test_reducers.py` |
 | 4. Checkpoint와 thread | [교본 + 실습](textbook/checkpoints/README.md) | `tests/test_checkpoints.py` |
 | 5. Interrupt와 재개 | [교본 + 실습](textbook/interrupts/README.md) | `tests/test_interrupts.py` |
-| 6. 결합·검증 | 후속 통합 과제 | 미구현 |
+| 6. 결합·검증 | [종합 교본 + 실습](textbook/integration/README.md) | `tests/test_integration.py` |
 
 **버전 기준:** 2026-11-19, LangGraph Python 1.2 계열. 지원 API는 공식 문서에서 재확인한다.
 
