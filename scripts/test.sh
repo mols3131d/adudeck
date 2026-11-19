@@ -190,7 +190,11 @@ run_langgraph_deck() {
   echo "==> [test:langgraph-deck] Running credential-free Graph API examples..."
   (
     cd decks/ai-langgraph
-    env -u VIRTUAL_ENV uv run python -m unittest discover -s tests -v
+    env -u VIRTUAL_ENV uv run --locked python -m unittest discover -s tests -v
+    # 교본의 학습자 진입점도 실제 실행해 출력/복구 경로를 확인한다.
+    for module in       textbook.state_flow.flow       textbook.reducers.parallel_updates       textbook.checkpoints.checkpoints       textbook.interrupts.approval; do
+      env -u VIRTUAL_ENV uv run --locked python -m "$module"
+    done
   )
 }
 

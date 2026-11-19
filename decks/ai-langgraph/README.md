@@ -81,10 +81,11 @@ planning·filesystem·subagent harness, LangSmith managed deployment 운영. 이
 
 ```bash
 cd decks/ai-langgraph
-uv sync
+uv sync --locked
 uv run python textbook/state_flow/flow.py
 uv run python textbook/reducers/parallel_updates.py
 uv run python textbook/checkpoints/checkpoints.py
+uv run python textbook/interrupts/approval.py
 uv run python -m unittest discover -s tests -v
 ```
 
@@ -99,7 +100,8 @@ uv run python -m unittest discover -s tests -v
 | 1. State와 분기 | [교본 + 실습](textbook/state_flow/README.md) | `tests/test_state_flow.py` |
 | 2~3. 병렬 병합·reducer | [교본 + 실습](textbook/reducers/README.md) | `tests/test_reducers.py` |
 | 4. Checkpoint와 thread | [교본 + 실습](textbook/checkpoints/README.md) | `tests/test_checkpoints.py` |
-| 5~6. interrupt·통합 | 후속 실습 | 미구현 |
+| 5. Interrupt와 재개 | [교본 + 실습](textbook/interrupts/README.md) | `tests/test_interrupts.py` |
+| 6. 결합·검증 | 후속 통합 과제 | 미구현 |
 
 **버전 기준:** 2026-11-19, LangGraph Python 1.2 계열. 지원 API는 공식 문서에서 재확인한다.
 
