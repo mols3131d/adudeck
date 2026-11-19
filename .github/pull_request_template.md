@@ -1,6 +1,6 @@
 <!--
 Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으로 유지한다.
-긴 섹션은 필요한 경우에만 H3로 나누고 Checklist의 세 H3 그룹은 유지한다.
+긴 섹션은 필요한 경우에만 H3로 나누고 Checklist의 두 H3 그룹은 유지한다.
 제출 전에 미사용 선택 섹션, 빈 제목, placeholder, 작성 안내 주석을 제거한다.
 -->
 
@@ -47,16 +47,10 @@ SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
 - [ ] 마지막 Reviewed HEAD 이후 변경(최초 리뷰라면 전체 diff)을 검토하고 의도하지 않은 변경이나 회귀를 확인했다.
 - [ ] Self-review에서 발견된 차단 이슈가 남아 있지 않다.
 
-### Automated checks
-
-- [ ] 적용 가능한 formatting 및 lint 검증을 통과했다.
-- [ ] 변경과 관련 있는 자동 테스트를 통과했다.
-- [ ] 현재 HEAD에 적용되는 GitHub CI 검증을 통과했다.
-
 ### Verification
 
-- [ ] 작업의 완료 기준과 필요한 수동/runtime 동작을 검증했다.
-- [ ] 실패·생략·미확인 검증과 미해결 위험을 기록했다(없으면 없음을 확인했다).
+- [ ] 작업의 완료 기준과 필요한 동작을 확인했다.
+- [ ] 미해결 위험이나 후속 확인 사항을 기록했다(없으면 없음을 확인했다).
 
 ## Boundaries
 
