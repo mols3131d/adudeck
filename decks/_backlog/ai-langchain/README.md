@@ -26,13 +26,17 @@ Python에서 모델·메시지·도구를 연결하고 `create_agent` 기반 age
 | 4. Context와 middleware | 실행 중 무엇을 전달·수정·보존해야 하는가? | middleware 전후 데이터 변화와 부작용을 검토한다 |
 | 5. Structured output과 검증 | 형식과 동작의 신뢰성을 어떻게 확보하는가? | 정상·잘못된 출력·도구 오류의 반례를 테스트한다 |
 
-**첫 제작 단위:** 단일 도구를 호출하는 agent의 message → tool call → tool result → final response를 관찰한다. 가능하면 고정된 응답 또는 테스트 double로 control flow를 먼저 확인하고, 실제 provider 호출은 별도 live 실습으로 분리한다. 처음부터 대규모 RAG pipeline이나 multi-agent system을 만들지 않는다.
+**첫 제작 단위:** 단일 도구를 호출하는 agent의 message → tool call → tool result → final response를 관찰한다. 가능하면
+고정된 응답 또는 테스트 double로 control flow를 먼저 확인하고, 실제 provider 호출은 별도 live 실습으로 분리한다.
+처음부터 대규모 RAG pipeline이나 multi-agent system을 만들지 않는다.
 
 ## 완료 기준과 범위 밖
 
-모델·도구·agent의 책임 경계를 설명하고, 예상한 실행 경로와 실제 실행 흔적을 비교하며, 실패를 재현·수정할 수 있으면 이 덱의 기본 목표를 충족한다.
+모델·도구·agent의 책임 경계를 설명하고, 예상한 실행 경로와 실제 실행 흔적을 비교하며, 실패를 재현·수정할 수 있으면 이
+덱의 기본 목표를 충족한다.
 
-LangGraph의 `StateGraph`·checkpoint·interrupt를 활용한 저수준 orchestration과 Deep Agents의 filesystem·subagent harness는 별도 학습 주제다. 구형 `LLMChain`/legacy `Chain` 예제를 현재 기본 경로로 다루지 않는다.
+LangGraph의 `StateGraph`·checkpoint·interrupt를 활용한 저수준 orchestration과 Deep Agents의 filesystem·subagent
+harness는 별도 학습 주제다. 구형 `LLMChain`/legacy `Chain` 예제를 현재 기본 경로로 다루지 않는다.
 
 ## 작성 시 확인할 사항
 
