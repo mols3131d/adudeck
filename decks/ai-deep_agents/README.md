@@ -1,0 +1,135 @@
+# Deep Agents SDK
+
+LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 agent harness의 동작을 이해하고 검증하는 학습 덱이다.
+핵심은 모델의 추론 능력을 높이는 방법이 아니라, agent loop에 filesystem, context 관리, 위임, 선택적 planning을
+조합했을 때 **상태·데이터·권한이 어디서 바뀌는지** 추적하는 것이다.
+
+현재는 **active** 덱이며, 학습 계약에 포함된 agent loop·planning·context·subagent·skills·memory·권한·HITL의
+교본과 credential 없는 실제 SDK 실행 실습을 구현했다. Provider 기반 실행 경로도 선택적으로 제공하되,
+이 repository의 CI가 외부 provider 계정을 대신 검증하지는 않는다.
+
+## 현재 학습 자료
+
+- [교본 01: agent loop와 harness 비교](textbook/01-agent-loop/README.md) — 실행 상태와 도구 호출의
+  흐름, worked example, 예측·실험·평가
+- [교본 02: Filesystem과 context](textbook/02-filesystem-context/README.md) — thread state와
+  공유 memory의 저장 수명, 경로 라우팅을 검증한다.
+- [교본 03: Subagent 위임](textbook/03-subagent/README.md) — 부모·자식 tool 및 context의 경계와
+  위임 실패 시 실행되지 않은 도구를 구분한다.
+- [교본 04: Skills·memory](textbook/04-skills-memory/README.md) — skill의 지연 로딩과
+  memory의 변경·재사용 및 namespace를 관찰한다.
+- [교본 05: 권한·HITL](textbook/05-permissions-hitl/README.md) — 파일 쓰기 규칙과
+  사용자 승인·거부 시점을 실제 중단·재개로 검증한다.
+- [선택적 실제 모델 실습](playground/live_provider.py) — 외부 OpenAI tool-calling 모델과
+  fixture를 연결해 관찰한다. API key와 명시적 유료 호출 승인 필요.
+- [실행 실습](playground/first_loop.py) · [계약 테스트](playground/test_first_loop.py) —
+  scripted model로 **실제 LangChain/Deep Agents 실행 경로**를 호출한다.
+  모델 응답은 결정론적으로 고정했으므로 provider의 실제 추론 품질을 평가하지는 않는다.
+
+저장소 루트에서 실행한다(네트워크는 최초 **패키지 설치**에만 필요하며, 실습의 모델 호출 자체는 오프라인이다).
+
+```bash
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+  python decks/ai-deep_agents/playground/first_loop.py
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+  python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_*.py' -v
+```
+
+Python 3.14 및 `deepagents==0.7.40`을 이 실습의 선택 버전으로 사용한다. 의존성 전체를 잠근
+deck-local lockfile이 아니라 일회성 `uv --with` 환경이다. CI는 전체 오프라인 모델 실습을 실행한다.
+실제 provider 모델을 쓰는 경우에는 별도 package·credential 및 비용이 필요하다.
+
+```bash
+# OPENAI_API_KEY는 shell의 비공개 환경 변수로만 설정한다. 값을 Git에 기록하지 않는다.
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+  --with 'langchain-openai>=1,<2' \
+  python decks/ai-deep_agents/playground/live_provider.py \
+  --model gpt-4.1-mini --case basic --run-paid-api
+```
+
+원격 모델이 실제로 어떤 도구를 선택했는지는 `requested_tools`와 `executed_tools`를 보고 판단한다.
+도구를 호출하지 않았거나 provider에서 오류가 발생해도 성공한 것처럼 기록하지 않는다.
+
+## 목표와 선행 지식
+
+학습 후에는 다음을 관찰 가능한 근거로 설명할 수 있어야 한다.
+
+- LangChain의 `create_agent`와 `create_deep_agent`의 공통 agent loop 및 추가 harness 책임을 구분한다.
+- 도구 호출, planning, 파일 읽기·쓰기, subagent 위임 전후의 입력·상태·결과를 추적한다.
+- thread-scoped 상태, checkpoint, cross-thread memory, skill 로딩의 수명과 공유 범위를 구분한다.
+- 내장 filesystem 도구와 사용자 정의 도구의 권한 경계를 구분하고 거부·승인·실패 경로를 검증한다.
+- 단순 agent로 충분한 문제와 Deep Agents가 유리한 문제를 복잡도·context·위임 비용으로 비교한다.
+
+**선행 지식:** Python 함수·패키지·테스트, LLM tool calling과 agent loop의 기본 실행 흐름.
+LangChain agent와 LangGraph state·checkpointer를 알면 도움이 되지만, 둘의 교본을 모두 마쳤다고 가정하지 않는다.
+
+## 현재 SDK 계약과 학습 범위
+
+다음은 2026-11-19 기준 공식 Python 문서와 SDK changelog를 대조한 학습 전제다.
+실습 구현 때 사용하는 버전에서 다시 확인한다.
+
+- `create_deep_agent`는 LangChain의 agent 구성 요소와 LangGraph runtime 위에 filesystem·subagent 등 harness 기능을
+  조합한다. **도구가 제공된다는 사실과 모델이 그 도구를 실제로 호출한다는 사실은 다르다.**
+- 구조화된 task planning(`write_todos`)은 **`deepagents>=0.7`부터 기본 활성화되지 않는다.**
+  `TodoListMiddleware`를 명시적으로 추가한 경우를 비교해야 한다.
+- 기본 filesystem은 `StateBackend`로, host의 임의 파일 경로를 그대로 노출하는 것이 아니다.
+  파일은 thread-scoped state에 속하며 실행 간 지속 여부는 checkpointer 등 저장 설정에 달려 있다.
+  cross-thread memory는 별도 지속 backend/store의 책임이다.
+- `permissions`의 경로 규칙은 **내장 filesystem 도구**에 적용된다. 첫 일치 규칙을 사용하며
+  일치하지 않는 작업은 허용된다. 사용자 정의 도구·MCP 도구나 sandbox의 `execute`까지
+  자동으로 보호하지 않는다. 권한 규칙, 도구 노출 제한, backend 격리를 구별해야 한다.
+- 사람 승인이 필요한 도구에는 `interrupt_on` 같은 별도 human-in-the-loop 구성을 사용한다.
+  중단 후 재개 흐름에는 checkpointer가 필요하다.
+
+Deep Agents Code(`dcode`) CLI, Managed Deep Agents 운영, LangChain 일반 API 전체,
+LangGraph runtime 내부 구현과 production infrastructure는 기본 범위에서 제외한다.
+
+## 학습 순서와 검증 지점
+
+| 순서 | 학습 단위와 개념 의존성 | 관찰·설명할 증거 |
+| --- | --- | --- |
+| 1. Agent loop와 harness | 모델 응답 → tool call → tool result → 다음 응답을 먼저 이해한다 | 동일한 도구를 쓰는 기본 agent와 Deep Agent의 노출 도구·실행 흐름을 비교한다 |
+| 2. 선택적 planning | agent 실행과 상태의 차이를 이해한 후 `TodoListMiddleware`를 추가한다 | `write_todos` 도구의 노출 및 호출 여부, 계획 상태와 실제 실행 결과의 차이를 구분한다 |
+| 3. Filesystem·context | 도구 반환값과 thread 상태를 이해한 후 backend를 바꾼다 | `StateBackend`의 파일 수명, 큰 결과의 offloading, checkpoint·store의 범위를 추적한다 |
+| 4. Subagent 위임 | context 경계를 이해한 후 `task` 위임을 다룬다 | 부모의 요청, 자식의 독립 context·tools, 부모에게 돌아온 결과를 구분한다 |
+| 5. Skills·memory | 파일 수명과 위임 경계를 이해한 후 지식 로딩을 다룬다 | skill의 지연 로딩과 memory의 지속·공유·수정 권한을 비교한다 |
+| 6. 권한·실패·선택 | 앞 단계의 state/data flow 위에 통제 수단을 얹는다 | 파일 접근 거부, 사용자 승인 중단·재개, tool 실패와 부분 결과를 검증하고 단순 agent와 비교한다 |
+
+각 단위에서 **어떤 기능이 구성만 되어 있는지**, **실제로 호출되었는지**, **결과가 저장·공유되었는지**를
+별개로 기록한다. 특히 planning이나 subagent가 반드시 사용된다고 가정하지 않는다.
+
+## 첫 calibration slice의 검증 계약
+
+기본 `create_agent`와 `create_deep_agent`에 같은 가상 fixture와 사용자 정의 read-only 도구를
+주고, **도구 노출 → 모델 요청 → 도구 실행 → 결과/상태 변경**을 구분한다.
+`TodoListMiddleware`를 추가한 planning 시나리오는 scripted model의 행동 시나리오도
+다르므로 구성 차이만으로 모델이 계획을 선택했다고 추론하지 않는다.
+
+실습 02~05는 첫 단위의 관찰 패턴을 state/backend, subagent, skills/memory,
+permissions/HITL에 적용한다. 큰 도구 결과 offloading은 **임시 state 파일**에 쓰는
+작은 검증으로 관찰하고, thread 및 namespace의 지속성은 별도로 판단한다.
+모든 기본 실습은 실제 SDK runtime을 실행하며, 모델의 응답만 결정론적으로 고정한다.
+
+## 수용 기준과 안전 경계
+
+- 학습 목표마다 위 순서 안에 설명·실습·확인 지점이 있고, 선행 개념을 사용하기 전에 소개한다.
+- 기본/추가 middleware의 차이, thread 상태/장기 저장의 차이, 도구 노출/실제 호출의 차이를 구분한다.
+- 정상 실행뿐 아니라 권한 거부 또는 도구 실패의 관찰과 해석이 있어야 한다.
+- 기본 실습에는 unrestricted host filesystem, 임의 shell 실행, 외부 쓰기 권한을 주지 않는다.
+- 인증 정보, 개인 데이터, 외부 자료 원문, 실행 중 생성한 장기 memory를 Git에 저장하지 않는다.
+- CI는 `deepagents==0.7.40`을 사용해 실제 SDK graph/middleware 도구 경로를 실행한다.
+  외부 provider 호출·운영 환경의 durable persistence·보안 공격 저항성은 CI 수용 범위가 아니다.
+
+## 공식 자료
+
+- [Deep Agents Python overview](https://docs.langchain.com/oss/python/deepagents/overview)
+- [Quickstart](https://docs.langchain.com/oss/python/deepagents/quickstart)
+- [Tools 및 선택적 planning](https://docs.langchain.com/oss/python/deepagents/tools)
+- [Backends](https://docs.langchain.com/oss/python/deepagents/backends)
+- [Filesystem permissions](https://docs.langchain.com/oss/python/deepagents/permissions)
+- [Subagents](https://docs.langchain.com/oss/python/deepagents/subagents)
+- [Skills](https://docs.langchain.com/oss/python/deepagents/skills) ·
+  [Memory](https://docs.langchain.com/oss/python/deepagents/memory)
+- [Human-in-the-loop](https://docs.langchain.com/oss/python/deepagents/human-in-the-loop)
+- [Deep Agents SDK source](https://github.com/langchain-ai/deepagents/tree/main/libs/deepagents)
+- [Deep Agents SDK changelog](https://github.com/langchain-ai/deepagents/blob/main/libs/deepagents/CHANGELOG.md)

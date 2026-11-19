@@ -5,7 +5,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 usage() {
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|deepagents-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
   echo "       scripts/test.sh --ci-scope [<base-ref>|--stdin]" >&2
 }
 
@@ -16,6 +16,7 @@ resolve_ci_scope_from_stream() {
   local add_dataset=false
   local add_openai=false
   local add_langfuse=false
+  local add_deepagents=false
   local add_otel=false
   local reason=""
   local file_count=0
@@ -40,6 +41,9 @@ resolve_ci_scope_from_stream() {
         ;;
       decks/llmops-langfuse/*)
         add_langfuse=true
+        ;;
+      decks/ai-deep_agents/*)
+        add_deepagents=true
         ;;
       decks/systems-opentelemetry/*)
         add_otel=true
@@ -77,6 +81,7 @@ resolve_ci_scope_from_stream() {
   [[ "$add_dataset" == true ]] && targets+=(dataset-generator)
   [[ "$add_openai" == true ]] && targets+=(openai-sdk-deck)
   [[ "$add_langfuse" == true ]] && targets+=(langfuse-deck)
+  [[ "$add_deepagents" == true ]] && targets+=(deepagents-deck)
   [[ "$add_otel" == true ]] && targets+=(opentelemetry-deck)
   targets+=(scripts)
 
@@ -260,6 +265,13 @@ PY
   echo "==> [test:langfuse-deck] Locked SDK and textbook contract validation passed."
 }
 
+run_deepagents_deck() {
+  echo "==> [test:deepagents-deck] Executing Deep Agents scripted-model runtime contract..."
+  env -u VIRTUAL_ENV uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+    python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_*.py' -v
+  echo "==> [test:deepagents-deck] SDK tool-loop contract passed."
+}
+
 run_opentelemetry_deck() {
   echo "==> [test:opentelemetry-deck] Validating locked core textbook evidence..."
   env -u VIRTUAL_ENV uv run --project decks/systems-opentelemetry --locked \
@@ -315,7 +327,7 @@ run_scripts() {
       | grep -Ev '^(mise\.toml|pyproject\.toml|uv\.lock|scripts/|\.github/workflows/)' \
       | bash scripts/test.sh --ci-scope --stdin
   )"
-  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
+  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langfuse-deck deepagents-deck opentelemetry-deck scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=true" <<<"$scope_out"
   grep -Fq "scope_reason=routed from " <<<"$scope_out"
 
@@ -326,6 +338,7 @@ run_smoke_flag=false
 run_dataset_flag=false
 run_openai_flag=false
 run_langfuse_flag=false
+run_deepagents_flag=false
 run_otel_flag=false
 run_otel_acceptance_flag=false
 run_scripts_flag=false
@@ -345,6 +358,9 @@ for target in "${REQUESTED_TARGETS[@]}"; do
     langfuse-deck)
       run_langfuse_flag=true
       ;;
+    deepagents-deck)
+      run_deepagents_flag=true
+      ;;
     opentelemetry-deck)
       run_otel_flag=true
       ;;
@@ -360,11 +376,12 @@ for target in "${REQUESTED_TARGETS[@]}"; do
       run_dataset_flag=true
       run_openai_flag=true
       run_langfuse_flag=true
+      run_deepagents_flag=true
       run_otel_flag=true
       run_scripts_flag=true
       ;;
     *)
-      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
+      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, deepagents-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
       exit 1
       ;;
   esac
@@ -374,6 +391,7 @@ done
 [[ "$run_dataset_flag" == true ]] && run_dataset_generator
 [[ "$run_openai_flag" == true ]] && run_openai_sdk_deck
 [[ "$run_langfuse_flag" == true ]] && run_langfuse_deck
+[[ "$run_deepagents_flag" == true ]] && run_deepagents_deck
 [[ "$run_otel_flag" == true ]] && run_opentelemetry_deck
 [[ "$run_otel_acceptance_flag" == true ]] && run_opentelemetry_acceptance
 [[ "$run_scripts_flag" == true ]] && run_scripts
