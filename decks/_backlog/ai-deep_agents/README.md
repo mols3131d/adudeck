@@ -57,7 +57,8 @@ LangGraph runtime 내부 구현과 production infrastructure는 기본 범위에
 
 ## 첫 제작 단위: 좁은 조사 agent의 실행 경계
 
-첫 calibration slice는 **도구 하나를 가진 조사·요약 agent**로 제한한다.
+첫 calibration slice는 **사용자 정의 read-only 도구 하나를 추가한 조사·요약 agent**로 제한한다.
+Deep Agent가 별도로 제공하는 내장 filesystem·위임 도구의 존재는 비교 대상에 포함한다.
 질문은 “동일한 입력과 고정된 도구 결과에서 기본 agent와 Deep Agent가 어떤 도구·상태 경계를 노출하는가?”다.
 
 1. **계약 조사(credential 불필요):** 설치 대상 SDK 버전을 결정하고 `create_agent`,
@@ -71,8 +72,9 @@ LangGraph runtime 내부 구현과 production infrastructure는 기본 범위에
    tool 호출·계획 변경은 실제 event/trace로 확인한다.
 4. **실패 경계:** `StateBackend`로 host 파일 접근을 피하고, 내장 filesystem 도구의 쓰기 거부를
    작은 음성 사례로 확인한다. 사용자 정의 도구에 동일 규칙이 적용된다고 주장하지 않는다.
-5. **해석과 평가:** 어떤 실행에서 tool이나 planning이 호출되지 않으면 그 자체를 관찰로 기록한다.
-   모델의 선택을 결정론적인 계약으로 해석하지 않으며, state snapshot과 trace에서만 결론을 낸다.
+5. **해석과 평가:** A/B/C마다 구성상 사용 가능한 도구, 실제 호출 순서·입출력, state·파일 변화,
+   최종 응답을 같은 양식으로 기록한다. 어떤 실행에서 tool이나 planning이 호출되지 않으면
+   그 자체를 관찰로 남기고, 모델의 선택을 결정론적인 계약으로 해석하지 않는다.
 
 SDK 객체 생성·도구 노출에 대한 정적 검증과 **실제 LLM 호출 기반 실행 검증**을 구분한다.
 실행 검증에는 tool-calling 지원 모델 및 provider credential(또는 동등하게 검증된 대체 모델)이 필요하다.
