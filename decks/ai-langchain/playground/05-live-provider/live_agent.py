@@ -8,7 +8,8 @@ from collections.abc import Sequence
 from typing import Any
 
 from langchain.agents import create_agent
-from langchain.messages import AIMessage, BaseMessage, ToolMessage
+from langchain.messages import AIMessage, ToolMessage
+from langchain_core.messages import BaseMessage
 from langchain.tools import tool
 
 
@@ -50,7 +51,7 @@ def live_run(model_name: str) -> dict[str, Any]:
         return value * 2
 
     agent = create_agent(
-        model=ChatOpenAI(model=model_name, temperature=0),
+        model=ChatOpenAI(model=model_name),
         tools=[double],
         system_prompt="For arithmetic, use the provided tool instead of guessing the result.",
     )
