@@ -5,7 +5,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 usage() {
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langgraph-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
   echo "       scripts/test.sh --ci-scope [<base-ref>|--stdin]" >&2
 }
 
@@ -15,6 +15,7 @@ resolve_ci_scope_from_stream() {
   local otel_acceptance=false
   local add_dataset=false
   local add_openai=false
+  local add_langgraph=false
   local add_langfuse=false
   local add_otel=false
   local reason=""
@@ -37,6 +38,9 @@ resolve_ci_scope_from_stream() {
         ;;
       decks/ai-openai_sdk/*)
         add_openai=true
+        ;;
+      decks/ai-langgraph/*)
+        add_langgraph=true
         ;;
       decks/llmops-langfuse/*)
         add_langfuse=true
@@ -76,6 +80,7 @@ resolve_ci_scope_from_stream() {
   local targets=(smoke)
   [[ "$add_dataset" == true ]] && targets+=(dataset-generator)
   [[ "$add_openai" == true ]] && targets+=(openai-sdk-deck)
+  [[ "$add_langgraph" == true ]] && targets+=(langgraph-deck)
   [[ "$add_langfuse" == true ]] && targets+=(langfuse-deck)
   [[ "$add_otel" == true ]] && targets+=(opentelemetry-deck)
   targets+=(scripts)
@@ -179,6 +184,25 @@ PY
   grep -Fq "HTTP attempts: 3" <<<"$retry_output"
 
   echo "==> [test:openai-sdk-deck] Locked deck validation passed."
+}
+
+run_langgraph_deck() {
+  echo "==> [test:langgraph-deck] Running credential-free Graph API examples..."
+  (
+    cd decks/ai-langgraph
+    env -u VIRTUAL_ENV uv run --locked python -m unittest discover -s tests -v
+    # 교본의 학습자 진입점도 실제 실행해 출력/복구 경로를 확인한다.
+    for module in \
+      textbook.state_flow.flow \
+      textbook.loops.counter_loop \
+      textbook.reducers.parallel_updates \
+      textbook.checkpoints.checkpoints \
+      textbook.checkpoints.replay \
+      textbook.interrupts.approval \
+      textbook.integration.workflow; do
+      env -u VIRTUAL_ENV uv run --locked python -m "$module"
+    done
+  )
 }
 
 run_langfuse_deck() {
@@ -290,6 +314,10 @@ run_scripts() {
   grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
+  scope_out="$(printf 'decks/ai-langgraph/tests/test_state_flow.py\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke langgraph-deck scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
   scope_out="$(printf 'decks/llmops-langfuse/README.md\ntools/dataset_generator/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
   grep -Fxq "test_targets=smoke dataset-generator langfuse-deck scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
@@ -315,7 +343,7 @@ run_scripts() {
       | grep -Ev '^(mise\.toml|pyproject\.toml|uv\.lock|scripts/|\.github/workflows/)' \
       | bash scripts/test.sh --ci-scope --stdin
   )"
-  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
+  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langgraph-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=true" <<<"$scope_out"
   grep -Fq "scope_reason=routed from " <<<"$scope_out"
 
@@ -325,6 +353,7 @@ run_scripts() {
 run_smoke_flag=false
 run_dataset_flag=false
 run_openai_flag=false
+run_langgraph_flag=false
 run_langfuse_flag=false
 run_otel_flag=false
 run_otel_acceptance_flag=false
@@ -341,6 +370,9 @@ for target in "${REQUESTED_TARGETS[@]}"; do
       ;;
     openai-sdk-deck)
       run_openai_flag=true
+      ;;
+    langgraph-deck)
+      run_langgraph_flag=true
       ;;
     langfuse-deck)
       run_langfuse_flag=true
@@ -359,12 +391,13 @@ for target in "${REQUESTED_TARGETS[@]}"; do
       run_smoke_flag=true
       run_dataset_flag=true
       run_openai_flag=true
+      run_langgraph_flag=true
       run_langfuse_flag=true
       run_otel_flag=true
       run_scripts_flag=true
       ;;
     *)
-      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
+      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langgraph-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
       exit 1
       ;;
   esac
@@ -373,6 +406,7 @@ done
 [[ "$run_smoke_flag" == true ]] && run_smoke
 [[ "$run_dataset_flag" == true ]] && run_dataset_generator
 [[ "$run_openai_flag" == true ]] && run_openai_sdk_deck
+[[ "$run_langgraph_flag" == true ]] && run_langgraph_deck
 [[ "$run_langfuse_flag" == true ]] && run_langfuse_deck
 [[ "$run_otel_flag" == true ]] && run_opentelemetry_deck
 [[ "$run_otel_acceptance_flag" == true ]] && run_opentelemetry_acceptance
