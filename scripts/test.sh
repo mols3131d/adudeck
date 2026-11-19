@@ -204,7 +204,16 @@ run_langchain_deck() {
     python "$state_lab_dir/test_state_context.py"
   env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
     python "$state_lab_dir/state_context.py"
-  echo "==> [test:langchain-deck] Agent-loop and state/context assertions passed."
+  echo "==> [test:langchain-deck] Verifying structured-output validation and recovery..."
+  local structured_lab_dir="decks/ai-langchain/playground/03-structured-output"
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    python "$structured_lab_dir/test_structured_response.py"
+  local rating_scenario
+  for rating_scenario in valid repair reject; do
+    env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+      python "$structured_lab_dir/structured_response.py" --scenario "$rating_scenario"
+  done
+  echo "==> [test:langchain-deck] Agent-loop, context, and structured-output assertions passed."
 }
 
 run_langfuse_deck() {
