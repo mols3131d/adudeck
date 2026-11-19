@@ -17,6 +17,8 @@ LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 a
   위임 실패 시 실행되지 않은 도구를 구분한다.
 - [교본 04: Skills·memory](textbook/04-skills-memory/README.md) — skill의 지연 로딩과
   memory의 변경·재사용 및 namespace를 관찰한다.
+- [교본 05: 권한·HITL](textbook/05-permissions-hitl/README.md) — 파일 쓰기 규칙과
+  사용자 승인·거부 시점을 실제 중단·재개로 검증한다.
 - [실행 실습](playground/first_loop.py) · [계약 테스트](playground/test_first_loop.py) —
   scripted model로 **실제 LangChain/Deep Agents 실행 경로**를 호출한다.
   모델 응답은 결정론적으로 고정했으므로 provider의 실제 추론 품질을 평가하지는 않는다.
