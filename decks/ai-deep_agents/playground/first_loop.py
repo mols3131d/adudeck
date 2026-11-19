@@ -135,8 +135,26 @@ def run_case(case: str) -> dict[str, Any]:
         for message in messages
         if isinstance(message, ToolMessage)
     ]
+    timeline = []
+    for message in messages:
+        if isinstance(message, AIMessage):
+            timeline.append({
+                "actor": "model",
+                "tool_calls": [{"id": call["id"], "name": call["name"]} for call in message.tool_calls],
+            })
+        elif isinstance(message, ToolMessage):
+            timeline.append({
+                "actor": "tool",
+                "name": message.name,
+                "tool_call_id": message.tool_call_id,
+                "status": message.status,
+            })
+        else:
+            timeline.append({"actor": message.type})
+
     return {
         "case": case,
+        "timeline": timeline,
         "offered_tools": sorted({name for names in model.exposed for name in names}),
         "calls": calls,
         "tool_results": returns,

@@ -37,6 +37,23 @@ class AgentLoopEvidenceTests(unittest.TestCase):
         self.assertEqual([call["name"] for call in planned["calls"]].count("write_todos"), 2)
         self.assertEqual(planned["todos"][0]["status"], "completed")
 
+    def test_timeline_pairs_model_requests_with_tool_responses(self) -> None:
+        for case, evidence in self.cases.items():
+            with self.subTest(case=case):
+                events = evidence["timeline"]
+                self.assertEqual(events[0]["actor"], "human")
+                self.assertEqual(events[-1]["actor"], "model")
+                sent = {
+                    call["id"]
+                    for event in events if event["actor"] == "model"
+                    for call in event["tool_calls"]
+                }
+                returned = {
+                    event["tool_call_id"]
+                    for event in events if event["actor"] == "tool"
+                }
+                self.assertEqual(sent, returned)
+
     def test_permission_denies_internal_write_not_custom_tool(self) -> None:
         denied = self.cases["denied"]
         by_name = {result["name"]: result for result in denied["tool_results"]}
