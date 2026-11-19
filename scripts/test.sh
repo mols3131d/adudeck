@@ -189,13 +189,13 @@ PY
 run_langchain_deck() {
   echo "==> [test:langchain-deck] Executing the first LangChain agent-loop lab..."
   local lab_dir="decks/ai-langchain/playground/01-agent-loop"
-  env -u VIRTUAL_ENV uv run --project decks/ai-langchain --no-lock \
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
     python -m compileall -q "$lab_dir"
-  env -u VIRTUAL_ENV uv run --project decks/ai-langchain --no-lock \
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
     python "$lab_dir/test_first_agent.py"
   local scenario
   for scenario in model-only no-tool tool error; do
-    env -u VIRTUAL_ENV uv run --project decks/ai-langchain --no-lock \
+    env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
       python "$lab_dir/first_agent.py" --scenario "$scenario"
   done
   echo "==> [test:langchain-deck] Agent-loop assertions and scenarios passed."

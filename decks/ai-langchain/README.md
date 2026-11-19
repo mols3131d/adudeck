@@ -7,10 +7,10 @@ Python에서 **모델 호출과 agent 실행을 구분**하고, LangChain `creat
 
 **지금 학습하기:** [01. 메시지와 도구 호출 교본](textbook/01-messages-tools-agent/README.md)과
 [실행 실습](playground/01-agent-loop/first_agent.py)을 함께 사용한다. Python 3.11+와 `uv`가 필요하며,
-API key 없이 `uv run --project decks/ai-langchain --no-lock python
+API key 없이 `uv run --no-project --with langchain==1.5.2 python
 decks/ai-langchain/playground/01-agent-loop/test_first_agent.py`로 첫 실습의 동작을 확인할 수 있다.
-현재 직접 의존성은 `langchain==1.5.2`로 고정했고, lockfile은 아직 없으므로 전이 의존성까지
-고정한 재현성은 보장하지 않는다.
+현재 직접 의존성은 `pyproject.toml`과 실습 실행 명령 모두 `langchain==1.5.2`로 고정했다.
+단, lockfile은 아직 없으므로 전이 의존성까지 고정한 재현성은 보장하지 않는다.
 
 ## 학습 목표와 선행 지식
 

@@ -75,16 +75,16 @@ HumanMessage("Double 7")
 ## 5. 실습: 예측하고 실행 기록으로 확인하기
 
 처음 한 번만 다음 명령으로 LangChain 의존성을 설치하면서 실행한다. 설치된 Python 3.11 이상과 `uv`가
-필요하며, 외부 API key는 필요 없다. 프로젝트 의존성의 직접 버전은 `pyproject.toml`에 고정되어 있다.
+필요하며, 외부 API key는 필요 없다. 실행 명령의 직접 버전은 `pyproject.toml`과 동일하게 고정했다.
 
 ```bash
-uv run --project decks/ai-langchain --no-lock python \
+uv run --no-project --with langchain==1.5.2 python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario model-only
-uv run --project decks/ai-langchain --no-lock python \
+uv run --no-project --with langchain==1.5.2 python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario no-tool
-uv run --project decks/ai-langchain --no-lock python \
+uv run --no-project --with langchain==1.5.2 python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario tool
-uv run --project decks/ai-langchain --no-lock python \
+uv run --no-project --with langchain==1.5.2 python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario error
 ```
 
@@ -98,7 +98,7 @@ uv run --project decks/ai-langchain --no-lock python \
 아래 명령은 도구 실행 횟수, 메시지 순서, ID 대응, 예외의 전파를 실제 LangChain 실행으로 검사한다.
 
 ```bash
-uv run --project decks/ai-langchain --no-lock python \
+uv run --no-project --with langchain==1.5.2 python \
   decks/ai-langchain/playground/01-agent-loop/test_first_agent.py
 ```
 
