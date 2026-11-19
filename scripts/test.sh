@@ -268,7 +268,7 @@ PY
 run_deepagents_deck() {
   echo "==> [test:deepagents-deck] Executing Deep Agents scripted-model runtime contract..."
   env -u VIRTUAL_ENV uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
-    python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_first_loop.py' -v
+    python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_*.py' -v
   echo "==> [test:deepagents-deck] SDK tool-loop contract passed."
 }
 

@@ -11,6 +11,8 @@ LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 a
 
 - [교본 01: agent loop와 harness 비교](textbook/01-agent-loop/README.md) — 실행 상태와 도구 호출의
   흐름, worked example, 예측·실험·평가
+- [교본 02: Filesystem과 context](textbook/02-filesystem-context/README.md) — thread state와
+  공유 memory의 저장 수명, 경로 라우팅을 검증한다.
 - [실행 실습](playground/first_loop.py) · [계약 테스트](playground/test_first_loop.py) —
   scripted model로 **실제 LangChain/Deep Agents 실행 경로**를 호출한다.
   모델 응답은 결정론적으로 고정했으므로 provider의 실제 추론 품질을 평가하지는 않는다.
