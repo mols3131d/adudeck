@@ -97,6 +97,7 @@ credential을 repository에 기록하지 않으며, 사용 가능한 환경이 �
 - [Backends](https://docs.langchain.com/oss/python/deepagents/backends)
 - [Filesystem permissions](https://docs.langchain.com/oss/python/deepagents/permissions)
 - [Subagents](https://docs.langchain.com/oss/python/deepagents/subagents)
-- [Skills](https://docs.langchain.com/oss/python/deepagents/skills) · [Memory](https://docs.langchain.com/oss/python/deepagents/memory)
+- [Skills](https://docs.langchain.com/oss/python/deepagents/skills) ·
+  [Memory](https://docs.langchain.com/oss/python/deepagents/memory)
 - [Human-in-the-loop](https://docs.langchain.com/oss/python/deepagents/human-in-the-loop)
 - [Deep Agents SDK source/changelog](https://github.com/langchain-ai/deepagents/tree/main/libs/deepagents)
