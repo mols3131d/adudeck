@@ -51,7 +51,7 @@ def run_agent(case: str, model: BaseChatModel) -> dict[str, Any]:
     """Return observed calls and results rather than assuming model behavior."""
     result = build_agent(case, model).invoke(
         {"messages": [{"role": "user", "content": QUESTION}]},
-        config={"recursion_limit": 12},
+        config={"recursion_limit": 24 if case == "planned" else 12},
     )
     messages = result["messages"]
     return {
