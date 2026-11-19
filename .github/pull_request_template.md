@@ -21,7 +21,7 @@ Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으�
 
 <!--
 실제로 확인한 항목만 체크한다. 실패·대기·미확인 사항은 미체크하고 이유를 기록한다.
-적용되지 않는 항목은 체크박스 대신 일반 bullet `- N/A: <이유>`로 교체한다.
+적용되지 않는 항목은 체크박스 대신 일반 bullet `- N/A: 사유`로 교체한다.
 변경의 성격과 위험에 비례하여 필요한 검증만 수행한다.
 관련 없는 테스트, 중복 검증, 불필요한 외부 API·runtime 호출은 실행하지 않는다.
 실행하지 않은 검증을 통과했다고 표시하지 않는다.
@@ -29,13 +29,13 @@ Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으�
 
 ### Self-review
 
-- Reviewed HEAD: <full SHA>
+- Reviewed HEAD:
 
 <!--
 Push마다 Self-review 체크를 초기화하고 직전 Reviewed HEAD 이후 변경을 검토한다.
 첫 리뷰, 기존 SHA가 없는 경우, base가 변경된 경우에는 현재 전체 PR diff를 검토한다.
 변경분이 전체 diff의 Goal과 Boundaries에 미치는 영향도 확인한다.
-위 불릿의 `<full SHA>`를 리뷰한 현재 HEAD의 전체 commit SHA로 교체한다. GitHub가 SHA를 자동 링크 처리한다.
+위 불릿의 `Reviewed HEAD:` 뒤에 리뷰한 현재 HEAD의 전체 commit SHA를 입력한다. GitHub가 SHA를 자동 링크 처리한다.
 SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
 -->
 
