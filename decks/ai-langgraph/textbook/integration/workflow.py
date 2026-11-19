@@ -94,6 +94,28 @@ def main() -> None:
     graph.invoke(initial_state(4), config=reject_config)
     print("rejected:", graph.invoke(Command(resume=False), config=reject_config))
 
+    # 실패 지점에서 실제로 멈추고, checkpoint를 관찰한 뒤 재개한다.
+    failure_trace: list[str] = []
+    failure_graph = build_graph(failure_trace, fail_first_apply=True)
+    failure_config = {"configurable": {"thread_id": "integrated-failure"}}
+    failure_graph.invoke(initial_state(3), config=failure_config)
+    try:
+        failure_graph.invoke(Command(resume=True), config=failure_config)
+    except RuntimeError as error:
+        if str(error) != "simulated apply failure":
+            raise
+        print("expected failure:", error)
+    else:
+        raise AssertionError("fault injection did not fail at apply")
+
+    failed_snapshot = failure_graph.get_state(failure_config)
+    print("failed checkpoint:", failed_snapshot.values)
+    print("retry next:", failed_snapshot.next)
+    recovered = failure_graph.invoke(None, config=failure_config)
+    print("recovered:", recovered)
+    print("apply attempts:", failure_trace.count("apply"))
+    print("node visits after recovery:", failure_trace)
+
 
 if __name__ == "__main__":
     main()

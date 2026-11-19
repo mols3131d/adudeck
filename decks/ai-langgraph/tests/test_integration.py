@@ -1,10 +1,12 @@
 """통합 그래프의 승인, 검증, checkpoint, 실패 복구 확인."""
 
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 
 from langgraph.types import Command
 
-from textbook.integration.workflow import build_graph, initial_state
+from textbook.integration.workflow import build_graph, initial_state, main
 
 
 class IntegratedWorkflowTest(unittest.TestCase):
@@ -64,6 +66,18 @@ class IntegratedWorkflowTest(unittest.TestCase):
         self.assertEqual(trace.count("ask_approval"), 2)
         self.assertEqual(trace.count("apply"), 2)
         self.assertEqual(graph.get_state(config).next, ())
+
+    def test_runnable_demo_exposes_failure_checkpoint_and_recovery(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            main()
+        evidence = output.getvalue()
+        self.assertIn("expected failure: simulated apply failure", evidence)
+        self.assertIn("retry next: ('apply',)", evidence)
+        self.assertIn("recovered:", evidence)
+        self.assertIn("'outcome': 'applied'", evidence)
+        self.assertIn("apply attempts: 2", evidence)
+        self.assertIn("node visits after recovery:", evidence)
 
 
 if __name__ == "__main__":

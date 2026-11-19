@@ -90,7 +90,9 @@ uv run python -m unittest discover -s tests -v
 
 `pause:`에서 승인 요청에 전달된 숫자와 검사 결과를 보고,
 `snapshot:`과 `next:`에서 중단 시점을 확인한다.
-`approved:`와 `rejected:`의 최종 state를 비교한다.
+`approved:`와 `rejected:`의 최종 state를 비교하고,
+이어서 `expected failure:` / `retry next:` / `recovered:` 출력으로
+실패 이후 상태가 무엇을 보존하는지 확인한다.
 `approval visits: 2`인 이유는 `interrupt()`가 포함된 node가 처음 시작할 때와
 resume 시 각각 한 번 실행되기 때문이다.
 
@@ -103,10 +105,20 @@ resume 시 각각 한 번 실행되기 때문이다.
 `RuntimeError("simulated apply failure")`를 발생시킨다. 이 동작은 코드에 넣은
 fault injection으로, LangGraph의 내장 오류 주입 기능이 아니다.
 
-[검증 코드](../../tests/test_integration.py)는 승인으로 `apply`에 도달한 후
-예외가 발생하는지 확인하고, 그 시점의 checkpoint에서 `next=("apply",)`인지를 본다.
-그다음 **같은 graph와 thread**에 `None`을 전달해 완료된 앞 단계 없이 `apply`만
-다시 실행되는지 검증한다.
+`workflow.py`를 실행하면 승인과 거절 경로 **다음에 실제 실패·복구 데모도 실행**된다.
+`expected failure:`에서 고의적인 `RuntimeError`가 발생했음을 확인한다.
+`failed checkpoint:`는 승인이 이미 기록된 상태를, `retry next: ('apply',)`는
+완료되지 않은 node를 보여 준다. 이어서 **같은 graph와 thread**에
+`graph.invoke(None, config=failure_config)`가 호출된다. `recovered:`의
+`number=4, outcome="applied"`와 `apply attempts: 2`를 비교한다.
+
+실습 전에 다음 값들을 예측해 보자. `node visits after recovery:`에는
+`ask_approval`가 두 번, `apply`가 두 번 기록되지만 `cancel`은 기록되지 않는다.
+승인 전에 완료된 `classify`, `check_range`, `check_parity`는 이 오류로
+재실행되지 않는다.
+
+[검증 코드](../../tests/test_integration.py)는 이 실행 의미를 별도로 assertion하며,
+정상/거절/범위 위반 경로에 영향이 없는지도 함께 검증한다.
 
 이때 관찰용 `trace`에는 `apply`가 **두 번** 남는다. 운영 환경의 실제
 side effect가 같은 방식으로 중복될 수 있으므로 안전한 재실행에는 idempotency key나
