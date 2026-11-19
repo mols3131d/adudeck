@@ -37,7 +37,8 @@ Push마다 Self-review 체크를 초기화하고 직전 Reviewed HEAD 이후 변
 SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
 -->
 
-Self-review는 기록된 `Reviewed HEAD`에서만 유효하다. Push 후 다시 확인한다.
+> [!WARNING]
+> Self-review는 기록된 `Reviewed HEAD`에 대해서만 유효하다. Push 후에는 체크를 해제하고 변경 사항을 재검토한 뒤, 체크 상태와 `Reviewed HEAD`를 갱신해야 한다.
 
 - [ ] 현재 PR diff가 Goal과 Boundaries에 부합하는지 확인했다.
 - [ ] 마지막 Reviewed HEAD 이후 변경(최초 리뷰라면 전체 diff)을 검토하고 의도하지 않은 변경이나 회귀를 확인했다.
