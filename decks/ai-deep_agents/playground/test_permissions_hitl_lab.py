@@ -38,10 +38,12 @@ class PermissionAndReviewTests(unittest.TestCase):
         self.assertTrue(self.rejected["resumed_without_interrupt"])
         self.assertEqual(self.rejected["effects_after_resume"], [])
 
-    def test_review_decision_is_not_filesystem_permission(self) -> None:
-        self.assertIn("record_local_change", self.approved["requested_actions"])
-        self.assertIn("record_local_change", self.rejected["requested_actions"])
-        self.assertNotIn("record_local_change", ["write_file", "read_file"])
+    def test_approval_result_corresponds_to_requested_custom_tool(self) -> None:
+        self.assertEqual(
+            [tool["name"] for tool in self.approved["returned_tools"]],
+            ["record_local_change"],
+        )
+        self.assertEqual(self.approved["returned_tools"][0]["status"], "success")
 
 
 if __name__ == "__main__":

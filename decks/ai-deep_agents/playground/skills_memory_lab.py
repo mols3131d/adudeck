@@ -91,6 +91,7 @@ def run_lab() -> dict[str, object]:
         "read_skill": result(first["messages"], "skill-read"),
         "update_memory": result(second["messages"], "memory-write"),
         "store_memory": memory_backend.read("/AGENTS.md").file_data,
+        "stored_skill_after": skills_backend.read("/compare/SKILL.md").file_data,
     }
 
 

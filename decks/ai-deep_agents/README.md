@@ -4,8 +4,9 @@ LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 a
 핵심은 모델의 추론 능력을 높이는 방법이 아니라, agent loop에 filesystem, context 관리, 위임, 선택적 planning을
 조합했을 때 **상태·데이터·권한이 어디서 바뀌는지** 추적하는 것이다.
 
-현재는 **active** 덱이며, 첫 calibration slice(기본 agent loop·Deep Agents harness·선택적 planning·쓰기 거부)를
-교본 및 실습으로 작성했다. 이후 단위인 context persistence, subagent, skills, memory, human approval은 준비 단계다.
+현재는 **active** 덱이며, 학습 계약에 포함된 agent loop·planning·context·subagent·skills·memory·권한·HITL의
+교본과 credential 없는 실제 SDK 실행 실습을 구현했다. Provider 기반 실행 경로도 선택적으로 제공하되,
+이 repository의 CI가 외부 provider 계정을 대신 검증하지는 않는다.
 
 ## 현재 학습 자료
 
@@ -19,6 +20,8 @@ LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 a
   memory의 변경·재사용 및 namespace를 관찰한다.
 - [교본 05: 권한·HITL](textbook/05-permissions-hitl/README.md) — 파일 쓰기 규칙과
   사용자 승인·거부 시점을 실제 중단·재개로 검증한다.
+- [선택적 실제 모델 실습](playground/live_provider.py) — 외부 OpenAI tool-calling 모델과
+  fixture를 연결해 관찰한다. API key와 명시적 유료 호출 승인 필요.
 - [실행 실습](playground/first_loop.py) · [계약 테스트](playground/test_first_loop.py) —
   scripted model로 **실제 LangChain/Deep Agents 실행 경로**를 호출한다.
   모델 응답은 결정론적으로 고정했으므로 provider의 실제 추론 품질을 평가하지는 않는다.
@@ -29,11 +32,23 @@ LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 a
 uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
   python decks/ai-deep_agents/playground/first_loop.py
 uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
-  python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_first_loop.py' -v
+  python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_*.py' -v
 ```
 
 Python 3.14 및 `deepagents==0.7.40`을 이 실습의 선택 버전으로 사용한다. 의존성 전체를 잠근
-deck-local lockfile이 아니라 일회성 `uv --with` 환경이다. CI 실행 결과는 PR 검사에서 별도로 확인한다.
+deck-local lockfile이 아니라 일회성 `uv --with` 환경이다. CI는 전체 오프라인 모델 실습을 실행한다.
+실제 provider 모델을 쓰는 경우에는 별도 package·credential 및 비용이 필요하다.
+
+```bash
+# OPENAI_API_KEY는 shell의 비공개 환경 변수로만 설정한다. 값을 Git에 기록하지 않는다.
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+  --with 'langchain-openai>=1,<2' \
+  python decks/ai-deep_agents/playground/live_provider.py \
+  --model gpt-4.1-mini --case basic --run-paid-api
+```
+
+원격 모델이 실제로 어떤 도구를 선택했는지는 `requested_tools`와 `executed_tools`를 보고 판단한다.
+도구를 호출하지 않았거나 provider에서 오류가 발생해도 성공한 것처럼 기록하지 않는다.
 
 ## 목표와 선행 지식
 

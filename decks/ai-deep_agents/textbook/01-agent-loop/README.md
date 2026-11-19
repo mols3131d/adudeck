@@ -135,6 +135,24 @@ introspection API가 아니다. 버전이 바뀌면 테스트를 다시 검증�
 - D에서 접근 제어가 적용되는 정확한 도구 범위를 말하고, custom tool까지 보호된다고 주장하지 않는가.
 - 테스트 성공이 모델 추론 품질이나 장기 persistence까지 검증한 것은 아님을 설명하는가.
 
+## 실제 provider 모델로 비교하기 (선택)
+
+지금까지는 scripted model의 의사결정은 고정하고 **실제 SDK runtime**만 검사했다.
+실제 tool-calling 모델을 연결하려면 [선택적 실습](../../playground/live_provider.py)을 실행한다.
+이 경로는 외부 OpenAI API에 요청을 보내므로 **API 사용료**가 발생할 수 있다.
+모델과 계정 접근 권한을 확인하고, `OPENAI_API_KEY`를 개인 환경 변수로 제공한다.
+
+```bash
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40'   --with 'langchain-openai>=1,<2'   python decks/ai-deep_agents/playground/live_provider.py   --model gpt-4.1-mini --case basic --run-paid-api
+```
+
+`--case basic`부터 실행하고 필요하면 `deep` 또는 `planned`로 바꾼다. 응답의
+`requested_tools`는 모델이 요청한 도구, `executed_tools`는 runtime에서 실행한 도구다.
+모델이 지시대로 tool을 호출하지 않을 수도 있으며, 이를 실패한 관찰로 그대로 기록한다.
+실험은 한 번에 한 variant만 실행해 과금과 비교의 경계를 유지한다. 실행 횟수와 모델
+버전이 달라지면 결론의 근거도 달라진다. 본 PR의 CI는 credential 없이 fake 모델을
+이 경로에 넣어 그래프 구성까지만 검증한다. **실제 외부 호출 성공은 검증되지 않았다.**
+
 ## 여기서 검증하지 않은 것
 
 이 단위는 provider LLM의 tool 선택, prompt injection 저항성, 비용·latency, subagent 내부

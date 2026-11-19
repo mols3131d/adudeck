@@ -31,6 +31,8 @@ class SkillsMemoryTests(unittest.TestCase):
 
     def test_updates_do_not_change_skill_definition(self) -> None:
         self.assertIn("compare-services", SKILL_TEXT)
+        self.assertIn("When comparing services", str(self.evidence["stored_skill_after"]))
+        self.assertIn(UPDATED_MEMORY, str(self.evidence["store_memory"]))
         self.assertEqual(len(self.evidence["model_requests"]), 5)
 
 
