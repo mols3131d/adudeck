@@ -29,11 +29,15 @@ Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으�
 
 ### Self-review
 
+```text
+Reviewed HEAD: <full SHA>
+```
+
 <!--
 Push마다 Self-review 체크를 초기화하고 직전 Reviewed HEAD 이후 변경을 검토한다.
 첫 리뷰, 기존 SHA가 없는 경우, base가 변경된 경우에는 현재 전체 PR diff를 검토한다.
 변경분이 전체 diff의 Goal과 Boundaries에 미치는 영향도 확인한다.
-리뷰한 현재 HEAD의 전체 SHA를 `- Reviewed HEAD: <full SHA>` 일반 bullet로 기록한다.
+리뷰한 현재 HEAD의 전체 SHA로 위 코드 블록의 `<full SHA>`를 교체한다.
 SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
 -->
 
