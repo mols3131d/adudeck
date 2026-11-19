@@ -213,7 +213,12 @@ run_langchain_deck() {
     env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
       python "$structured_lab_dir/structured_response.py" --scenario "$rating_scenario"
   done
-  echo "==> [test:langchain-deck] Agent-loop, context, and structured-output assertions passed."
+  echo "==> [test:langchain-deck] Observing streaming steps and tool-error middleware..."
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    python "$lab_dir/test_trace_and_recovery.py"
+  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    python "$lab_dir/trace_and_recovery.py"
+  echo "==> [test:langchain-deck] All four LangChain learning slices validated."
 }
 
 run_langfuse_deck() {
