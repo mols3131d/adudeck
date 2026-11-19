@@ -4,8 +4,28 @@ LangChain 생태계의 **Deep Agents SDK**로 복잡한 작업을 수행하는 a
 핵심은 모델의 추론 능력을 높이는 방법이 아니라, agent loop에 filesystem, context 관리, 위임, 선택적 planning을
 조합했을 때 **상태·데이터·권한이 어디서 바뀌는지** 추적하는 것이다.
 
-현재는 후속 학습을 준비하는 **backlog**다. 이 README는 학습 계약과 첫 검증 단위를 정한다.
-교본과 실행 가능한 playground는 아직 작성하지 않았다.
+현재는 **active** 덱이며, 첫 calibration slice(기본 agent loop·Deep Agents harness·선택적 planning·쓰기 거부)를
+교본 및 실습으로 작성했다. 이후 단위인 context persistence, subagent, skills, memory, human approval은 준비 단계다.
+
+## 현재 학습 자료
+
+- [교본 01: agent loop와 harness 비교](textbook/01-agent-loop/README.md) — 실행 상태와 도구 호출의
+  흐름, worked example, 예측·실험·평가
+- [실행 실습](playground/first_loop.py) · [계약 테스트](playground/test_first_loop.py) —
+  scripted model로 **실제 LangChain/Deep Agents 실행 경로**를 호출한다.
+  모델 응답은 결정론적으로 고정했으므로 provider의 실제 추론 품질을 평가하지는 않는다.
+
+저장소 루트에서 실행한다(네트워크는 최초 **패키지 설치**에만 필요하며, 실습의 모델 호출 자체는 오프라인이다).
+
+```bash
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+  python decks/ai-deep_agents/playground/first_loop.py
+uv run --no-project --python 3.14 --with 'deepagents==0.7.40' \
+  python -m unittest discover -s decks/ai-deep_agents/playground -p 'test_first_loop.py' -v
+```
+
+Python 3.14 및 `deepagents==0.7.40`을 이 실습의 선택 버전으로 사용한다. 의존성 전체를 잠근
+deck-local lockfile이 아니라 일회성 `uv --with` 환경이다. CI 실행 결과는 PR 검사에서 별도로 확인한다.
 
 ## 목표와 선행 지식
 
