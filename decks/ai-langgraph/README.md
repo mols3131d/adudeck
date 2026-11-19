@@ -3,7 +3,7 @@
 Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계하고, checkpoint·resume·human-in-the-loop
 실행을 관찰·검증하기 위한 학습 덱이다.
 
-현재는 후속 학습을 준비하는 **backlog**다. 이 문서는 학습 범위와 제작 순서를 정하며, 교본과 실행 코드는 아직 없다.
+현재 작업 중인 **active** deck이다. 아래 6단계는 전체 학습 계약이며, 실제 구현은 검토된 학습 단위부터 점진적으로 추가한다.
 
 ## 목표와 선행 지식
 
@@ -38,8 +38,7 @@ Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계
 
 ## 첫 제작 단위: credential-free calibration
 
-교본과 playground를 작성할 때는 아래의 작은 사례 **하나**로 먼저 설명과 검증 방식을 교정한다.
-현재 PR에서는 구현하지 않는다.
+첫 단위는 [State와 조건 분기 교본](textbook/state_flow/README.md)에 구현되어 있다. 아래는 그 실습의 학습 계약이다.
 
 - **상태:** `number: int`, `branch: str`를 가진 `TypedDict`.
 - **그래프:** `START → classify → (increment 또는 double) → END`. `classify`는 홀짝에 따라
@@ -74,6 +73,30 @@ Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계
 **범위 밖:** LangChain `create_agent`의 일반적인 model/tool integration, Deep Agents의
 planning·filesystem·subagent harness, LangSmith managed deployment 운영. 이들은 관련된
 별도 학습 주제이며 이 덱의 선행 조건으로 강제하지 않는다.
+
+## 시작하기
+
+이 덱은 root Python 환경과 독립적인 `pyproject.toml`을 가진다. 저장소 root에서:
+
+```bash
+cd decks/ai-langgraph
+uv sync
+uv run python textbook/state_flow/flow.py
+uv run python -m unittest discover -s tests -v
+```
+
+`flow.py`는 node별 **update event**와 최종 state를 구분해 출력한다. 상태 전이가 예측과 다르면
+[Unit 1 교본](textbook/state_flow/README.md)의 worked trace로 돌아가 원인을 추적한다.
+외부 API key와 모델 서비스는 사용하지 않는다. Python 3.10+과 `uv`가 필요하다.
+
+## 구현 현황
+
+| 단위 | 학습 자료 | 실행 검증 |
+| --- | --- | --- |
+| 1. State와 분기 | [교본 + 실습](textbook/state_flow/README.md) | `tests/test_state_flow.py` |
+| 2~6. 병렬 병합·checkpoint·interrupt·통합 | 후속 실습 | 미구현 |
+
+**버전 기준:** 2026-11-19, LangGraph Python 1.2 계열. 지원 API는 공식 문서에서 재확인한다.
 
 ## 공식 자료
 
