@@ -44,8 +44,9 @@ Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계
 - **상태:** `number: int`, `branch: str`를 가진 `TypedDict`.
 - **그래프:** `START → classify → (increment 또는 double) → END`. `classify`는 홀짝에 따라
   `branch`만 update하고, 조건부 edge는 그 값을 보고 다음 node를 선택한다.
-- **예측 사례:** `number=3`이면 `classify` 뒤 `branch="odd"`, `increment` 뒤 `number=4`.
-  `number=4`이면 `branch="even"`, `double` 뒤 `number=8`.
+- **예측 사례:** 초기 state `{"number": 3, "branch": ""}`에서 `classify` 뒤 `branch="odd"`,
+  `increment` 뒤 `number=4`. 초기 state `{"number": 4, "branch": ""}`에서는 `branch="even"`,
+  `double` 뒤 `number=8`. 두 경우 모두 다른 key는 유지된다.
 - **관찰:** 각 node의 반환 update, 조건부 edge가 선택한 경로, 최종 state를 예측과 대조한다.
   업데이트하지 않은 key가 보존되는지도 확인한다.
 - **반례:** `classify`가 전체 state를 돌려줘야 한다고 가정하거나, 조건부 edge가 이전 `branch`
