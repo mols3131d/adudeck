@@ -1,4 +1,4 @@
-# 4. Interrupt 이후 어디부터 다시 실행되는가?
+# 5. Interrupt 이후 어디부터 다시 실행되는가?
 
 [Checkpoint 교본](../checkpoints/README.md)에서는 완료된 thread에 새 입력을 보냈다.
 이번에는 node 내부에서 **사용자 승인을 기다리는 동안 실제로 멈추고**, 같은 thread에

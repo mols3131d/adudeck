@@ -194,6 +194,7 @@ run_langgraph_deck() {
     # 교본의 학습자 진입점도 실제 실행해 출력/복구 경로를 확인한다.
     for module in \
       textbook.state_flow.flow \
+      textbook.loops.counter_loop \
       textbook.reducers.parallel_updates \
       textbook.checkpoints.checkpoints \
       textbook.interrupts.approval \

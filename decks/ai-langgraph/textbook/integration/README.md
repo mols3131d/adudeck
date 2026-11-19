@@ -1,4 +1,4 @@
-# 5. 종합 실습: 승인형 stateful workflow를 추적하고 복구한다
+# 6. 종합 실습: 승인형 stateful workflow를 추적하고 복구한다
 
 앞선 네 단위에서는 state·조건 분기, 병렬 reducer, checkpoint, interrupt를 서로 분리해서 보았다.
 이제 하나의 작은 graph에 결합한다. [workflow.py](workflow.py)를 실행하고 **정상 승인,

@@ -52,7 +52,7 @@ Python에서 **명시적인 state와 control flow**를 가진 workflow를 설계
 - **반례:** `classify`가 전체 state를 돌려줘야 한다고 가정하거나, 조건부 edge가 이전 `branch`
   값을 읽는다고 예측한 경우를 구별한다.
 
-첫 단위에서는 reducer·checkpointer·interrupt를 사용하지 않는다. 뒤 단위에서 병렬 병합,
+첫 단위에서는 reducer·checkpointer·interrupt를 사용하지 않는다. 이후 반복 경로를 확인하고 병렬 병합,
 checkpoint, interrupt를 각각 관찰한 뒤 [종합 실습](textbook/integration/README.md)에서
 하나의 workflow에 결합한다. 각 단위에서 예측 → 실행 → state 비교 → 반례 설명을 검토한다.
 
@@ -83,6 +83,7 @@ planning·filesystem·subagent harness, LangSmith managed deployment 운영. 이
 cd decks/ai-langgraph
 uv sync --locked
 uv run python textbook/state_flow/flow.py
+uv run python textbook/loops/counter_loop.py
 uv run python textbook/reducers/parallel_updates.py
 uv run python textbook/checkpoints/checkpoints.py
 uv run python textbook/interrupts/approval.py
@@ -99,7 +100,8 @@ uv run python -m unittest discover -s tests -v
 | 단위 | 학습 자료 | 실행 검증 |
 | --- | --- | --- |
 | 1. State와 분기 | [교본 + 실습](textbook/state_flow/README.md) | `tests/test_state_flow.py` |
-| 2~3. 병렬 병합·reducer | [교본 + 실습](textbook/reducers/README.md) | `tests/test_reducers.py` |
+| 2. Edge와 반복 | [교본 + 실습](textbook/loops/README.md) | `tests/test_loops.py` |
+| 3. 병렬 병합·reducer | [교본 + 실습](textbook/reducers/README.md) | `tests/test_reducers.py` |
 | 4. Checkpoint와 thread | [교본 + 실습](textbook/checkpoints/README.md) | `tests/test_checkpoints.py` |
 | 5. Interrupt와 재개 | [교본 + 실습](textbook/interrupts/README.md) | `tests/test_interrupts.py` |
 | 6. 결합·검증 | [종합 교본 + 실습](textbook/integration/README.md) | `tests/test_integration.py` |

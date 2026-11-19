@@ -1,4 +1,4 @@
-# 2. 왜 병렬 node에는 reducer가 필요한가?
+# 3. 왜 병렬 node에는 reducer가 필요한가?
 
 [첫 단위](../state_flow/README.md)에서는 한 번에 한 계산 node만 실행되어
 state key `number`를 갱신했다. 이제 두 node가 **같은 super-step에** `events`라는

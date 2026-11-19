@@ -1,4 +1,4 @@
-# 3. Checkpoint는 실행 중인 graph의 상태를 thread별로 보존한다
+# 4. Checkpoint는 실행 중인 graph의 상태를 thread별로 보존한다
 
 [이전 단위](../reducers/README.md)까지 graph는 모든 실행을 현재 메모리에만 두었다.
 이제 하나의 graph object에서 **thread별 최신 state**를 저장하고 다음 입력이 이를
