@@ -29,7 +29,7 @@ Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으�
 
 ### Self-review
 
-```text
+```yml
 Reviewed HEAD: <full SHA>
 ```
 
