@@ -192,7 +192,11 @@ run_langgraph_deck() {
     cd decks/ai-langgraph
     env -u VIRTUAL_ENV uv run --locked python -m unittest discover -s tests -v
     # 교본의 학습자 진입점도 실제 실행해 출력/복구 경로를 확인한다.
-    for module in       textbook.state_flow.flow       textbook.reducers.parallel_updates       textbook.checkpoints.checkpoints       textbook.interrupts.approval \
+    for module in \
+      textbook.state_flow.flow \
+      textbook.reducers.parallel_updates \
+      textbook.checkpoints.checkpoints \
+      textbook.interrupts.approval \
       textbook.integration.workflow; do
       env -u VIRTUAL_ENV uv run --locked python -m "$module"
     done
@@ -306,6 +310,10 @@ run_scripts() {
 
   scope_out="$(printf 'docs/automation.md\n.rulesync/rules/overview.md\nrulesync.lock\ndecks/computer-science/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
   grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
+  scope_out="$(printf 'decks/ai-langgraph/tests/test_state_flow.py\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke langgraph-deck scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
   scope_out="$(printf 'decks/llmops-langfuse/README.md\ntools/dataset_generator/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
