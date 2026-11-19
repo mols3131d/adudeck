@@ -3,7 +3,14 @@
 Python에서 **모델 호출과 agent 실행을 구분**하고, LangChain `create_agent`의 메시지·도구·실행 흐름을
 설명하고 검증하기 위한 학습 덱이다.
 
-**상태:** 후속 학습을 위한 backlog. 이 README는 학습 계약과 첫 제작 단위를 정의하며, 교본과 실행 코드는 아직 없다.
+**상태:** 첫 학습 단위를 구현 중인 active deck. 커리큘럼 전체가 완성된 것은 아니다.
+
+**지금 학습하기:** [01. 메시지와 도구 호출 교본](textbook/01-messages-tools-agent/README.md)과
+[실행 실습](playground/01-agent-loop/first_agent.py)을 함께 사용한다. Python 3.11+와 `uv`가 필요하며,
+API key 없이 `uv run --project decks/ai-langchain --no-lock python
+decks/ai-langchain/playground/01-agent-loop/test_first_agent.py`로 첫 실습의 동작을 확인할 수 있다.
+현재 직접 의존성은 `langchain==1.5.2`로 고정했고, lockfile은 아직 없으므로 전이 의존성까지
+고정한 재현성은 보장하지 않는다.
 
 ## 학습 목표와 선행 지식
 
@@ -37,9 +44,9 @@ LangGraph 경험은 필요하지 않으며, 직접적인 graph 구성은 이 덱
 이 순서는 하나의 입문 학습 경로다. message history를 관찰하는 것과 여러 호출 사이의 영속적인
 대화 상태를 보존하는 것은 다르며, 후자는 별도 persistence 구성이 필요할 수 있다.
 
-## 첫 제작 단위: 한 번의 도구 호출
+## 구현된 첫 제작 단위: 한 번의 도구 호출
 
-초기 교본·실습은 **단일 순수 함수 도구를 호출하는 작은 agent**로 시작한다. 먼저 모델·도구의
+첫 교본·실습은 **단일 순수 함수 도구를 호출하는 작은 agent**를 다룬다. 먼저 모델·도구의
 입출력을 고정해 control flow를 관찰하고, provider 호출은 별도의 선택적 실습으로 분리한다.
 
 1. **예측:** 사용자 메시지 이후 `AIMessage.tool_calls`가 생성되더라도 도구 함수가 아직 실행된 것은
@@ -68,11 +75,11 @@ LangGraph 경험은 필요하지 않으며, 직접적인 graph 구성은 이 덱
   Deep Agents의 filesystem·subagent harness, 대규모 RAG와 multi-agent pipeline.
   과거의 `LLMChain`/legacy `Chain` 예제는 현재의 기본 학습 경로로 사용하지 않는다.
 
-## 구현 전 확인
+## 버전과 후속 구현 확인
 
 현재 기준은 **2026-11-19에 확인한 LangChain Python 공식 문서의 `create_agent` 중심 API**다.
-실제 코드를 추가할 때는 당시 지원 버전과 provider 통합 패키지를 다시 확인하고, 실습에 필요한
-의존성을 deck 단위로 명시한다. 모델의 tool calling·structured output 지원은 provider와 모델에
+추가 코드를 작성할 때는 당시 지원 버전과 provider 통합 패키지를 다시 확인하고, 필요한 의존성을
+이 deck의 `pyproject.toml`에 명시한다. 모델의 tool calling·structured output 지원은 provider와 모델에
 따라 다를 수 있으므로 동일한 동작을 가정하지 않는다.
 
 API key, prompt의 개인정보, provider 응답 원문 또는 민감한 trace를 Git에 기록하지 않는다.

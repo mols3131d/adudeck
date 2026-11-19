@@ -1,0 +1,9 @@
+[project]
+name = "adudeck-ai-langchain"
+version = "0.1.0"
+description = "First LangChain agent-loop learning lab."
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+  "langchain==1.5.2",
+]

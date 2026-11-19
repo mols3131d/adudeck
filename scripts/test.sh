@@ -5,7 +5,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 usage() {
-  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
+  echo "Usage: scripts/test.sh [all|smoke|dataset-generator|openai-sdk-deck|langchain-deck|langfuse-deck|opentelemetry-deck|opentelemetry-acceptance|scripts ...]" >&2
   echo "       scripts/test.sh --ci-scope [<base-ref>|--stdin]" >&2
 }
 
@@ -14,6 +14,7 @@ resolve_ci_scope_from_stream() {
   local broaden=false
   local otel_acceptance=false
   local add_dataset=false
+  local add_langchain=false
   local add_openai=false
   local add_langfuse=false
   local add_otel=false
@@ -34,6 +35,9 @@ resolve_ci_scope_from_stream() {
         ;;
       tools/dataset_generator/*)
         add_dataset=true
+        ;;
+      decks/ai-langchain/*)
+        add_langchain=true
         ;;
       decks/ai-openai_sdk/*)
         add_openai=true
@@ -75,6 +79,7 @@ resolve_ci_scope_from_stream() {
 
   local targets=(smoke)
   [[ "$add_dataset" == true ]] && targets+=(dataset-generator)
+  [[ "$add_langchain" == true ]] && targets+=(langchain-deck)
   [[ "$add_openai" == true ]] && targets+=(openai-sdk-deck)
   [[ "$add_langfuse" == true ]] && targets+=(langfuse-deck)
   [[ "$add_otel" == true ]] && targets+=(opentelemetry-deck)
@@ -179,6 +184,21 @@ PY
   grep -Fq "HTTP attempts: 3" <<<"$retry_output"
 
   echo "==> [test:openai-sdk-deck] Locked deck validation passed."
+}
+
+run_langchain_deck() {
+  echo "==> [test:langchain-deck] Executing the first LangChain agent-loop lab..."
+  local lab_dir="decks/ai-langchain/playground/01-agent-loop"
+  env -u VIRTUAL_ENV uv run --project decks/ai-langchain --no-lock \
+    python -m compileall -q "$lab_dir"
+  env -u VIRTUAL_ENV uv run --project decks/ai-langchain --no-lock \
+    python "$lab_dir/test_first_agent.py"
+  local scenario
+  for scenario in model-only no-tool tool error; do
+    env -u VIRTUAL_ENV uv run --project decks/ai-langchain --no-lock \
+      python "$lab_dir/first_agent.py" --scenario "$scenario"
+  done
+  echo "==> [test:langchain-deck] Agent-loop assertions and scenarios passed."
 }
 
 run_langfuse_deck() {
@@ -290,6 +310,10 @@ run_scripts() {
   grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
+  scope_out="$(printf 'decks/ai-langchain/playground/01-agent-loop/first_agent.py\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke langchain-deck scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
   scope_out="$(printf 'decks/llmops-langfuse/README.md\ntools/dataset_generator/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
   grep -Fxq "test_targets=smoke dataset-generator langfuse-deck scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
@@ -315,7 +339,7 @@ run_scripts() {
       | grep -Ev '^(mise\.toml|pyproject\.toml|uv\.lock|scripts/|\.github/workflows/)' \
       | bash scripts/test.sh --ci-scope --stdin
   )"
-  grep -Fxq "test_targets=smoke dataset-generator openai-sdk-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
+  grep -Fxq "test_targets=smoke dataset-generator langchain-deck openai-sdk-deck langfuse-deck opentelemetry-deck scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=true" <<<"$scope_out"
   grep -Fq "scope_reason=routed from " <<<"$scope_out"
 
@@ -324,6 +348,7 @@ run_scripts() {
 
 run_smoke_flag=false
 run_dataset_flag=false
+run_langchain_flag=false
 run_openai_flag=false
 run_langfuse_flag=false
 run_otel_flag=false
@@ -338,6 +363,9 @@ for target in "${REQUESTED_TARGETS[@]}"; do
       ;;
     dataset-generator)
       run_dataset_flag=true
+      ;;
+    langchain-deck)
+      run_langchain_flag=true
       ;;
     openai-sdk-deck)
       run_openai_flag=true
@@ -358,6 +386,7 @@ for target in "${REQUESTED_TARGETS[@]}"; do
       run_all_flag=true
       run_smoke_flag=true
       run_dataset_flag=true
+      run_langchain_flag=true
       run_openai_flag=true
       run_langfuse_flag=true
       run_otel_flag=true
@@ -372,6 +401,7 @@ done
 
 [[ "$run_smoke_flag" == true ]] && run_smoke
 [[ "$run_dataset_flag" == true ]] && run_dataset_generator
+[[ "$run_langchain_flag" == true ]] && run_langchain_deck
 [[ "$run_openai_flag" == true ]] && run_openai_sdk_deck
 [[ "$run_langfuse_flag" == true ]] && run_langfuse_deck
 [[ "$run_otel_flag" == true ]] && run_opentelemetry_deck
