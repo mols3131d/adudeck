@@ -197,6 +197,7 @@ run_langgraph_deck() {
       textbook.loops.counter_loop \
       textbook.reducers.parallel_updates \
       textbook.checkpoints.checkpoints \
+      textbook.checkpoints.replay \
       textbook.interrupts.approval \
       textbook.integration.workflow; do
       env -u VIRTUAL_ENV uv run --locked python -m "$module"

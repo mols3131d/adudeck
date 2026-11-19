@@ -82,6 +82,60 @@ for snapshot in graph.get_state_history(first):
 체크포인트 세부 구현에 따라 달라질 수 있으므로, 개수 대신 어떤 `total` 상태가
 보존되는지를 설명한다.
 
+## 과거 checkpoint에서 replay: 새 입력·실패 복구와 다른 선택
+
+완료된 thread의 `graph.invoke(None, config)`는 다음에 실행할 node가 없다면
+그대로 완료 state를 반환한다. 반면 **과거 checkpoint를 특정해** 같은
+`None`을 전달하면 그 뒤 node를 다시 실행한다. 이 차이는 새로운
+`thread_id`를 만드는 것과도 다르다.
+
+[replay.py](replay.py)는 독립적인 2-node graph를 사용한다.
+
+```text
+START -> prepare -> apply -> END
+
+입력: number=2, offset=0
+prepare 결과: offset=5
+apply 결과: number=7
+```
+
+첫 실행이 끝난 뒤 `graph.get_state_history(config)`에서
+`next == ("apply",)`인 snapshot을 찾는다. 이는 **`prepare`까지
+완료했지만 `apply`는 아직 실행하기 전** checkpoint다.
+
+| 호출 | 사용하는 기준 | 실제 재실행한 node | 최종값 |
+| --- | --- | --- | --- |
+| `invoke(None, config)` | 최신, 완료된 state | 없음 | `number=7` |
+| `invoke(None, snapshot.config)` | `apply` 직전 checkpoint | `apply` 한 번 | `number=7` |
+| `invoke({"number": 10, "offset": 0}, config)` | 현재 thread에 새 입력 | `prepare`, `apply` | `number=15` |
+
+`snapshot.config`에는 `thread_id`뿐 아니라 선택한
+`checkpoint_id`가 있다. **과거 checkpoint ID를 전달하기 때문에**
+최신 완료 상태가 아니라 그 시점 이후를 replay한다.
+`get_state_history`가 돌려주는 snapshot은 최신이 먼저이므로
+코드에서는 순서에 의존하지 않고 `snapshot.next`로 대상 경계를 고른다.
+
+```bash
+uv run --locked python textbook/checkpoints/replay.py
+```
+
+예제의 `trace`는 checkpoint 밖에서 함수 실행 횟수를 관찰하는 **메모리 기록**이다.
+첫 호출 직후 `["prepare", "apply"]`였던 기록이 과거 checkpoint에서
+replay하고 나면 `["prepare", "apply", "apply"]`가 된다.
+결과 state가 7로 같다고 해서 `apply`를 다시 실행하지 않았다고
+판단하면 안 된다.
+
+실습으로 `prepare`가 생성하는 `offset=5`를 7로 바꿔 보고,
+같은 checkpoint에서 replay한 결과를 예측하라. 기존 checkpoint에
+보존된 `offset`과 node 함수의 새 구현 중 무엇이 replay에 반영되는지
+구별해야 한다.
+
+**중요한 한계:** 이 실습은 순수 계산만 반복한다. Replay는 해당 구간의
+모델 호출이나 외부 API 호출도 다시 실행할 수 있으므로,
+`InMemorySaver`의 저장만으로 외부 side effect가 exactly-once가 되지 않는다.
+실패 뒤 최신 미완료 지점을 `invoke(None, config)`로 재개하는 사례는
+[종합 실습](../integration/README.md)에 따로 있다.
+
 ## 실패하기 쉬운 해석
 
 - **"thread_id는 자동으로 새 실행을 만든다."** 아니다. 같은 ID는 이전 state를 참조할 수 있다.
@@ -106,3 +160,4 @@ for snapshot in graph.get_state_history(first):
 
 - [Checkpointers](https://docs.langchain.com/oss/python/langgraph/checkpointers)
 - [Persistence와 store 차이](https://docs.langchain.com/oss/python/langgraph/persistence)
+- [Checkpoint history 및 replay](https://docs.langchain.com/oss/python/langgraph/checkpointers)
