@@ -1,6 +1,7 @@
 <!--
 Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으로 유지한다.
-긴 섹션은 필요한 경우에만 H3로 나누고 Checklist의 두 H3 그룹은 유지한다.
+긴 섹션은 필요한 경우에만 설명적인 H3로 나눈다. Checklist의 Self-review와
+Verification은 필수 H3이고, Documentation은 문서 변경·영향이 있을 때만 추가한다.
 제출 전에 미사용 선택 섹션, 빈 제목, placeholder, 작성 안내 주석을 제거한다.
 -->
 
@@ -15,33 +16,32 @@ Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으�
 ## Tasks
 
 <!-- 실제 산출물을 - [ ] / - [x]로 추적하고 완료한 작업만 체크한다.
-필요하면 H3로 나누되 변경 파일 목록과 commit history를 반복하지 않는다. -->
+필요하면 작업 흐름별 H3로 나누되 변경 파일 목록과 commit history를 반복하지 않는다. -->
 
 ## Checklist
 
 <!--
 실제로 확인한 항목만 체크한다. 실패·대기·미확인 사항은 미체크하고 이유를 기록한다.
-적용되지 않는 항목은 체크박스 대신 일반 bullet `- N/A: 사유`로 교체한다.
+해당하지 않는 항목은 체크박스 항목 전체를 일반 bullet `- N/A: 사유`로 교체한다.
+N/A를 체크박스로 표현하면 GitHub의 작업 진행률에 잘못 반영된다.
 변경의 성격과 위험에 비례하여 필요한 검증만 수행한다.
-관련 없는 테스트, 중복 검증, 불필요한 외부 API·runtime 호출은 실행하지 않는다.
-실행하지 않은 검증을 통과했다고 표시하지 않는다.
+실행하지 않은 검증이나 GitHub Checks UI에 표시되는 결과를 중복 기록하지 않는다.
 -->
 
 ### Self-review
 
-- Reviewed HEAD:
+- Reviewed HEAD: Pending
 
 <!--
-Push마다 Self-review 체크를 초기화하고 직전 Reviewed HEAD 이후 변경을 검토한다.
-첫 리뷰, 기존 SHA가 없는 경우, base가 변경된 경우에는 현재 전체 PR diff를 검토한다.
-변경분이 전체 diff의 Goal과 Boundaries에 미치는 영향도 확인한다.
-위 불릿의 `Reviewed HEAD:` 뒤에 리뷰한 현재 HEAD의 전체 commit SHA를 입력한다. GitHub가 SHA를 자동 링크 처리한다.
-SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
+첫 리뷰, 직전 Reviewed HEAD가 없거나 base가 바뀐 경우 전체 PR diff를 검토한다.
+그 외에는 직전 Reviewed HEAD 이후 변경과 그 변경이 전체 PR diff의
+Goal 및 Boundaries에 미치는 영향을 검토한다.
+리뷰 후 Pending을 검토한 현재 HEAD의 전체 commit SHA로 교체한다.
+GitHub가 일반 텍스트 SHA를 자동 링크 처리한다.
 -->
 
 > [!WARNING]
-> Self-review는 기록된 `Reviewed HEAD`에 대해서만 유효하다. Push 후에는 체크를 해제하고 변경 사항을 재검토한 뒤, 체크
-> 상태와 `Reviewed HEAD`를 갱신해야 한다.
+> Self-review는 기록된 `Reviewed HEAD`에 대해서만 유효하다. Push 후에는 체크를 해제하고 변경 사항을 재검토한 뒤, 체크 상태와 `Reviewed HEAD`를 갱신해야 한다.
 
 - [ ] 현재 PR diff가 Goal과 Boundaries에 부합하는지 확인했다.
 - [ ] 마지막 Reviewed HEAD 이후 변경(최초 리뷰라면 전체 diff)을 검토하고 의도하지 않은 변경이나 회귀를 확인했다.
@@ -49,12 +49,27 @@ SHA가 현재 HEAD와 다르면 Self-review는 다시 필요하다.
 
 ### Verification
 
-- [ ] 작업의 완료 기준과 필요한 동작을 확인했다.
-- [ ] 미해결 위험이나 후속 확인 사항을 기록했다(없으면 없음을 확인했다).
+- [ ] 작업의 완료 기준과 필요한 runtime·수동 동작을 검증했다.
+
+### Documentation
+
+<!--
+선택 항목: 문서를 변경했거나 문서가 실질적인 영향을 받을 때만 이 H3 전체를 남긴다.
+사람과 AI 에이전트가 필요한 정보를 찾고 이해하여 정확한 판단·행동으로
+이어지게 하는지 확인한다. 문서 길이와 토큰 수 자체를 최소화하는 것이 목표는 아니다.
+실제로 확인한 항목만 체크하고, 미충족 항목은 이유를 설명한다.
+-->
+
+- [ ] **목적과 독자:** 문서의 역할과 대상 독자가 명확하며 필요한 이해·판단·행동을 지원한다.
+- [ ] **정확성과 완전성:** 사실·계약·제약·근거를 보존하고 관련 정본과 일치시켰다.
+- [ ] **맥락·토큰 비용:** 중복·장황함을 줄이고 필요한 정보를 선택적으로 읽을 수 있게 구성했다.
+- [ ] **탐색 비용:** 정보의 위치·책임·연결 관계가 명확해 필요한 정본에 쉽게 도달할 수 있다.
+- [ ] **추론 비용:** 전제·조건·관계·판단 기준을 명확히 하여 불필요한 추론과 재확인을 줄였다.
+- [ ] **가독성과 유지보수성:** 핵심 정보를 우선 제시하고 구조를 명료하게 하며 중복 관리를 피했다.
 
 ## Boundaries
 
-<!-- 의도적으로 제외한 범위, 주요 제약, 권한, 부작용, 후속 작업을 적는다.
+<!-- 의도적으로 제외한 범위, 미검증 사항, 미해결 위험, 주요 제약·권한·부작용 및 후속 작업을 적는다.
 해당 사항이 없으면 N/A로 명시한다. -->
 
 <!-- 필요할 때만 Risks, Review Focus, Compatibility, Migration, Security,
