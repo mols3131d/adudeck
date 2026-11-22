@@ -34,8 +34,7 @@ fi
 echo "==> [setup] Installing git hooks with lefthook..."
 lefthook install
 
-echo "==> [setup] Installing frozen rulesync dependencies and local skill projections..."
-rulesync install --frozen
-rulesync generate
+echo "==> [setup] Restoring Rulesync dependencies and generating excluded local agent assets..."
+mise run rulesync:generate
 
 echo "==> Environment setup successfully completed!"

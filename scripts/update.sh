@@ -31,14 +31,8 @@ for proj in tools/*/pyproject.toml decks/[!_]*/pyproject.toml; do
   fi
 done
 
-echo "==> [update] Updating rulesync external dependencies..."
-rulesync install --update
-
-echo "==> [update] Regenerating agent projections..."
-rulesync generate
-rulesync generate --targets agentsmd,copilot --features rules
-sh .rulesync/scripts/project-root-agents.sh
-python .rulesync/scripts/project-chatbot-routes.py
+echo "==> [update] Explicitly refreshing external Rulesync assets and local projections..."
+mise run rulesync:refresh
 
 echo "==> [update] Refreshing git hooks with lefthook..."
 lefthook install

@@ -1,14 +1,14 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
-  "targets": [
-    "claudecode",
-    "codexcli",
-    "copilot",
-    "copilotcli",
-    "antigravity-ide",
-    "antigravity-cli"
-  ],
-  "features": ["skills"],
+  "targets": {
+    "claudecode": ["skills"],
+    "codexcli": ["skills"],
+    "copilot": ["rules", "skills"],
+    "copilotcli": ["skills"],
+    "antigravity-ide": ["rules", "skills"],
+    "antigravity-cli": ["rules", "skills"],
+    "agentsmd": ["rules"]
+  },
   "sources": [
     {
       "source": "https://github.com/mols3131d/mols-agent-assets.git",
@@ -20,7 +20,6 @@
         "mols-clarify-code",
         "mols-agent-asset",
         "mols-agent-asset-find",
-        "mols-chatbot-bootstrap",
         "mols-ci-design",
         "mols-markdown-maintenance",
         "mols-mermaid-diagram",
@@ -38,5 +37,6 @@
     }
   ],
   "outputRoots": ["."],
-  "delete": true
+  "delete": false,
+  "gitignoreDestination": "gitexclude"
 }

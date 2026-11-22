@@ -45,7 +45,7 @@ resolve_ci_scope_from_stream() {
         add_otel=true
         otel_acceptance=true
         ;;
-      README.md|CHATBOT.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|.inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/pull_request_template.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/computer-science/*|decks/data_engineering-apache_airflow/*)
+      README.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|.inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/pull_request_template.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/computer-science/*|decks/data_engineering-apache_airflow/*)
         ;;
       decks/*/*)
         deck_dir="${file#decks/}"
@@ -278,8 +278,15 @@ run_opentelemetry_acceptance() {
 run_scripts() {
   echo "==> [test:scripts] Checking shell script syntax and CI scope routing..."
   bash -n scripts/*.sh
-  sh -n .rulesync/scripts/project-root-agents.sh
-  python -m py_compile .rulesync/scripts/project-chatbot-routes.py
+  # Rulesync projections must never be tracked after the migration.
+  local tracked_projections
+  tracked_projections="$(git ls-files -- \
+    CHATBOT.md .agents/route .github/copilot-instructions.md \
+    .github/instructions decks/AGENTS.md decks/_archive/AGENTS.md decks/_backlog/AGENTS.md)"
+  if [[ -n "$tracked_projections" ]]; then
+    printf 'Unexpected tracked agent projections:\n%s\n' "$tracked_projections" >&2
+    return 1
+  fi
 
   local scope_out
   scope_out="$(printf '' | bash scripts/test.sh --ci-scope --stdin)"

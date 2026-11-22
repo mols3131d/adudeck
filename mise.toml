@@ -14,31 +14,30 @@ UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
 python.uv_venv_auto = "source"
 
 [tasks."rulesync:doctor"]
-description = "Validate Rulesync configuration"
+description = "Validate Rulesync configuration without writing"
 run = "rulesync doctor --strict"
 
-[tasks."rulesync:install"]
-description = "Resolve external Rulesync dependencies"
-run = "rulesync install"
-
 [tasks."rulesync:generate"]
-description = "Generate agent projections from canonical Rulesync assets"
+description = "Exclude, restore and generate local Rulesync projections"
 run = """
+rulesync gitignore
 rulesync install --frozen
 rulesync generate
-rulesync generate --targets agentsmd,copilot --features rules
-sh .rulesync/scripts/project-root-agents.sh
-python .rulesync/scripts/project-chatbot-routes.py
 """
 
 [tasks."rulesync:check"]
-description = "Check frozen Skills, Copilot Rules, root AGENTS.md, and chatbot routes"
+description = "Check Rulesync configuration and existing local projections without writing"
 run = """
-rulesync install --frozen
+rulesync doctor --strict
 rulesync generate --check
-rulesync generate --check --targets copilot --features rules
-sh .rulesync/scripts/project-root-agents.sh --check
-python .rulesync/scripts/project-chatbot-routes.py --check
+"""
+
+[tasks."rulesync:refresh"]
+description = "Explicitly update external Skill lock and local projections"
+run = """
+rulesync gitignore
+rulesync install --update
+rulesync generate
 """
 
 [tasks.format]
@@ -66,12 +65,12 @@ description = "Update toolchain, dependencies, and agent projections"
 run = "bash scripts/update.sh"
 
 [tasks."ci:fast"]
-description = "Auto-fix and run cheap deterministic PR validation"
+description = "Check tracked sources and run cheap deterministic verification"
 run = """
 uv sync --locked
-mise run format
+mise run format:check
 lefthook validate
-mise run rulesync:doctor
 mise run rulesync:generate
+mise run rulesync:check
 mise run test
 """
