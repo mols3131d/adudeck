@@ -7,7 +7,6 @@ Thumbs.db
 !.env.example
 mise.local.toml
 lefthook-local.yml
-rulesync.local.jsonc
 .venv/
 tools/dataset_generator/data/
 
