@@ -13,7 +13,7 @@
 | JSON/JSONC | Biome | auto-format/check |
 | TOML | Tombi | auto-format/lint |
 | Git hooks | Lefthook | staged auto-fix와 local guard |
-| agent assets | Rulesync | canonical Rule/Skill에서 target-native file 생성 |
+| agent assets | Rulesync | canonical scoped Rules/Skills에서 local target-native projection 생성과 Git exclude 관리 |
 
 ## Local
 
@@ -26,7 +26,7 @@ mise run ci:fast
 
 `setup`은 `mise.toml`에 선언된 tool을 설치하고 locked dependency, local hook, local Rulesync Skill projection을
 구성한다. version pin이나 lock을 upgrade하지 않는다. 의도적으로 repository-managed tool pin, dependency lock,
-Rulesync dependency/generated state를 갱신할 때만 `mise run update`를 사용한다.
+Rulesync dependency/generated state를 갱신할 때만 `mise run update`를 사용한다. 생성 자산은 `.gitignore` 대신 Git의 로컬 `info/exclude`로 관리하며, `rulesync:generate`가 이를 먼저 설정한다.
 
 `ci:fast`는 format 이후 Rulesync projection을 생성·검증하고 테스트를 실행한다. 필요한 단계만 실행할 때는
 `mise run format`, `mise run format:check`, `mise run test` (특정 대상만 검증할 때는 `mise run test <target...>`)
@@ -52,13 +52,13 @@ local hook은 staged file의 formatting 문제를 수정하고 수정된 file을
 
 CI는 `ci/validated` 단일 상태 보고를 유지하면서 변경 영향 범위에 비례해 검증한다.
 
-- formatting, hook, Rulesync projection, chatbot route, root `smoke`, `scripts` 검증은 모든 실행에서 수행한다.
+- formatting, hook, Rulesync 로컬 projection, root `smoke`, `scripts` 검증은 모든 실행에서 수행한다.
 - branch push는 `origin/main` 대비 변경 경로(`scripts/test.sh --ci-scope`)를 계산해 영향받는 subproject test와
   OpenTelemetry external runtime acceptance만 선택 실행한다.
 - 공통 설정(`mise.toml`, `pyproject.toml`, `uv.lock`, `scripts/*`, `.github/workflows/*`)이나 미분류 경로가 변경되면,
   또는 `main` push·`workflow_dispatch`·base 비교 불가 시에는 전체 테스트와 external acceptance로 fail-safe 확장한다.
-- formatter와 Rulesync는 branch push에서 style/projection drift를 먼저 auto-fix하되, write permission과
-  repository-defined command 실행을 분리한다.
+- branch push에서 formatter가 수정한 tracked source만 auto-fix 대상으로 삼는다. Rulesync 생성물은
+  `info/exclude`와 Git index 정리로 미추적 상태를 유지한다.
 - persisted auto-fix는 read-only job이 검증한 Git tree와 동일할 때만 허용하며, `main`과 manual validation은
   auto-fix drift 발견 시 저장소를 수정하지 않고 실패시킨다.
 

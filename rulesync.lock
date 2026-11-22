@@ -48,9 +48,6 @@
         "mols-ci-design": {
           "integrity": "sha256-d1e45b38bab766af738f50b2828ce615eacf2ec4d63b5c8cd9b83b31344161b5"
         },
-        "mols-chatbot-bootstrap": {
-          "integrity": "sha256-9e184ecb2175c262ea243d0c5b3861b6aa3a2b39275402433c016e0488917cea"
-        },
         "mols-agent-asset": {
           "integrity": "sha256-c95e805777264c3cb5c8687dc0e4499d939fa005d205ab56622dd4276b1ce427"
         },
@@ -65,7 +62,6 @@
         "guidance-context",
         "mols-agent-asset",
         "mols-agent-asset-find",
-        "mols-chatbot-bootstrap",
         "mols-ci-design",
         "mols-clarify-code",
         "mols-code-comprehension-refactor",

@@ -1,43 +1,25 @@
 # Rulesync
 
-`.rulesync/`는 repository-owned portable agent Rules와 Skills의 canonical authoring source다. Generated target files는
-derived projection이며 직접 편집하지 않는다.
+`.rulesync/` owns portable scoped Rules and task-selected Skills. The checked-in root `AGENTS.md` owns repository-wide guidance; it is not a Rulesync projection. Generated native rule/skill files stay local and are not checked into Git.
 
-## Layout
+## Sources and generated outputs
 
-```text
-.rulesync/
-├── rules/     # portable repository rules
-├── scripts/   # root AGENTS and chatbot route projection helpers
-└── skills/    # portable agent skills
-```
+- `.rulesync/rules/` — canonical scoped Rules; Rulesync generates supported native scoped instructions.
+- `.rulesync/skills/` — canonical local Skills; external selection lives in `rulesync.jsonc`.
+- `rulesync.lock` — committed external Skill revision and integrity selection.
+- Native projections under `.agents/`, `.github/`, `.claude/`, `.codex/`, and scoped `AGENTS.md` are generated, not independently edited.
 
-`rulesync.jsonc`가 shared Skill target set과 external Skill dependency selection의 source of truth다.
-
-External reusable Skills는 `rulesync.jsonc`의 declarative `sources`로 관리한다. Upstream repository가 authority이며,
-`rulesync install`이 dependency를 `.rulesync/skills/.curated/`에 설치하고 resolved revision을 `rulesync.lock`에
-고정한다. Curated dependency와 generated Skill projections는 Git에 추적하지 않는다. Chatbot route의 external source
-revision도 같은 `resolvedRef`를 따라야 한다.
-
-Repository Rules는 `agentsmd,copilot` 대상으로 별도 생성한다. Nested `AGENTS.md`는 canonical scoped Rule projection이고,
-`.rulesync/scripts/project-root-agents.sh`가 canonical root Rule body를 root `AGENTS.md`로 투영한다. Chatbot용
-cross-`AGENTS.md` loading harness는 `CHATBOT.md`만 소유한다.
-
-`rulesync.local.jsonc`에서 `targets`를 정의하면 shared target set 전체를 교체한다. Local target을 추가할 때 repository의
-shared target도 함께 적는다.
+Rulesync writes generated path exclusions to Git's local `info/exclude`, **not** `.gitignore`. Antigravity does not load agent assets when their paths are ignored by `.gitignore`. `info/exclude` is not committed or copied by Git clone; every checkout must initialize it before generating any files.
 
 ## Commands
 
 ```bash
-mise run rulesync:doctor
-mise run rulesync:install
-mise run rulesync:generate
-mise run rulesync:check
+mise run rulesync:doctor    # read-only configuration diagnostics
+mise run rulesync:generate  # set up local Git excludes, restore frozen Skills and generate
+mise run rulesync:check     # read-only drift check, after generate
+mise run rulesync:refresh   # explicitly update upstream Skill revisions and regenerate
 ```
 
-- `doctor` — configuration을 strict mode로 진단한다.
-- `install` — external dependency를 resolve하고 lockfile을 갱신한다.
-- `generate` — frozen lock을 소비해 Skills, Rule projections, chatbot route metadata를 생성·동기화한다.
-- `check` — frozen Skills, Copilot Rules, root `AGENTS.md`, chatbot route projection을 확인한다.
+The first command in generation/refresh is `rulesync gitignore`, so native projections cannot accidentally become untracked candidates for a later `git add -A`. `rulesync install --frozen` restores from the committed lock without updating revisions. Only `rulesync:refresh` intentionally updates them.
 
-Rulesync는 active development 동안 mise의 GitHub backend에서 current latest release를 사용한다.
+Do not run `git add -f` on generated paths. A local exclusion does not untrack files that are already in Git's index; migration must explicitly remove previously tracked native projections. Avoid introducing additional custom projection generators or chatbot routing shims.
