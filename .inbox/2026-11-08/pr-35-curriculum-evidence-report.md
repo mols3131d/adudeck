@@ -4,8 +4,6 @@
 - 대상: [PR #35](https://github.com/mols3131d/adudeck/pull/35), `feat/posix-sh-deck-foundation` → `main`
 - 조사 기준 head: `bc2180889ef068801dc92b12545c65cdf3dc657c` (보고서 추가 전)
 - 대상 baseline: [deck README](../../decks/programming-posix_sh/README.md)
-- 선행 자료: [2026-10-03 조사](../2026-10-03/posix-sh-textbook-research.md),
-  [2026-10-05 심층 리뷰](../2026-10-05/pr-35-deep-review.md)
 - 범위: **조사와 최소 curriculum repair 권고**. 기존 교본/README 수정, 실습 작성, 리뷰 스레드 resolve, 병합은 수행하지
   않음.
 
