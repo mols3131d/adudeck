@@ -10,15 +10,30 @@
 
 ## 1. 구조가 맞는 것과 의미가 맞는 것은 다른 문제다
 
-`Rating`은 `score: int`와 `reason: str`을 정의하는 Pydantic 모델이다. `score`에 `ge=1`,
-`le=5`라는 제약을 추가했으므로 `score=9`는 거부된다. 이는 단순히 JSON 형태가 유효한지만
-보는 것보다 강한 검증이다. 반면 `score=4`가 실제 제품을 올바르게 평가한 값인지는 **schema로
-검증할 수 없다**. 데이터 형태와 사실·품질을 따로 평가해야 한다.
+`Rating`은 `score`와 `reason`에 값 제약을 둔 Pydantic 모델이다.
+
+```python
+class Rating(BaseModel):
+    score: int = Field(ge=1, le=5)
+    reason: str = Field(min_length=1)
+
+agent = create_agent(
+    model=model,
+    tools=[],
+    response_format=ToolStrategy(Rating, handle_errors=retry),
+)
+```
+
+`score`에 `ge=1`, `le=5` 제약을 두고 `reason`에 `min_length=1`을 선언했으므로 `score=9`나 빈
+문자열 `reason=""`은 모두 schema 단계에서 거부된다. 이는 단순히 JSON 문법이 유효한지만 보는 것보다
+강한 검증이다. 반면 `score=4`가 실제 제품을 올바르게 평가한 값인지는 **schema로 검증할 수 없다**.
+데이터 형태와 사실·품질을 따로 평가해야 한다.
 
 `create_agent(..., response_format=ToolStrategy(Rating))`는 모델의 응답을 schema에 맞춰
 구조화하도록 요청한다. 유효한 값은 `state["structured_response"]`에서 Pydantic 객체로 얻는다.
-`ToolStrategy`는 provider-native JSON 모드와 다른 도구 호출 기반 전략이다. 이 실습에서는
-실제 모델의 provider 지원과 무관하게 검증 메커니즘을 관찰하기 위해 `ToolStrategy`를 명시한다.
+LangChain은 structured output 전략으로 provider-native JSON/schema 출력을 사용하는
+`ProviderStrategy`와 도구 호출 계약을 활용하는 `ToolStrategy`를 구분한다. 이 실습에서는 실제
+모델의 provider 지원 여부와 무관하게 검증·피드백 메커니즘을 관찰하기 위해 `ToolStrategy`를 명시한다.
 
 ## 2. 예측할 세 가지 경로
 
@@ -66,10 +81,10 @@ ID를 확인하면 어떤 요청이 검증 오류를 냈고 어떤 요청이 최
 세 가지를 먼저 예측한다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario valid
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario repair
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario reject
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/03-structured-output/test_structured_response.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario valid
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario repair
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario reject
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/03-structured-output/test_structured_response.py
 ```
 
 테스트는 Pydantic 경계 검증뿐 아니라 실제 `create_agent` 실행 결과에서

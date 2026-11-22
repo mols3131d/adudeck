@@ -5,14 +5,23 @@
 알기 어렵다. 이번 단원에서는 같은 `create_agent`를 `stream_mode="updates"`로 실행하고
 단계별 산출물을 검증한다.
 
-[관찰 실습](../../playground/01-agent-loop/trace_and_recovery.py)과
-[실행 테스트](../../playground/01-agent-loop/test_trace_and_recovery.py)를 사용한다.
+[관찰 실습](../../playground/04-observation-verification/trace_and_recovery.py)과
+[실행 테스트](../../playground/04-observation-verification/test_trace_and_recovery.py)를 사용한다.
 
 ## 1. 최종 응답과 실행 증거는 무엇이 다른가?
 
 정상적인 `agent.invoke`는 결과 `state`를 반환한다. 반면 `agent.stream(..., stream_mode="updates")`
 는 **모델 노드와 도구 노드에서 상태가 갱신될 때마다** 업데이트를 전달한다. 모델이 tool call을
 생성한 시점과 실제 도구가 값을 반환한 시점의 차이를 조사할 수 있다.
+
+```python
+events = list(
+    agent.stream(
+        {"messages": [HumanMessage(content="Double 7.")]},
+        stream_mode="updates",
+    )
+)
+```
 
 이번 실습의 정상 실행에서 흐름은 다음과 같다.
 
@@ -38,7 +47,25 @@ distributed trace나 실제 provider 토큰 사용량은 아니다. 서로 다�
 이번 단원의 두 번째 경로는 `@wrap_tool_call` middleware를 적용한다.
 middleware는 `handler(request)`를 실행하고, 특정 `ValueError`가 발생한 경우에만
 `ToolMessage(status="error", tool_call_id=...)`를 반환한다. 따라서 도구 실행 실패라는 사실은
-남고, 모델은 그 오류를 보고 **정상 계산을 할 수 없다는 내용**으로 응답할 수 있다.
+남고, 모델은 그 오류를 보고 **정상 계산을 할 수 없다는 내용**으로 응답할 수 있다. 반환 타입
+주석에 보이는 `Command`는 `create_agent`가 LangGraph runtime 위에서 동작하기 때문에
+`langgraph.types`에서 가져온 타입이다.
+
+```python
+@wrap_tool_call
+def report_failure(
+    request: ToolCallRequest,
+    handler: Callable[[ToolCallRequest], ToolMessage | Command],
+) -> ToolMessage | Command:
+    try:
+        return handler(request)
+    except ValueError as exc:
+        return ToolMessage(
+            content=f"tool failed: {exc}",
+            tool_call_id=request.tool_call["id"],
+            status="error",
+        )
+```
 
 중요한 차이는 다음과 같다.
 
@@ -61,8 +88,8 @@ middleware는 `handler(request)`를 실행하고, 특정 `ValueError`가 발생�
 받는 것과 도구 호출이 성공한 것이 왜 다른지 예상한다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/01-agent-loop/trace_and_recovery.py
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/01-agent-loop/test_trace_and_recovery.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/04-observation-verification/trace_and_recovery.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/04-observation-verification/test_trace_and_recovery.py
 ```
 
 관찰 결과가 예측과 다르면 단순히 테스트를 완화하지 말고 **어느 단계의 상태를 잘못 이해했는지**
@@ -83,8 +110,9 @@ uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground
 
 ## 4. 독립 연습
 
-1. `stream_success`의 도구 실행을 두 번 일으키도록 fake 응답을 수정한다. 모델/도구 노드의
-   순서를 **실행 전에 예상**하고, 각 tool call ID와 결과 ID가 일치하는지 검사하라.
+1. `stream_success`의 도구 실행을 두 번 일으키도록 fake 응답을 수정한다. 한 `AIMessage`에
+   두 `tool_calls`를 넣는 경우와 두 턴에 나누어 호출하는 경우의 모델/도구 노드 순서를
+   **실행 전에 예상**하고, 각 tool call ID와 결과 ID가 일치하는지 검사하라.
 2. `report_failure`에서 `ValueError` 대신 모든 `Exception`을 가로채게 하면 어떤 문제가
    생기는가? 설정 오류나 프로그래밍 오류가 **정상 실행인 것처럼** 처리될 위험을 설명하라.
 3. `ToolMessage`를 만들면서 `tool_call_id`를 잘못 기록하면 어떻게 진단할 수 있는가?
@@ -97,6 +125,33 @@ uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground
 **평가 기준:** 결과만 보고 결론을 추측하지 않고, node update·메시지·함수 호출 횟수를
 같은 실행 사건으로 연결한다. 실패를 숨기지 않으면서 복구 경로를 설명하며, 테스트의
 검증 수준과 아직 검증되지 않은 범위를 구분할 수 있어야 한다.
+
+## 5. 누적 통합 점검 (01~04장 종합)
+
+01~04장을 모두 마친 뒤, 다음 가상 실행 기록만으로 원인과 책임 계층을 진단한다.
+
+> `InMemorySaver` checkpointer, `RunContext(label=...)`, `double` 도구, `@wrap_tool_call` 오류
+> 변환 middleware, `ToolStrategy(Rating, handle_errors=True)`를 함께 연결한 agent를 같은
+> `thread-a`에 두 번 호출했다. 두 번째 호출에서 최종 `state["structured_response"]`는
+> `Rating(score=5, reason="ok")`로 반환되었지만, 스트림 기록에는 `double(-1)`에 대한
+> `ToolMessage(status="error")`가 남아 있다.
+
+코드를 보지 않고 아래 네 질문에 근거와 함께 답한다.
+
+1. **도구 실행 vs 구조화 검증:** `structured_response`가 유효한 `Rating` 객체라는 사실이
+   `double` 도구 실행 성공을 증명하는가? `ToolMessage.status`와 `structured_response`의
+   책임 차이를 설명하라.
+2. **상태 수명:** 두 번째 호출의 `state["messages"]`에 첫 호출 메시지와 두 번째 호출의 오류
+   `ToolMessage`가 함께 남아 있을 때, `RunContext.label`도 첫 호출 값이 유지되는가?
+3. **오류 정책 선택:** 만약 `double(-1)` 실패 시 구조화된 최종 응답 자체를 만들지 않고
+   호출자에게 실패를 알려야 한다면, `@wrap_tool_call`과 `handle_errors` 중 어느 경계를
+   어떻게 바꿔야 하는가?
+4. **테스트 설계:** 이 회귀를 막는 무키(unit) 테스트에 넣어야 할 최소 assertion 3가지를
+   적고, 그 테스트가 여전히 검증하지 못하는 항목 1가지를 명시하라.
+
+**통과 기준:** (1) schema 통과와 도구 실행 성공·사실성을 분리하고, (2) thread state와
+per-invocation context의 수명을 구별하며, (3) 오류 전파/변환 경계를 정책에 맞게 선택하고,
+(4) fake 단위 테스트의 검증 한계를 함께 서술해야 한다.
 
 ## 공식 근거
 

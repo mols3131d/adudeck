@@ -16,13 +16,13 @@ from langchain.tools import tool
 def require_live_permission(*, execute: bool, api_key: str | None) -> None:
     if not execute:
         raise SystemExit("No API call made. Pass --execute after reviewing provider costs.")
-    if not api_key:
+    if not api_key or not api_key.strip():
         raise SystemExit("No API call made. Set OPENAI_API_KEY outside the repository.")
 
 
 def inspect_execution(messages: Sequence[BaseMessage]) -> tuple[int, int, str]:
-    requests = [
-        call["id"]
+    raw_requests = [
+        call.get("id")
         for message in messages
         if isinstance(message, AIMessage)
         for call in message.tool_calls
@@ -30,8 +30,11 @@ def inspect_execution(messages: Sequence[BaseMessage]) -> tuple[int, int, str]:
     results = [
         message for message in messages if isinstance(message, ToolMessage)
     ]
-    if not requests:
+    if not raw_requests:
         raise RuntimeError("The model did not request a tool; compare the prompt/model.")
+    if any(not isinstance(call_id, str) or not call_id for call_id in raw_requests):
+        raise RuntimeError("A tool call is missing a valid tool_call_id.")
+    requests = [call_id for call_id in raw_requests if isinstance(call_id, str)]
     if sorted(requests) != sorted(message.tool_call_id for message in results):
         raise RuntimeError("A tool result is missing or its tool_call_id does not match.")
     if any(message.status == "error" for message in results):
@@ -57,7 +60,7 @@ def live_run(model_name: str) -> dict[str, Any]:
     )
     return agent.invoke(
         {"messages": [{"role": "user", "content": "Use double to compute twice 7."}]},
-        config={"recursion_limit":8},
+        config={"recursion_limit": 8},
     )
 
 

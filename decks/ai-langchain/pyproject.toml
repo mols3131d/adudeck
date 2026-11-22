@@ -5,8 +5,11 @@ description = "LangChain Python fundamentals and executable agent learning labs.
 readme = "README.md"
 requires-python = ">=3.11,<4"
 dependencies = [
-  "langchain==1.5.2",
+  "langchain>=1.5.2,<2",
+  "pydantic>=2,<3",
 ]
 
 [project.optional-dependencies]
-live = ["langchain-openai==1.8.2"]
+live = [
+  "langchain-openai>=1.8.2,<2",
+]

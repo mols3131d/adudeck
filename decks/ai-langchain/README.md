@@ -14,20 +14,21 @@ structured output, 실행 증거를 단계별로 이해·검증하는 학습 덱
 **선행 지식:** Python 함수·타입·패키지·테스트 기초, JSON, LLM API 요청·응답 구조.
 LangGraph와 Deep Agents를 미리 공부할 필요는 없다.
 
-저장소 root에서 Python 3.11+ 및 `uv`가 있는 환경으로 실행한다. 현재 프로젝트가 사용하는 Python 3.14에서도
-검증하도록 구성했다. 초기 실행에 패키지 다운로드가 필요할 수 있다.
+저장소 root에서 Python 3.11+ 및 `uv`가 있는 환경으로 실행한다. 이 덱의 의존성은
+[`pyproject.toml`](pyproject.toml)과 [`uv.lock`](uv.lock)에 고정되어 있으며, 저장소 CI의
+Python 3.14 환경에서도 검증한다.
 
 ```bash
 bash scripts/test.sh langchain-deck
 ```
 
-단원별로 직접 재현하려면 다음을 실행한다.
+단원별로 직접 재현하려면 committed lockfile 그대로 다음을 실행한다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario tool
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/02-state-context/state_context.py
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario repair
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/01-agent-loop/trace_and_recovery.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario tool
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/02-state-context/state_context.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/03-structured-output/structured_response.py --scenario repair
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/04-observation-verification/trace_and_recovery.py
 ```
 
 각 실습은 아래 교본의 **실행 전 예측 → 관찰 → 해석 → 반례 → 독립 문제** 순서로 진행한다.
@@ -42,7 +43,7 @@ uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground
 | 3. Agent loop | 01 교본 · [agent tests](playground/01-agent-loop/test_first_agent.py) | no-tool, tool, error 경로의 차이를 추적한다 |
 | 4. State·context·middleware | [02. 상태와 수명](textbook/02-state-context/README.md) · [실습](playground/02-state-context/state_context.py) | thread별 상태 분리, run별 context, hook 전후 개수를 예측한다 |
 | 5. Structured output | [03. 스키마와 검증](textbook/03-structured-output/README.md) · [실습](playground/03-structured-output/structured_response.py) | 검증 성공·수정·거부의 세 경로를 구별한다 |
-| 6. 실행 추적과 검증 | [04. 관찰과 오류 경계](textbook/04-observation-verification/README.md) · [실습](playground/01-agent-loop/trace_and_recovery.py) | stream 단계와 middleware 오류 상태를 확인하고 증거의 한계를 설명한다 |
+| 6. 실행 추적과 검증 | [04. 관찰과 오류 경계](textbook/04-observation-verification/README.md) · [실습](playground/04-observation-verification/trace_and_recovery.py) | stream 단계와 middleware 오류 상태를 확인하고 누적 통합 점검으로 경계를 설명한다 |
 | 선택. 실제 provider | [05. OpenAI 연동](textbook/05-live-provider/README.md) · [승인된 실행](playground/05-live-provider/live_agent.py) | API key와 명시적 opt-in을 거쳐 tool 선택을 관찰한다. 자동 테스트로 provider 결과를 가정하지 않는다 |
 
 각 단계에는 교본, 설명이 있는 실행 예제, 예측·비교·디버깅 문제 및 검사 가능한 assertion이 있다.
@@ -71,17 +72,20 @@ structured output은 schema 검증을 제공할 뿐 **최종 답변의 사실성
 - **검증하지 않는 범위:** live provider의 실제 모델 판단 품질, 생성 내용의 사실성,
   외부 도구의 네트워크 부작용, 실제 운영 환경에서의 장기 저장과 distributed trace.
   해당 항목을 fake 테스트 성공으로 대체하거나 검증됐다고 주장하지 않는다.
-- **의존성:** `pyproject.toml`의 직접 의존성은 `langchain==1.5.2`. 실행 명령도 동일하게
-  고정한다. 선택적 live 연동은 `langchain-openai==1.8.2`를 사용한다.
-  아직 전이 의존성을 고정한 lockfile은 없으므로 완전한 환경 재현성은 보장하지 않는다.
+- **의존성과 버전 기준 (2026-11-22 검토):** [`pyproject.toml`](pyproject.toml)에 호환 범위
+  (`langchain>=1.5.2,<2`, `pydantic>=2,<3`, 선택적 `live = ["langchain-openai>=1.8.2,<2"]`)를 선언하고,
+  [`uv.lock`](uv.lock)으로 실제 실행할 전이 의존성 전체를 고정한다
+  (현재 lock 기준: `langchain 1.5.2`, `langchain-openai 1.8.5`, `langgraph 1.2.24`, `pydantic 2.14.4`).
+  일반 학습과 테스트는 `uv run --project decks/ai-langchain --locked`로 실행한다.
 - **안전:** API key, 개인정보, prompt 원문과 민감한 provider 응답/trace를 Git에 기록하지 않는다.
 
 ## 완료 기준과 제외
 
 이 입문 범위의 완료는 학습자가 모델·도구·agent의 책임을 설명하고, 첫 실행에서 tool call을 보고
 실행 결과를 예측하며, 두 번째 호출의 상태와 다른 thread의 상태를 구별하고, schema 오류와
-도구 오류의 서로 다른 경로를 **직접 재현·변형**할 수 있는지로 판단한다. 실행된 unit test는
-그 확인을 위한 장치이지, 학습자가 문제를 해결했다는 뜻은 아니다.
+도구 오류의 서로 다른 경로를 **직접 재현·변형**할 수 있는지로 판단한다. 01~04장 전체를 묶는
+진단 과제는 [04장 누적 통합 점검](textbook/04-observation-verification/README.md#5-누적-통합-점검-0104장-종합)에서
+확인한다. 실행된 unit test는 그 확인을 위한 장치이지, 학습자가 문제를 해결했다는 뜻은 아니다.
 
 이 덱은 LangChain Python의 현재 `create_agent` 중심 API를 다룬다.
 LangGraph `StateGraph` 직접 구성·checkpoint 관리·interrupt,

@@ -22,11 +22,11 @@ def build_lab() -> tuple[Any, list[tuple[str, str, int]]]:
     observations: list[tuple[str, str, int]] = []
 
     @before_model
-    def observe_input(state: AgentState, runtime: Runtime) -> None:
+    def observe_input(state: AgentState, runtime: Runtime[RunContext]) -> None:
         observations.append(("before", runtime.context.label, len(state["messages"])))
 
     @after_model
-    def observe_output(state: AgentState, runtime: Runtime) -> None:
+    def observe_output(state: AgentState, runtime: Runtime[RunContext]) -> None:
         observations.append(("after", runtime.context.label, len(state["messages"])))
 
     model = GenericFakeChatModel(messages=iter(["response-1", "response-2", "response-3"]))

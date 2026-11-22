@@ -59,6 +59,23 @@ HumanMessage("Double 7")
 `model-only` 시나리오는 모델이 tool call을 생성하는데도 실제 실행 횟수가 0임을 보여준다.
 같은 scripted 응답을 `create_agent`에 전달한 `tool` 시나리오에서는 `double`이 1회 실행된다.
 
+핵심 연결 구조는 다음 몇 줄에 모인다.
+
+```python
+@tool
+def double(value: int) -> int:
+    """Return twice an integer; -1 intentionally raises an example error."""
+    if value == -1:
+        raise ValueError("intentional tool failure")
+    return value * 2
+
+agent = create_agent(scripted_model("tool"), tools=[double])
+state = agent.invoke({"messages": [HumanMessage(content="Double 7 if needed.")]})
+```
+
+여기서 `double`을 `tools=[double]`로 등록해야 `create_agent`가 모델의 `ToolCall(name="double", ...)`을
+실제 Python 함수 호출로 연결할 수 있다.
+
 ## 4. `create_agent`는 언제 멈추는가?
 
 `create_agent(model, tools=[...])`는 모델과 도구의 실행을 연결한다. 핵심은 다음 두 분기다.
@@ -74,17 +91,17 @@ HumanMessage("Double 7")
 
 ## 5. 실습: 예측하고 실행 기록으로 확인하기
 
-처음 한 번만 다음 명령으로 LangChain 의존성을 설치하면서 실행한다. 설치된 Python 3.11 이상과 `uv`가
-필요하며, 외부 API key는 필요 없다. 실행 명령의 직접 버전은 `pyproject.toml`과 동일하게 고정했다.
+Python 3.11 이상과 `uv`가 있는 환경에서 덱의 [`pyproject.toml`](../../pyproject.toml)과
+[`uv.lock`](../../uv.lock)을 그대로 사용해 실행한다. 외부 API key는 필요 없다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python \
+uv run --project decks/ai-langchain --locked python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario model-only
-uv run --no-project --with langchain==1.5.2 python \
+uv run --project decks/ai-langchain --locked python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario no-tool
-uv run --no-project --with langchain==1.5.2 python \
+uv run --project decks/ai-langchain --locked python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario tool
-uv run --no-project --with langchain==1.5.2 python \
+uv run --project decks/ai-langchain --locked python \
   decks/ai-langchain/playground/01-agent-loop/first_agent.py --scenario error
 ```
 
@@ -98,7 +115,7 @@ uv run --no-project --with langchain==1.5.2 python \
 아래 명령은 도구 실행 횟수, 메시지 순서, ID 대응, 예외의 전파를 실제 LangChain 실행으로 검사한다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python \
+uv run --project decks/ai-langchain --locked python \
   decks/ai-langchain/playground/01-agent-loop/test_first_agent.py
 ```
 
@@ -122,7 +139,10 @@ uv run --no-project --with langchain==1.5.2 python \
 
 **힌트:** (2)는 `ToolMessage`를 직접 만들기보다 agent가 생성하게 두고 출력 ID를 비교한다.
 (3)은 도구가 `"error"`라는 정상 문자열을 반환한 상태와 실제 Python 예외가 발생한 상태의 의미를
-분리한다. (4)는 도구 함수의 존재와 agent에 등록된 도구 목록이 다른 개념이라는 점에서 출발한다.
+분리한다. 또한 `scripted_model("error")`는 두 번째 scripted 응답으로 `"The doubled value is 14."`를
+미리 넣어 두었으므로, 예외를 문자열로 삼키면 오류 입력인데도 최종 문장이 `"14"`로 이어진다. 이 결과는
+오류 은닉의 위험과 fake 모델이 도구 결과를 읽지 않는다는 한계를 함께 드러낸다.
+(4)는 도구 함수의 존재와 agent에 등록된 도구 목록이 다른 개념이라는 점에서 출발한다.
 
 **체크포인트:** 다른 숫자와 새 call ID를 사용해도 도구 실행 1회, 요청↔결과 ID 일치, 도구 없는 경로
 실행 0회, 처리하지 않은 예외의 전파라는 특성을 스스로 설명하고 확인할 수 있어야 한다. 실행 결과를

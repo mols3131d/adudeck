@@ -4,8 +4,7 @@ import unittest
 
 from langchain.messages import AIMessage, HumanMessage, ToolMessage
 
-from first_agent import build_agent
-from trace_and_recovery import recover_failure, stream_success
+from trace_and_recovery import build_agent, recover_failure, stream_success
 
 
 class StreamAndRecoveryTests(unittest.TestCase):

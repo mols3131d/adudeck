@@ -187,42 +187,61 @@ PY
 }
 
 run_langchain_deck() {
+  echo "==> [test:langchain-deck] Validating locked deck environment and offline LangChain labs..."
+  local project_dir="decks/ai-langchain"
+  local lab_dir="${project_dir}/playground/01-agent-loop"
+  local state_lab_dir="${project_dir}/playground/02-state-context"
+  local structured_lab_dir="${project_dir}/playground/03-structured-output"
+  local trace_lab_dir="${project_dir}/playground/04-observation-verification"
+  local live_lab_dir="${project_dir}/playground/05-live-provider"
+
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python -m compileall -q "$project_dir/playground"
+
   echo "==> [test:langchain-deck] Executing the first LangChain agent-loop lab..."
-  local lab_dir="decks/ai-langchain/playground/01-agent-loop"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
-    python -m compileall -q "$lab_dir"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
     python "$lab_dir/test_first_agent.py"
   local scenario
   for scenario in model-only no-tool tool error; do
-    env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
       python "$lab_dir/first_agent.py" --scenario "$scenario"
   done
+
   echo "==> [test:langchain-deck] Running state/context/middleware checks..."
-  local state_lab_dir="decks/ai-langchain/playground/02-state-context"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
     python "$state_lab_dir/test_state_context.py"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
     python "$state_lab_dir/state_context.py"
+
   echo "==> [test:langchain-deck] Verifying structured-output validation and recovery..."
-  local structured_lab_dir="decks/ai-langchain/playground/03-structured-output"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
     python "$structured_lab_dir/test_structured_response.py"
   local rating_scenario
   for rating_scenario in valid repair reject; do
-    env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+    env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
       python "$structured_lab_dir/structured_response.py" --scenario "$rating_scenario"
   done
+
   echo "==> [test:langchain-deck] Observing streaming steps and tool-error middleware..."
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
-    python "$lab_dir/test_trace_and_recovery.py"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
-    python "$lab_dir/trace_and_recovery.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$trace_lab_dir/test_trace_and_recovery.py"
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
+    python "$trace_lab_dir/trace_and_recovery.py"
+
   echo "==> [test:langchain-deck] Running safe live-provider boundary checks..."
-  local live_lab_dir="decks/ai-langchain/playground/05-live-provider"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 \
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked \
     python "$live_lab_dir/test_live_agent.py"
-  env -u VIRTUAL_ENV uv run --no-project --with langchain==1.5.2 --with langchain-openai==1.8.2 \
+  local live_gate_output
+  if live_gate_output="$(
+    env -u VIRTUAL_ENV -u OPENAI_API_KEY uv run --project "$project_dir" --locked \
+      python "$live_lab_dir/live_agent.py" --model dummy-model 2>&1
+  )"; then
+    echo "Error: live_agent.py succeeded without --execute." >&2
+    exit 1
+  fi
+  grep -Fq "No API call made." <<<"$live_gate_output"
+
+  env -u VIRTUAL_ENV uv run --project "$project_dir" --locked --extra live \
     python -c 'from langchain_openai import ChatOpenAI; assert callable(ChatOpenAI)'
   echo "==> [test:langchain-deck] All offline LangChain learning slices and live safety checks validated."
 }
@@ -419,7 +438,7 @@ for target in "${REQUESTED_TARGETS[@]}"; do
       run_scripts_flag=true
       ;;
     *)
-      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
+      echo "Error: Unknown test target '$target'. Allowed: all, smoke, dataset-generator, langchain-deck, openai-sdk-deck, langfuse-deck, opentelemetry-deck, opentelemetry-acceptance, scripts" >&2
       exit 1
       ;;
   esac

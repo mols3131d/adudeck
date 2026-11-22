@@ -19,16 +19,44 @@ checkpointer를 제공해야 한다. 두 방식은 프로그램의 책임이 다
 다른 thread는 독립적이다. 여기서 `thread_id`는 사용자의 ID나 인증 정보가 아니라 checkpointer의
 대화 구분 키다.
 
+> **왜 코드에 `langgraph.*` import가 보일까?**
+> LangChain v1의 `create_agent`는 내부적으로 LangGraph runtime 위에서 실행된다. 그래서
+> `InMemorySaver`와 `Runtime` 타입은 `langgraph` 패키지에서 가져온다. 이는 `create_agent`의
+> checkpointer·runtime 인터페이스를 사용하는 것이며, LangGraph `StateGraph`를 직접 설계하는 작업과는
+> 별개다.
+
 ## 2. state와 runtime context는 무엇이 다른가?
 
 LangChain의 `state`는 모델과 도구 실행이 진행되는 동안 저장·갱신되는 정보다. 기본적으로
 `messages`가 대표적이며, checkpointer가 있으면 같은 thread의 다음 호출에서 읽어올 수 있다.
-메시지에 도구의 이름과 결과가 추가되면 state도 변한다.
+`messages` 필드는 단순 대입(덮어쓰기)이 아니라 기존 기록 뒤에 새 메시지를 이어 붙이는 **message
+reducer**(병합 규칙)로 갱신된다. 그래서 두 번째 호출에 새 `HumanMessage` 하나만 넘겨도 이전
+`HumanMessage`·`AIMessage` 뒤에 누적된다.
 
 `context`는 **이번 `invoke`에만 주는 실행 설정/데이터**다. 예를 들면 테넌트 구분, 리소스 이름,
 설정 플래그와 같은 값이다. `context_schema`로 구조를 선언한 뒤 호출자는 `context=RunContext(...)`
 형태로 전달한다. middleware는 `runtime.context.label`로 읽는다. 이것은 메시지 history에 append되지
 않으며, checkpointer에 저장되는 state와 동일시해서는 안 된다.
+
+핵심 구성은 다음과 같다.
+
+```python
+@dataclass
+class RunContext:
+    label: str
+
+@before_model
+def observe_input(state: AgentState, runtime: Runtime[RunContext]) -> None:
+    observations.append(("before", runtime.context.label, len(state["messages"])))
+
+agent = create_agent(
+    model=model,
+    tools=[],
+    checkpointer=InMemorySaver(),
+    context_schema=RunContext,
+    middleware=[observe_input, observe_output],
+)
+```
 
 실행 순서와 예상되는 관찰 값은 다음과 같다.
 
@@ -54,17 +82,18 @@ runtime context로 남지 않는다. 반대로 메시지는 두 번의 호출에
 작은 이벤트만 수집한다. 실제 시스템의 로그/trace 연동이나 예외 복구와 달리, 이는 작동 순서를
 가르치기 위한 관찰 장치다. 모델 호출이 실패하면 `after_model`까지 실행된다고 가정하면 안 된다.
 
-node-style hook은 state update dict를 반환해 상태를 갱신할 수도 있다. 반면
-`wrap_model_call`은 호출을 감싸며 처리/재시도/모델 교체에 개입한다. 단순 상태 관찰과
-재시도 같은 **부작용**을 같은 동작으로 혼동하지 말아야 한다.
+node-style hook은 state update dict(예: `{"messages": [...]}`)를 반환해 상태를 갱신할 수도 있다.
+이때 반환한 dict는 해당 필드의 reducer(예: `messages`의 append 규칙)를 거쳐 state에 병합된다.
+반면 `wrap_model_call`은 호출을 감싸며 처리/재시도/모델 교체에 개입한다. 단순 상태 관찰, state
+갱신, 재시도 같은 **부작용**을 같은 동작으로 혼동하지 말아야 한다.
 
 ## 4. 예측 → 실행 → 해석
 
-다음 명령은 단일 프로세스에서 실습한다. 외부 모델을 호출하지 않는다.
+다음 명령은 단일 프로세스에서 committed lockfile로 실습한다. 외부 모델을 호출하지 않는다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/02-state-context/state_context.py
-uv run --no-project --with langchain==1.5.2 python decks/ai-langchain/playground/02-state-context/test_state_context.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/02-state-context/state_context.py
+uv run --project decks/ai-langchain --locked python decks/ai-langchain/playground/02-state-context/test_state_context.py
 ```
 
 실행 전에 **(a) 세 호출의 메시지 개수, (b) 앞/뒤 hook의 개수, (c) 세 번째 호출에 첫 thread의

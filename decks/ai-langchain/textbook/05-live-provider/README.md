@@ -27,14 +27,27 @@
 터미널 기록에 저장하지 않는다. 가능한 경우 OS의 보호된 secret store나 일회성 환경에서 주입한다.
 
 Python 3.11+, `uv`, 인터넷, OpenAI API 사용 권한이 필요하다.
-`langchain==1.5.2`와 `langchain-openai==1.8.2`를 명시적으로 사용한다.
-실제 사용 가능한 모델 이름과 가격·지원 기능은 호출 전에 확인한다. 이 교본은 모델을 임의로
-선택하지 않는다.
+선택적 의존성은 [`pyproject.toml`](../../pyproject.toml)의 `live` extra와 [`uv.lock`](../../uv.lock)에
+고정되어 있다. 실제 사용 가능한 모델 이름과 가격·지원 기능은 호출 전에 확인한다. 이 교본은 모델을
+임의로 선택하지 않는다.
+
+핵심 안전 게이트와 호출 경계는 다음과 같다.
+
+```python
+def require_live_permission(*, execute: bool, api_key: str | None) -> None:
+    if not execute:
+        raise SystemExit("No API call made. Pass --execute after reviewing provider costs.")
+    if not api_key or not api_key.strip():
+        raise SystemExit("No API call made. Set OPENAI_API_KEY outside the repository.")
+
+agent = create_agent(model=ChatOpenAI(model=model_name), tools=[double], ...)
+agent.invoke(..., config={"recursion_limit": 8})
+```
 
 ```bash
 # 먼저 API key를 안전하게 환경 변수로 제공하고, 해당 모델을 실제로 사용할 수 있는지 확인한다.
 # YOUR_MODEL은 실제 계정에서 사용할 수 있는 모델 식별자로 바꾼다.
-uv run --no-project --with langchain==1.5.2 --with langchain-openai==1.8.2 \
+uv run --project decks/ai-langchain --locked --extra live \
   python decks/ai-langchain/playground/05-live-provider/live_agent.py \
   --model YOUR_MODEL --execute
 ```
@@ -66,7 +79,7 @@ uv run --no-project --with langchain==1.5.2 --with langchain-openai==1.8.2 \
 provider를 호출하지 않고 인증 승인 게이트와 결과 ID invariant를 검사한다.
 
 ```bash
-uv run --no-project --with langchain==1.5.2 python \
+uv run --project decks/ai-langchain --locked python \
   decks/ai-langchain/playground/05-live-provider/test_live_agent.py
 ```
 
