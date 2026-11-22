@@ -13,8 +13,8 @@
 
 ## Authority
 
-- `.rulesync/` is the canonical source for portable agent Rules and Skills; generated vendor-native files are derived
-  artifacts and must not be edited as independent owners.
+- This checked-in `AGENTS.md` owns the repository-wide entrypoint; `.rulesync/` owns portable scoped Rules and Skills.
+- Generated agent projections are local derived artifacts, never independent owners or committed files.
 - For Agent Asset or Rulesync work, read `.rulesync/README.md` and prefer its `mise run rulesync:*` workflow.
 
 ## Safety

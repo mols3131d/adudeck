@@ -28,11 +28,12 @@ mise run setup
 ```
 
 VS Code에서는 `Terminal > Run Task... > adudeck: bootstrap`으로 같은 초기 설정을 실행할 수 있다. 이후 formatting은
-`adudeck: format`, auto-fix를 포함한 빠른 로컬 검증은 `adudeck: fix & check`를 사용한다. `fix & check`는 formatting과
-generated projection을 갱신할 수 있다.
+`adudeck: format`, 읽기 전용 source 검증은 `adudeck: check`를 사용한다. `check`는 local projection을 재생성하지만
+tracked source를 수정하지 않는다.
 
 `mise`가 repository toolchain을 관리하고, `uv`가 Python dependency와 `.venv`를 관리한다. Agent asset을 변경했을 때는
-`mise run rulesync:generate`로 projection을 갱신한다.
+`mise run rulesync:generate`로 로컬 projection을 갱신한다. 이 task는 먼저 `rulesync gitignore`로
+Git의 `info/exclude`를 구성한다. 생성된 Agent Assets는 Git에 추적하지 않는다.
 
 ## Working Model
 
@@ -40,7 +41,8 @@ generated projection을 갱신할 수 있다.
 - 다른 storage는 사용자가 현재 deck 또는 작업에 대해 명시적으로 지정한 경우에만 사용한다.
 - deck의 storage와 state 원칙은 [`docs/decks.md`](docs/decks.md)를 따른다.
 - directory 사용법은 가까운 `README.md`에, repository-wide 정책은 `docs/`에 둔다.
-- portable agent Rules와 Skills의 canonical source는 `.rulesync/`이며 generated target files는 직접 수정하지 않는다.
+- 루트 `AGENTS.md`는 추적하는 repository 진입점이며, scoped Rules와 Skills의 canonical source는 `.rulesync/`다.
+  생성된 native 파일은 직접 수정하거나 Git에 추가하지 않는다.
 
 ## Automation
 
@@ -49,7 +51,7 @@ mise run format
 mise run ci:fast
 ```
 
-format 가능한 문제는 자동 수정하고, CI는 빠르고 결정적인 검증만 수행한다. 자세한 경계는
+formatting 수정은 `mise run format`으로 명시적으로 수행하며, CI는 tracked source를 변경하지 않고 검증한다. 자세한 경계는
 [`docs/automation.md`](docs/automation.md)를 따른다.
 
 ## Docs

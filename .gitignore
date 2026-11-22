@@ -14,16 +14,5 @@ tools/dataset_generator/data/
 __pycache__/
 *.py[cod]
 
-# Rulesync
-rulesync.local.jsonc
-.rulesync/rules/.curated/
-.rulesync/skills/.curated/
-
-# Local-only agent projections
-.claude/skills/
-.github/skills/
-.agents/rules/
-.agents/skills/
-.agents/workflows/
-.codex/
-AGENTS.override.md
+# Rulesync-generated agent assets are excluded locally by `rulesync gitignore`
+# in Git's info/exclude, not here (Antigravity does not load ignored assets).
