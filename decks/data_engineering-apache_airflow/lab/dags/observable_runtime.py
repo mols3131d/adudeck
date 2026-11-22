@@ -11,7 +11,9 @@ from typing import Any
 import pendulum
 from airflow.sdk import Param, dag, get_current_context, task
 
-OUTPUT_DIR = Path(os.environ.get("ADUDECK_AIRFLOW_OUTPUT_DIR", "/tmp/adudeck-airflow-output"))
+OUTPUT_DIR = Path(
+    os.environ.get("ADUDECK_AIRFLOW_OUTPUT_DIR", "/tmp/adudeck-airflow-output")
+)
 
 
 def _safe(value: str) -> str:
@@ -40,7 +42,9 @@ def _runtime_snapshot() -> dict[str, Any]:
 
 def _observe(label: str) -> dict[str, Any]:
     snapshot = _runtime_snapshot()
-    print(f"[ADUDECK_OBSERVE] {label}: {json.dumps(snapshot, ensure_ascii=False, sort_keys=True)}")
+    print(
+        f"[ADUDECK_OBSERVE] {label}: {json.dumps(snapshot, ensure_ascii=False, sort_keys=True)}"
+    )
     return snapshot
 
 

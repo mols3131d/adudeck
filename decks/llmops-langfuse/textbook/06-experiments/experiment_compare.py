@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-
 LOCAL_DATA = [
     {
         "input": {"case_id": "electronics-day-3", "category": "electronics", "days": 3},
@@ -13,7 +12,11 @@ LOCAL_DATA = [
         "metadata": {"critical": False},
     },
     {
-        "input": {"case_id": "electronics-day-14", "category": "electronics", "days": 14},
+        "input": {
+            "case_id": "electronics-day-14",
+            "category": "electronics",
+            "days": 14,
+        },
         "expected_output": {"eligible": True},
         "metadata": {"critical": True},
     },
@@ -71,7 +74,7 @@ def evaluate_variant(*, refund_window_days: int) -> list[ItemResult]:
         )
         rows.append(
             ItemResult(
-                case_id=item["input"]["case_id"],
+                case_id=str(item["input"]["case_id"]),
                 critical=bool(item["metadata"]["critical"]),
                 expected=bool(item["expected_output"]["eligible"]),
                 actual=bool(output["eligible"]),
@@ -95,9 +98,7 @@ def compare_variants(
         if baseline_row.score == 1.0 and candidate_by_id[case_id].score == 0.0
     )
     critical_regressions = tuple(
-        case_id
-        for case_id in regressions
-        if candidate_by_id[case_id].critical
+        case_id for case_id in regressions if candidate_by_id[case_id].critical
     )
 
     return Comparison(
@@ -156,7 +157,9 @@ def hosted_support_application(*, item: Any, refund_window_days: int) -> dict[st
 
 def _hosted_experiment_task(refund_window_days: int):
     def task(*, item, **kwargs):
-        return hosted_support_application(item=item, refund_window_days=refund_window_days)
+        return hosted_support_application(
+            item=item, refund_window_days=refund_window_days
+        )
 
     return task
 
@@ -239,7 +242,9 @@ def main() -> None:
     print(comparison)
 
     if os.getenv("RUN_LANGFUSE_EXPERIMENT") != "1":
-        print("Langfuse experiment skipped; set RUN_LANGFUSE_EXPERIMENT=1 for the live lab.")
+        print(
+            "Langfuse experiment skipped; set RUN_LANGFUSE_EXPERIMENT=1 for the live lab."
+        )
         return
 
     require_langfuse_credentials()

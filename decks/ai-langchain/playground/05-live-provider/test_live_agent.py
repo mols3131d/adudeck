@@ -6,7 +6,6 @@ import unittest
 
 from langchain.messages import AIMessage, HumanMessage, ToolCall, ToolMessage
 from langchain_core.messages import BaseMessage
-
 from live_agent import inspect_execution, require_live_permission
 
 
@@ -49,7 +48,9 @@ class LiveSafetyTests(unittest.TestCase):
 
     def test_failure_tool_result_is_not_success(self) -> None:
         messages = example_messages()
-        messages[2] = ToolMessage(content="failed", tool_call_id="call_1", status="error")
+        messages[2] = ToolMessage(
+            content="failed", tool_call_id="call_1", status="error"
+        )
         with self.assertRaisesRegex(RuntimeError, "tool failed"):
             inspect_execution(messages)
 

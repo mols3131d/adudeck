@@ -30,7 +30,12 @@ class DatasetCaseContractTest(unittest.TestCase):
 
         self.assertEqual(
             payload["id"],
-            str(uuid5(NAMESPACE_URL, "adudeck-langfuse-lab:support/refund-policy:refund-day-10")),
+            str(
+                uuid5(
+                    NAMESPACE_URL,
+                    "adudeck-langfuse-lab:support/refund-policy:refund-day-10",
+                )
+            ),
         )
         self.assertEqual(payload["input"], {"days_since_delivery": 10})
         self.assertEqual(
@@ -53,7 +58,12 @@ class DatasetCaseContractTest(unittest.TestCase):
         self.assertEqual(
             payload,
             {
-                "id": str(uuid5(NAMESPACE_URL, "adudeck-langfuse-lab:support/refund-policy:refund-day-15")),
+                "id": str(
+                    uuid5(
+                        NAMESPACE_URL,
+                        "adudeck-langfuse-lab:support/refund-policy:refund-day-15",
+                    )
+                ),
                 "dataset_name": "support/refund-policy",
                 "input": {"days_since_delivery": 15},
                 "expected_output": {"eligible": False, "policy_days": 14},
@@ -86,7 +96,9 @@ class DatasetCaseContractTest(unittest.TestCase):
             "trace-production-1",
         )
 
-    def test_repeat_upload_reuses_the_same_id_and_dataset_name_scopes_identity(self) -> None:
+    def test_repeat_upload_reuses_the_same_id_and_dataset_name_scopes_identity(
+        self,
+    ) -> None:
         case = build_refund_regression_case(
             case_id="refund-day-10",
             days_since_delivery=10,

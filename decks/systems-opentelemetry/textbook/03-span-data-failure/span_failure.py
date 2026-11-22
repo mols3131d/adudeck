@@ -37,7 +37,9 @@ def reserve_inventory() -> None:
 def charge_payment(should_fail: bool) -> None:
     # Keep automatic exception-event recording, but make operation status an explicit
     # teaching decision instead of letting the context manager overwrite it.
-    with tracer.start_as_current_span("charge_payment", set_status_on_exception=False) as span:
+    with tracer.start_as_current_span(
+        "charge_payment", set_status_on_exception=False
+    ) as span:
         span.set_attribute("payment.method", "card")
         if not should_fail:
             span.set_attribute("payment.result", "charged")
@@ -51,7 +53,9 @@ def charge_payment(should_fail: bool) -> None:
 
 def run_checkout(payment_should_fail: bool) -> None:
     with tracer.start_as_current_span("checkout") as span:
-        span.set_attribute("checkout.scenario", "failure" if payment_should_fail else "success")
+        span.set_attribute(
+            "checkout.scenario", "failure" if payment_should_fail else "success"
+        )
         reserve_inventory()
         try:
             charge_payment(payment_should_fail)

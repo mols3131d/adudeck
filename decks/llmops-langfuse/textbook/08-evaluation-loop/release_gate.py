@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Literal
 
-
 EvaluationStatus = Literal[
     "scored",
     "application_error",
@@ -19,14 +18,13 @@ class VariantEvidence:
     score: float | None = None
 
     def __post_init__(self) -> None:
-        if self.status == "scored" and self.score is None:
-            raise ValueError("scored evidence requires a score")
-        if self.status != "scored" and self.score is not None:
+        if self.status == "scored":
+            if self.score is None:
+                raise ValueError("scored evidence requires a score")
+            if not isfinite(self.score) or not 0.0 <= self.score <= 1.0:
+                raise ValueError("scored evidence must be finite and within [0, 1]")
+        elif self.score is not None:
             raise ValueError("non-scored evidence must not carry a score")
-        if self.status == "scored" and (
-            not isfinite(self.score) or not 0.0 <= self.score <= 1.0
-        ):
-            raise ValueError("scored evidence must be finite and within [0, 1]")
 
     @classmethod
     def scored(cls, score: float) -> VariantEvidence:
@@ -57,7 +55,10 @@ class ReleasePolicy:
     def __post_init__(self) -> None:
         if not isfinite(self.min_correctness_delta):
             raise ValueError("minimum correctness delta must be finite")
-        if not isfinite(self.max_p95_latency_seconds) or self.max_p95_latency_seconds < 0:
+        if (
+            not isfinite(self.max_p95_latency_seconds)
+            or self.max_p95_latency_seconds < 0
+        ):
             raise ValueError("maximum p95 latency must be finite and nonnegative")
 
 
@@ -101,8 +102,7 @@ def _paired_average(
         return None
 
     values = [
-        row.candidate.score if candidate else row.baseline.score
-        for row in paired_rows
+        row.candidate.score if candidate else row.baseline.score for row in paired_rows
     ]
     return sum(score for score in values if score is not None) / len(paired_rows)
 

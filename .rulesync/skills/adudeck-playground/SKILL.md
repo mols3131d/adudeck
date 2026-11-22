@@ -40,14 +40,14 @@ Use the smallest coherent investigation that exposes the target mechanism:
 
 1. **Target** — identify the state transition, control flow, data flow, side effect, ownership,
    isolation, concurrency, or other mechanism that must become visible.
-1. **Predict** — state the observable evidence expected before execution or investigation,
+2. **Predict** — state the observable evidence expected before execution or investigation,
    including an invariant when one matters.
-1. **Run or stage** — execute the smallest useful experiment, or select the smallest existing case
+3. **Run or stage** — execute the smallest useful experiment, or select the smallest existing case
    that contains the evidence needed for a read-only investigation.
-1. **Observe** — inspect only the surfaces that materially reveal the mechanism.
-1. **Interpret** — connect observations back to the model and explain why they occurred.
-1. **Vary or compare when useful** — change one meaningful condition or choose a contrasting case.
-1. **Re-observe when varied** — if variation or comparison is used, explain the resulting difference
+4. **Observe** — inspect only the surfaces that materially reveal the mechanism.
+5. **Interpret** — connect observations back to the model and explain why they occurred.
+6. **Vary or compare when useful** — change one meaningful condition or choose a contrasting case.
+7. **Re-observe when varied** — if variation or comparison is used, explain the resulting difference
    and any invariant that remained true.
 
 Do not require variation when a diagnostic or read-only investigation already provides sufficient

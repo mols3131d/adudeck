@@ -86,12 +86,12 @@ competence 획득을 검증할 수 없다.
 
 로컬 환경의 `dash`, `bash`에서 동일한 예를 실행했다.
 
-~~~sh
+```sh
 HOME='/tmp/space name'
 set -- ~/x "~/x" "$((2 + 3))"
 printf 'argc=%s\n' "$#"
 printf '<%s>\n' "$@"
-~~~
+```
 
 각 shell에서 `argc=3`, `</tmp/space name/x>`, `<~/x>`, `<5>` 형태의 결과를 관찰했다. 이 관찰은 해당 로컬 바이너리와 실행
 설정에만 적용되며 모든 POSIX-conforming shell의 행동을 증명하지 않는다. ShellCheck와 repository validation을 이 probe로

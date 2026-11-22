@@ -16,8 +16,10 @@ from prompt_versioning import (
 class FakePrompt:
     name = PROMPT_NAME
     version = 21
-    labels = ["staging"]
-    prompt = LAB_PROMPT
+
+    def __init__(self) -> None:
+        self.labels = ["staging"]
+        self.prompt = LAB_PROMPT
 
     def compile(self, **variables):
         return [
@@ -51,7 +53,9 @@ class FakeNotFoundError(Exception):
 
 
 class FakeLangfuse:
-    def __init__(self, *, prompt: object | None = None, missing_labels: set[str] | None = None) -> None:
+    def __init__(
+        self, *, prompt: object | None = None, missing_labels: set[str] | None = None
+    ) -> None:
         self.calls: list[tuple[str, dict[str, object]]] = []
         self.create_calls: list[dict[str, object]] = []
         self.prompt = FakePrompt() if prompt is None else prompt
@@ -167,7 +171,9 @@ class PromptVersioningContractTest(unittest.TestCase):
 
         self.assertTrue(created)
         self.assertEqual(prompt.labels, ["staging"])
-        self.assertEqual([call[1]["label"] for call in langfuse.calls], ["staging", "latest"])
+        self.assertEqual(
+            [call[1]["label"] for call in langfuse.calls], ["staging", "latest"]
+        )
         self.assertEqual(
             langfuse.create_calls,
             [
@@ -195,7 +201,9 @@ class PromptVersioningContractTest(unittest.TestCase):
 
         self.assertEqual(langfuse.create_calls, [])
 
-    def test_bootstrap_rejects_existing_series_with_missing_requested_label(self) -> None:
+    def test_bootstrap_rejects_existing_series_with_missing_requested_label(
+        self,
+    ) -> None:
         langfuse = FakeLangfuse(missing_labels={"staging"})
 
         with self.assertRaisesRegex(RuntimeError, "existing prompt series"):
@@ -203,7 +211,9 @@ class PromptVersioningContractTest(unittest.TestCase):
                 langfuse, label="staging", not_found_error=FakeNotFoundError
             )
 
-        self.assertEqual([call[1]["label"] for call in langfuse.calls], ["staging", "latest"])
+        self.assertEqual(
+            [call[1]["label"] for call in langfuse.calls], ["staging", "latest"]
+        )
         self.assertEqual(langfuse.create_calls, [])
 
 

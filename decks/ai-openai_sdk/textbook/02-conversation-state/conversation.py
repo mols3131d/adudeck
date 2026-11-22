@@ -23,11 +23,14 @@ try:
     )
     print("second:", second.output_text)
 finally:
-    items = list(client.conversations.items.list(conversation.id, order="asc", limit=100))
+    items = list(
+        client.conversations.items.list(conversation.id, order="asc", limit=100)
+    )
     print("stored item ids:", [item.id for item in items])
 
     for item in items:
-        client.conversations.items.delete(item.id, conversation_id=conversation.id)
+        if item.id is not None:
+            client.conversations.items.delete(item.id, conversation_id=conversation.id)
 
     deleted = client.conversations.delete(conversation.id)
     print("conversation deleted:", deleted.deleted)

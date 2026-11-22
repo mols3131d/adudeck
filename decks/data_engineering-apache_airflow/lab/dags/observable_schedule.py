@@ -11,7 +11,9 @@ import pendulum
 from airflow.sdk import dag, get_current_context, task
 from airflow.timetables.interval import CronDataIntervalTimetable
 
-OUTPUT_DIR = Path(os.environ.get("ADUDECK_AIRFLOW_OUTPUT_DIR", "/tmp/adudeck-airflow-output"))
+OUTPUT_DIR = Path(
+    os.environ.get("ADUDECK_AIRFLOW_OUTPUT_DIR", "/tmp/adudeck-airflow-output")
+)
 
 
 def _safe(value: str) -> str:

@@ -60,17 +60,17 @@ distinct.
 
 1. Identify the learner level, learning scope, learner prerequisites, and outcomes from the supplied
    context.
-1. Preserve the accepted deck curriculum unit order. Within the assigned unit or slice, choose the
+2. Preserve the accepted deck curriculum unit order. Within the assigned unit or slice, choose the
    smallest coherent local section sequence, ordered by conceptual dependency.
-1. Develop each major concept from motivation or prerequisite connection into a precise model,
+3. Develop each major concept from motivation or prerequisite connection into a precise model,
    explanation, worked application, and practice.
-1. Add misconceptions, counterexamples, boundaries, or failure cases where a plausible wrong
+4. Add misconceptions, counterexamples, boundaries, or failure cases where a plausible wrong
    mental model exists.
-1. When direct interaction materially improves understanding, connect the explanation to a
+5. When direct interaction materially improves understanding, connect the explanation to a
    playground at the point where the learner needs observable system evidence rather than
    postponing it as a detached appendix.
-1. Add checkpoints or cumulative work when the learner must integrate multiple concepts.
-1. Review the result against the textbook quality gate and deepen only the parts that fail it.
+6. Add checkpoints or cumulative work when the learner must integrate multiple concepts.
+7. Review the result against the textbook quality gate and deepen only the parts that fail it.
 
 Across sections, preserve conceptual continuity: reuse established terminology and invariants
 consistently, and do not rely on a prerequisite before it has been introduced or declared.
@@ -99,10 +99,10 @@ Use only the moves that materially improve learning.
 A worked example should show how an informed learner moves from problem to result:
 
 1. state the problem and relevant assumptions;
-1. identify the concept or model being used;
-1. expose meaningful intermediate steps, states, transformations, or decisions;
-1. explain why important steps are valid;
-1. verify or interpret the result.
+2. identify the concept or model being used;
+3. expose meaningful intermediate steps, states, transformations, or decisions;
+4. explain why important steps are valid;
+5. verify or interpret the result.
 
 For code, expose execution state or control flow when that is the learning target. For
 mathematics, show the needed derivation or transformation. For systems and tools, explain state

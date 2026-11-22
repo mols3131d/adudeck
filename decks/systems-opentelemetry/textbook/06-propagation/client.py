@@ -8,7 +8,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 from opentelemetry.trace import SpanKind
 
-
 resource = Resource.create({"service.name": "adudeck-service-a"})
 provider = TracerProvider(resource=resource)
 provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))

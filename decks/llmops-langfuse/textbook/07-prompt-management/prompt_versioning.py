@@ -4,7 +4,6 @@ import argparse
 import os
 from typing import Any
 
-
 PROMPT_NAME = "adudeck-lab/refund-answer"
 LAB_PROMPT = [
     {

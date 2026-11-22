@@ -9,13 +9,15 @@ from typing import Any
 
 from langchain.agents import create_agent
 from langchain.messages import AIMessage, ToolMessage
-from langchain_core.messages import BaseMessage
 from langchain.tools import tool
+from langchain_core.messages import BaseMessage
 
 
 def require_live_permission(*, execute: bool, api_key: str | None) -> None:
     if not execute:
-        raise SystemExit("No API call made. Pass --execute after reviewing provider costs.")
+        raise SystemExit(
+            "No API call made. Pass --execute after reviewing provider costs."
+        )
     if not api_key or not api_key.strip():
         raise SystemExit("No API call made. Set OPENAI_API_KEY outside the repository.")
 
@@ -27,18 +29,22 @@ def inspect_execution(messages: Sequence[BaseMessage]) -> tuple[int, int, str]:
         if isinstance(message, AIMessage)
         for call in message.tool_calls
     ]
-    results = [
-        message for message in messages if isinstance(message, ToolMessage)
-    ]
+    results = [message for message in messages if isinstance(message, ToolMessage)]
     if not raw_requests:
-        raise RuntimeError("The model did not request a tool; compare the prompt/model.")
+        raise RuntimeError(
+            "The model did not request a tool; compare the prompt/model."
+        )
     if any(not isinstance(call_id, str) or not call_id for call_id in raw_requests):
         raise RuntimeError("A tool call is missing a valid tool_call_id.")
     requests = [call_id for call_id in raw_requests if isinstance(call_id, str)]
     if sorted(requests) != sorted(message.tool_call_id for message in results):
-        raise RuntimeError("A tool result is missing or its tool_call_id does not match.")
+        raise RuntimeError(
+            "A tool result is missing or its tool_call_id does not match."
+        )
     if any(message.status == "error" for message in results):
-        raise RuntimeError("A tool failed; inspect the tool status before accepting a response.")
+        raise RuntimeError(
+            "A tool failed; inspect the tool status before accepting a response."
+        )
     last = messages[-1]
     if not isinstance(last, AIMessage) or last.tool_calls:
         raise RuntimeError("The agent did not finish with a final model answer.")
@@ -66,8 +72,12 @@ def live_run(model_name: str) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", required=True, help="A model available on your OpenAI account")
-    parser.add_argument("--execute", action="store_true", help="Approve one paid provider run")
+    parser.add_argument(
+        "--model", required=True, help="A model available on your OpenAI account"
+    )
+    parser.add_argument(
+        "--execute", action="store_true", help="Approve one paid provider run"
+    )
     args = parser.parse_args()
 
     require_live_permission(execute=args.execute, api_key=os.getenv("OPENAI_API_KEY"))

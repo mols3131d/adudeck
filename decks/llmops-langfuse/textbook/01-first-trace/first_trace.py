@@ -20,7 +20,9 @@ def search_policy(langfuse, query: str) -> dict[str, str]:
         }
 
 
-def record_support_turn(langfuse, *, detach_search: bool = False) -> dict[str, str | None]:
+def record_support_turn(
+    langfuse, *, detach_search: bool = False
+) -> dict[str, str | None]:
     with langfuse.start_as_current_observation(
         as_type="span",
         name="support-turn",

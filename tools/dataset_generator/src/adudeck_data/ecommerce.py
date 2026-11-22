@@ -71,7 +71,9 @@ def _build_users(fake: Faker, rng: random.Random, count: int) -> list[dict[str, 
     return rows
 
 
-def _build_products(fake: Faker, rng: random.Random, count: int) -> list[dict[str, Any]]:
+def _build_products(
+    fake: Faker, rng: random.Random, count: int
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for index in range(1, count + 1):
         price = Decimal(rng.randint(500, 50_000)) / 100
@@ -104,7 +106,7 @@ def _build_orders(
         )
         item_count = rng.randint(1, min(4, len(products)))
         selected_products = rng.sample(products, k=item_count)
-        total = Decimal("0")
+        total = Decimal(0)
         order_id = f"order_{index:07d}"
 
         for product in selected_products:

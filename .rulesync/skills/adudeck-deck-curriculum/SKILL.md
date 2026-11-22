@@ -79,16 +79,16 @@ rather than leaving it only in transient research context.
 Before substantial authoring when no adequate baseline exists:
 
 1. Define learner-facing goal and intended competence.
-1. Separate learner prerequisites to assume from material to teach inside the deck.
-1. Define the smallest learning scope that supports the goal and explicit exclusions.
-1. Express learning outcomes as observable capabilities, not topic labels.
-1. Identify concepts, mechanisms, reasoning tools, and skills required by those outcomes.
-1. Map what must be understood before dependent concepts can be taught well.
-1. Group dependencies into the smallest coherent learning units.
-1. Sequence units by conceptual dependency and assign unit responsibilities.
-1. Map substantial outcomes to where they are developed and eventually assessed.
-1. Record any version or authority assumption that materially constrains the curriculum.
-1. Review coherence before handing the baseline to deck implementation.
+2. Separate learner prerequisites to assume from material to teach inside the deck.
+3. Define the smallest learning scope that supports the goal and explicit exclusions.
+4. Express learning outcomes as observable capabilities, not topic labels.
+5. Identify concepts, mechanisms, reasoning tools, and skills required by those outcomes.
+6. Map what must be understood before dependent concepts can be taught well.
+7. Group dependencies into the smallest coherent learning units.
+8. Sequence units by conceptual dependency and assign unit responsibilities.
+9. Map substantial outcomes to where they are developed and eventually assessed.
+10. Record any version or authority assumption that materially constrains the curriculum.
+11. Review coherence before handing the baseline to deck implementation.
 
 Do not require one concept per chapter. Derive chapter or unit boundaries from learning structure,
 not conventional domain categories.
