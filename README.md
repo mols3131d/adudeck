@@ -28,8 +28,8 @@ mise run setup
 ```
 
 VS Code에서는 `Terminal > Run Task... > adudeck: bootstrap`으로 같은 초기 설정을 실행할 수 있다. 이후 formatting은
-`adudeck: format`, auto-fix를 포함한 빠른 로컬 검증은 `adudeck: fix & check`를 사용한다. `fix & check`는 formatting과
-generated projection을 갱신할 수 있다.
+`adudeck: format`, 읽기 전용 source 검증은 `adudeck: check`를 사용한다. `check`는 local projection을 재생성하지만
+tracked source를 수정하지 않는다.
 
 `mise`가 repository toolchain을 관리하고, `uv`가 Python dependency와 `.venv`를 관리한다. Agent asset을 변경했을 때는
 `mise run rulesync:generate`로 로컬 projection을 갱신한다. 이 task는 먼저 `rulesync gitignore`로
@@ -51,7 +51,7 @@ mise run format
 mise run ci:fast
 ```
 
-format 가능한 문제는 자동 수정하고, CI는 빠르고 결정적인 검증만 수행한다. 자세한 경계는
+formatting 수정은 `mise run format`으로 명시적으로 수행하며, CI는 tracked source를 변경하지 않고 검증한다. 자세한 경계는
 [`docs/automation.md`](docs/automation.md)를 따른다.
 
 ## Docs

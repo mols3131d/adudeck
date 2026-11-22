@@ -65,10 +65,10 @@ description = "Update toolchain, dependencies, and agent projections"
 run = "bash scripts/update.sh"
 
 [tasks."ci:fast"]
-description = "Auto-fix and run cheap deterministic PR validation"
+description = "Check tracked sources and run cheap deterministic verification"
 run = """
 uv sync --locked
-mise run format
+mise run format:check
 lefthook validate
 mise run rulesync:generate
 mise run rulesync:check

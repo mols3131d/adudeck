@@ -16,7 +16,7 @@
       }
     },
     {
-      "label": "adudeck: fix & check",
+      "label": "adudeck: check",
       "type": "shell",
       "command": "mise run ci:fast",
       "options": {

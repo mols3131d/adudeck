@@ -1,6 +1,6 @@
 # Automation Policy
 
-자동화는 **자동 수정 가능한 것은 조용히 고치고, 실패는 사람이 판단해야 하는 문제에만 사용**한다.
+자동 수정은 명시적인 format task와 local hook에 한정한다. CI는 추적 중인 source를 변경하지 않고 검증한다.
 
 ## Ownership
 
@@ -29,7 +29,7 @@ mise run ci:fast
 dependency/generated state를 갱신할 때만 `mise run update`를 사용한다. 생성 자산은 `.gitignore` 대신 Git의 로컬
 `info/exclude`로 관리하며, `rulesync:generate`가 이를 먼저 설정한다.
 
-`ci:fast`는 format 이후 Rulesync projection을 생성·검증하고 테스트를 실행한다. 필요한 단계만 실행할 때는
+`ci:fast`는 formatting을 확인하고 로컬 Rulesync projection을 생성·검증한 뒤 테스트를 실행한다. tracked source는 변경하지 않는다. 필요한 단계만 실행할 때는
 `mise run format`, `mise run format:check`, `mise run test` (특정 대상만 검증할 때는 `mise run test <target...>`)
 또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
 
@@ -58,10 +58,9 @@ CI는 `ci/validated` 단일 상태 보고를 유지하면서 변경 영향 범�
   OpenTelemetry external runtime acceptance만 선택 실행한다.
 - 공통 설정(`mise.toml`, `pyproject.toml`, `uv.lock`, `scripts/*`, `.github/workflows/*`)이나 미분류 경로가 변경되면,
   또는 `main` push·`workflow_dispatch`·base 비교 불가 시에는 전체 테스트와 external acceptance로 fail-safe 확장한다.
-- branch push에서 formatter가 수정한 tracked source만 auto-fix 대상으로 삼는다. Rulesync 생성물은
-  `info/exclude`와 Git index 정리로 미추적 상태를 유지한다.
-- persisted auto-fix는 read-only job이 검증한 Git tree와 동일할 때만 허용하며, `main`과 manual validation은
-  auto-fix drift 발견 시 저장소를 수정하지 않고 실패시킨다.
+- CI는 formatting drift와 tracked source 변경을 오류로 보고한다. 자동 commit/push는 하지 않는다.
+- Rulesync 생성물은 `info/exclude`로 미추적 상태를 유지한다. 루트 `AGENTS.md`는 추적되는 entrypoint이므로
+  Rulesync의 자동 orphan 삭제를 비활성화하며, 사용하지 않는 projection은 경로를 검토한 후 명시적으로 retire한다.
 
 ## Tests
 
