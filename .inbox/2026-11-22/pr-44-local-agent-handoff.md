@@ -10,8 +10,9 @@ Before this note was committed, the PR head was `c4e37142e21b02629e334fab0943d68
 `b9ea2b051d365ababab89ece5f6b9dfdfda7c98e`. GitHub compare reported the branch **5 commits ahead,
 0 behind** `main`; no integration commit or rebase was needed. Resolve the *current* refs again before further work.
 
-The change has passed [GitHub Actions CI](https://github.com/mols3131d/adudeck/actions/runs/45025309533)
-at `c4e37142e21b02629e334fab0943d6879835d2f3`. This is not proof of Antigravity IDE/CLI runtime activation or of any newer commit.
+The change has passed [GitHub Actions CI](https://github.com/mols3131d/adudeck/actions/runs/45025309533) at
+`c4e37142e21b02629e334fab0943d6879835d2f3`. This is not proof of Antigravity IDE/CLI runtime activation or of any newer
+commit.
 
 ## Goal and ownership
 
