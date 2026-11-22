@@ -29,9 +29,9 @@ mise run ci:fast
 dependency/generated state를 갱신할 때만 `mise run update`를 사용한다. 생성 자산은 `.gitignore` 대신 Git의 로컬
 `info/exclude`로 관리하며, `rulesync:generate`가 이를 먼저 설정한다.
 
-`ci:fast`는 formatting을 확인하고 로컬 Rulesync projection을 생성·검증한 뒤 테스트를 실행한다. tracked source는 변경하지 않는다. 필요한 단계만 실행할 때는
-`mise run format`, `mise run format:check`, `mise run test` (특정 대상만 검증할 때는 `mise run test <target...>`)
-또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
+`ci:fast`는 formatting을 확인하고 로컬 Rulesync projection을 생성·검증한 뒤 테스트를 실행한다. tracked source는 변경하지
+않는다. 필요한 단계만 실행할 때는 `mise run format`, `mise run format:check`, `mise run test` (특정 대상만 검증할 때는
+`mise run test <target...>`) 또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
 
 multi-step 구현은 `scripts/`가 소유하므로 필요하면 직접 호출할 수 있다.
 

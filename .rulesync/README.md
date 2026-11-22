@@ -28,7 +28,8 @@ The first command in generation/refresh is `rulesync gitignore`, so native proje
 untracked candidates for a later `git add -A`. `rulesync install --frozen` restores from the committed lock without
 updating revisions. Only `rulesync:refresh` intentionally updates them.
 
-`rulesync.jsonc` disables automatic stale-output deletion: otherwise `rulesync generate` removes the checked-in root `AGENTS.md` when no root rule exists. Retire unused target outputs explicitly after reviewing their paths.
+`rulesync.jsonc` disables automatic stale-output deletion: otherwise `rulesync generate` removes the checked-in root
+`AGENTS.md` when no root rule exists. Retire unused target outputs explicitly after reviewing their paths.
 
 Do not run `git add -f` on generated paths. A local exclusion does not untrack files that are already in Git's index;
 migration must explicitly remove previously tracked native projections. Avoid introducing additional custom projection
