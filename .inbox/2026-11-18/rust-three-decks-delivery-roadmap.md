@@ -2,9 +2,8 @@
 
 - 기준일: 2026-11-18
 - 대상: [PR #36](https://github.com/mols3131d/adudeck/pull/36)
-- 성격: `inbox/`의 임시 실행·검토 기록이며, 각 덱의 학습 목표·범위·선행 조건을 대체하지 않는다.
-- 근거: [초기 결정](../2026-10-28/rust-three-decks-learning-plan.md),
-  [기술 조사](../2026-11-08/rust-learning-research-report.md), 각 덱의 README
+- 성격: `.inbox/`의 임시 실행·검토 기록이며, 각 덱의 학습 목표·범위·선행 조건을 대체하지 않는다.
+- 근거: [기술 조사](../2026-11-08/rust-learning-research-report.md), 각 덱의 README
 - 현재 상태: PR #36은 Backlog 정의·자료 조사 범위로 진행 중. 코드·교본·벤치마크·wheel은 구현하지 않았다.
 
 ## 실행 결정
@@ -75,8 +74,8 @@ Python 통합 테스트는 실패로 판정한다. 공통 입력 계약은 실�
 **Review 2 — 사용 가능성:** 다음 작업자가 첫 commit의 수정 파일, 예제의 동작/실패 계약, 테스트·교본 완료 조건, 실제로
 하지 않은 검증을 구분할 수 있는가?
 
-**Review 3 — PR 통합:** CI 결과와 GitHub의 실제 PR head를 확인한다. `inbox/`의 임시 자료가 저장소의 canonical policy처럼
-인용되거나 Notion state 변경으로 잘못 이어지지 않았는가? 비밀·사적 데이터·복제 제한 자료가 없는가?
+**Review 3 — PR 통합:** CI 결과와 GitHub의 실제 PR head를 확인한다. `.inbox/`의 임시 자료가 저장소의 canonical
+policy처럼 인용되거나 Notion state 변경으로 잘못 이어지지 않았는가? 비밀·사적 데이터·복제 제한 자료가 없는가?
 
 리뷰 발견사항은 **수정/이월/범위 밖**으로 분류한다. 범위 밖은 근거 없이 현재 PR에 추가하지 않는다. 각 재검토에서는
 해결된 항목과 아직 검증하지 못한 항목을 다시 확인한다.
