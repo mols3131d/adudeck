@@ -5,9 +5,7 @@
 - 시작 시점 PR head: `c6c6e7e0835383c29c2ef5a6907b1b18d536a225`; README 수정 commit:
   `f8bccc1fa8ad4a31364fe516c05d15a16a2acd01`
 - 커리큘럼: [deck README](../../decks/programming-posix_sh/README.md)
-- 선행 근거: [2026-10-03 심층 조사](../2026-10-03/posix-sh-textbook-research.md),
-  [2026-10-05 리뷰](../2026-10-05/pr-35-deep-review.md),
-  [2026-11-08 쟁점 조사](../2026-11-08/pr-35-curriculum-evidence-report.md)
+- 선행 근거: [2026-11-08 쟁점 조사](../2026-11-08/pr-35-curriculum-evidence-report.md)
 
 ## 결론
 

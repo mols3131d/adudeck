@@ -45,7 +45,7 @@ resolve_ci_scope_from_stream() {
         add_otel=true
         otel_acceptance=true
         ;;
-      README.md|CHATBOT.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/pull_request_template.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/computer-science/*|decks/data_engineering-apache_airflow/*)
+      README.md|CHATBOT.md|AGENTS.md|.editorconfig|.gitattributes|.gitignore|.gitmessage|biome.json|lefthook.yml|rulesync.jsonc|rulesync.lock|docs/*|.inbox/*|.vscode/*|.rulesync/*|.agents/*|.github/copilot-instructions.md|.github/pull_request_template.md|.github/instructions/*|.github/skills/*|.codex/*|.gemini/*|.opencode/*|decks/README.md|decks/AGENTS.md|decks/_archive/*|decks/_backlog/*|decks/computer-science/*|decks/data_engineering-apache_airflow/*)
         ;;
       decks/*/*)
         deck_dir="${file#decks/}"
@@ -287,6 +287,10 @@ run_scripts() {
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
   scope_out="$(printf 'docs/automation.md\n.rulesync/rules/overview.md\nrulesync.lock\ndecks/computer-science/README.md\n' | bash scripts/test.sh --ci-scope --stdin)"
+  grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
+  grep -Fxq "otel_acceptance=false" <<<"$scope_out"
+
+  scope_out="$(printf '.inbox/2026-11-18/review.md\n' | bash scripts/test.sh --ci-scope --stdin)"
   grep -Fxq "test_targets=smoke scripts" <<<"$scope_out"
   grep -Fxq "otel_acceptance=false" <<<"$scope_out"
 
