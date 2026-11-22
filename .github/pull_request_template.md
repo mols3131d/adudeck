@@ -1,13 +1,13 @@
 <!--
-Summary, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으로 유지한다.
+Description, Goal, Tasks, Checklist, Boundaries를 순서대로 필수 H2 섹션으로 유지한다.
 긴 섹션은 필요한 경우에만 설명적인 H3로 나눈다. Checklist의 Self-review와
 Verification은 필수 H3이고, Documentation은 문서 변경·영향이 있을 때만 추가한다.
 제출 전에 미사용 선택 섹션, 빈 제목, placeholder, 작성 안내 주석을 제거한다.
 -->
 
-## Summary
+## Description
 
-<!-- 변경 결과를 요약하고 관련 Issue나 작업이 있다면 연결한다. -->
+<!-- 변경 내용과 결과를 설명한다. 문제·성공 기준은 Goal에서 다루고, 관련 작업은 필요할 때 연결한다. -->
 
 ## Goal
 
@@ -27,6 +27,8 @@ N/A를 체크박스로 표현하면 GitHub의 작업 진행률에 잘못 반영�
 변경의 성격과 위험에 비례하여 필요한 검증만 수행한다.
 관련 없는 테스트, 중복 검증, 불필요한 외부 API·runtime 호출은 실행하지 않는다.
 실행하지 않은 검증을 통과했다고 표시하지 않는다.
+검증 방법·환경·결과·근거·제약은 필요할 때 해당 항목 아래 일반 불릿으로 설명한다.
+설명용 불릿에는 체크박스를 사용하지 않는다.
 GitHub Checks UI의 검사 결과를 수동 목록으로 반복하지 않는다.
 -->
 
@@ -51,7 +53,7 @@ GitHub가 일반 텍스트 SHA를 자동 링크 처리한다.
 
 ### Verification
 
-- [ ] 작업의 완료 기준과 필요한 runtime·수동 동작을 검증했다.
+- [ ] 작업별 완료 기준과 필요한 runtime·수동 동작을 실제로 검증했다.
 
 ### Documentation
 
