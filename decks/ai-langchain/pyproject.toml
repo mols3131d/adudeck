@@ -13,3 +13,9 @@ dependencies = [
 live = [
   "langchain-openai>=1.8.2,<2",
 ]
+
+[[tool.ty.overrides]]
+include = ["playground/05-live-provider/live_agent.py"]
+
+[tool.ty.overrides.rules]
+import-not-found = "ignore"

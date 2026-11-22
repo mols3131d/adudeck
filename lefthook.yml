@@ -9,12 +9,28 @@ pre-commit:
             glob: "**/*.md"
             exclude:
               - ".agents/**"
+              - ".claude/**"
+              - ".codex/**"
+              - ".copilot/**"
               - ".github/copilot-instructions.md"
+              - ".github/agents/**"
               - ".github/instructions/**"
+              - ".github/prompts/**"
               - ".github/skills/**"
+              - ".rulesync/*/.curated/**"
               - "AGENTS.md"
-              - "decks/**/AGENTS.md"
+              - "**/AGENTS.md"
+              - "AGENTS.override.md"
+              - "**/AGENTS.override.md"
+              - "decks/_archive/**"
             run: rumdl fmt {staged_files}
+            stage_fixed: true
+
+          - name: python
+            glob: "**/*.py"
+            exclude:
+              - "decks/_archive/**"
+            run: ruff check --fix {staged_files} && ruff format {staged_files}
             stage_fixed: true
 
           - name: json

@@ -8,3 +8,12 @@ dependencies = [
   "opentelemetry-api>=1.45,<2",
   "opentelemetry-sdk>=1.45,<2",
 ]
+
+[[tool.ty.overrides]]
+include = [
+  "textbook/05-instrumentation/flask_*.py",
+  "textbook/07-otlp-collector/otlp_trace.py",
+]
+
+[tool.ty.overrides.rules]
+import-not-found = "ignore"

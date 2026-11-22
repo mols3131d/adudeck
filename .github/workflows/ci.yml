@@ -36,7 +36,7 @@ jobs:
           if [ "$EVENT_NAME" != "push" ] || [ "$REF_NAME" = "refs/heads/main" ]; then
             scope_output="$(printf 'test_targets=all\notel_acceptance=true\nscope_reason=full verification (%s on %s)\n' "$EVENT_NAME" "$REF_NAME")"
           elif git fetch --no-tags --depth=100 origin "+refs/heads/main:refs/remotes/origin/main" 2>/dev/null; then
-            scope_output="$(bash scripts/test.sh --ci-scope origin/main)"
+            scope_output="$(python scripts/test.py --ci-scope origin/main)"
           else
             scope_output="$(printf 'test_targets=all\notel_acceptance=true\nscope_reason=origin/main fetch failed (fail-safe full scope)\n')"
           fi
