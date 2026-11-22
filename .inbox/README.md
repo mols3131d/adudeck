@@ -1,16 +1,13 @@
 # Inbox
 
-`.inbox/` is a temporary, non-canonical workspace. This `README.md` defines its policy.
+`.inbox/`는 조사·계획·검토·초안·인계 자료를 위한 임시 작업 공간이다. 이곳의 기록은 **비정본 작업 근거**이며 repository 정책, deck 상태, 확정된 지식을 대신하지 않는다.
 
-## Rules
+## 필요한 안내 선택
 
-- Store working material under `.inbox/YYYY-MM-DD/`.
-- Keep at most 30 dated directories. When adding one would exceed the limit, delete the oldest dated directories so no
-  more than 30 remain.
-- Use dated material as working context only when it is reasonably fresh and accurate. It is never project authority;
-  canonical artifacts win on conflict.
-- Except for this `README.md`, do not link to or reference inbox files from outside `.inbox/`.
-- Promote durable material before external reference: move it to its canonical location or absorb the relevant content
-  into an existing canonical artifact, then reference that artifact.
-- Repository safety and confidentiality rules still apply. Never store secrets, credentials, access tokens, or private
-  account identifiers here.
+- **작업 자료를 찾거나 새 디렉터리를 정할 때:** [배치·구성 가이드](.configs/guides/organization.md)
+- **조사·계획·검토·인계 문서를 작성할 때:** [작성 가이드와 선택적 템플릿](.configs/guides/writing.md)
+- **작업 종료 후 자료를 정리할 때:** [보존·정리 가이드](.configs/guides/lifecycle.md)
+
+관련된 가이드와 필요한 템플릿만 열어 사용한다. 기존 작업 기록은 새 규칙을 적용하기 위해 일괄 개명하거나 이동하지 않는다.
+
+저장소의 안전·권한·정본 관련 상위 규칙은 [Repository Contract](../AGENTS.md)를 따른다.
