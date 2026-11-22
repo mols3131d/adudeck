@@ -13,7 +13,8 @@
 
 ## Authority
 
-- This checked-in `AGENTS.md` owns the repository-wide entrypoint; `.rulesync/` owns portable scoped Rules and Skills.
+- This checked-in `AGENTS.md` owns the repository-wide entrypoint; `.rulesync/` owns portable scoped Rules, Skills,
+  Commands, and Subagents.
 - Generated agent projections are local derived artifacts, never independent owners or committed files.
 - For Agent Asset or Rulesync work, read `.rulesync/README.md` and prefer its `mise run rulesync:*` workflow.
 
