@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import sys
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 # This executable chapter test checks the producer contract of Unit 5 directly.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "05-datasets"))
-from dataset_case import build_refund_regression_case  # noqa: E402
-from datetime import datetime, timezone
-from types import SimpleNamespace
-
+from dataset_case import build_refund_regression_case
 from experiment_compare import (
     evaluate_variant,
     hosted_support_application,
@@ -22,7 +22,7 @@ from experiment_compare import (
 
 class FakeDataset:
     def __init__(self) -> None:
-        self.calls: list[dict[str, object]] = []
+        self.calls: list[dict[str, Any]] = []
 
     def run_experiment(self, **kwargs):
         self.calls.append(kwargs)
@@ -63,7 +63,9 @@ class ExperimentComparisonTest(unittest.TestCase):
         self.assertEqual(baseline["electronics-day-14"].score, 1.0)
         self.assertEqual(candidate["electronics-day-14"].score, 0.0)
 
-    def test_unit5_hosted_case_runs_through_unit6_task_with_exact_output_contract(self) -> None:
+    def test_unit5_hosted_case_runs_through_unit6_task_with_exact_output_contract(
+        self,
+    ) -> None:
         case = build_refund_regression_case(
             case_id="refund-day-10",
             days_since_delivery=10,

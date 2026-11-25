@@ -6,7 +6,6 @@ Flask/zero-code instrumentation and an actual Collector container.
 
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import socket
@@ -14,10 +13,10 @@ import subprocess
 import tempfile
 import time
 import unittest
+from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 from uuid import uuid4
-
 
 DECK = Path(__file__).resolve().parents[1]
 TEXTBOOK = DECK / "textbook"
@@ -29,7 +28,9 @@ COLLECTOR_IMAGE = f"otel/opentelemetry-collector:{COLLECTOR_VERSION}"
 
 
 def clean_env(extra: dict[str, str] | None = None) -> dict[str, str]:
-    env = {key: value for key, value in os.environ.items() if not key.startswith("OTEL_")}
+    env = {
+        key: value for key, value in os.environ.items() if not key.startswith("OTEL_")
+    }
     if extra:
         env.update(extra)
     return env
@@ -72,7 +73,9 @@ def wait_http(url: str, process: subprocess.Popen, timeout: float = 20) -> str:
     last_error: Exception | None = None
     while time.monotonic() < deadline:
         if process.poll() is not None:
-            raise AssertionError(f"server exited before request succeeded: returncode={process.returncode}")
+            raise AssertionError(
+                f"server exited before request succeeded: returncode={process.returncode}"
+            )
         try:
             with urlopen(url, timeout=0.5) as response:
                 return response.read().decode()
@@ -159,19 +162,19 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 str(port),
             ]
 
-        log = tempfile.NamedTemporaryFile(prefix="adudeck-otel-flask-", suffix=".log", delete=False)
-        log_path = Path(log.name)
-        log.close()
-        handle = log_path.open("w", encoding="utf-8")
-        process = subprocess.Popen(
-            uv_command(with_deps, command),
-            cwd=DECK,
-            env=env,
-            stdout=handle,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-        handle.close()
+        with tempfile.NamedTemporaryFile(
+            prefix="adudeck-otel-flask-", suffix=".log", delete=False
+        ) as log:
+            log_path = Path(log.name)
+        with log_path.open("w", encoding="utf-8") as handle:
+            process = subprocess.Popen(
+                uv_command(with_deps, command),
+                cwd=DECK,
+                env=env,
+                stdout=handle,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
         return process, log_path
 
     def test_flask_plain_and_mixed_instrumentation(self) -> None:
@@ -212,12 +215,18 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
         mixed_output = mixed_log.read_text(encoding="utf-8")
         mixed_log.unlink(missing_ok=True)
 
-        summaries = [line for line in mixed_output.splitlines() if line.startswith("scope-summary ")]
+        summaries = [
+            line
+            for line in mixed_output.splitlines()
+            if line.startswith("scope-summary ")
+        ]
         business_line = next(
             line for line in summaries if "scope=adudeck.checkout.business" in line
         )
         framework_lines = [
-            line for line in summaries if "scope=opentelemetry.instrumentation.flask" in line
+            line
+            for line in summaries
+            if "scope=opentelemetry.instrumentation.flask" in line
         ]
         self.assertEqual(len(framework_lines), 1, mixed_output)
 
@@ -227,15 +236,20 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
         self.assertEqual(business["parent_id"], framework["span_id"])
         self.assertNotEqual(business["scope"], framework["scope"])
 
-    def test_otlp_http_reaches_collector_and_failure_stays_outside_business_work(self) -> None:
+    def test_otlp_http_reaches_collector_and_failure_stays_outside_business_work(
+        self,
+    ) -> None:
         if shutil.which("docker") is None:
-            self.fail("Docker is required for the OpenTelemetry Collector acceptance test")
+            self.fail(
+                "Docker is required for the OpenTelemetry Collector acceptance test"
+            )
 
         info = subprocess.run(
             ["docker", "info"],
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
         self.assertEqual(info.returncode, 0, info.stdout + info.stderr)
 
@@ -244,6 +258,7 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
             capture_output=True,
             text=True,
             timeout=240,
+            check=False,
         )
         self.assertEqual(pull.returncode, 0, pull.stdout + pull.stderr)
 
@@ -268,26 +283,38 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
             deadline = time.monotonic() + 20
             while True:
                 try:
-                    with socket.create_connection(("127.0.0.1", host_port), timeout=0.5):
+                    with socket.create_connection(
+                        ("127.0.0.1", host_port), timeout=0.5
+                    ):
                         break
                 except OSError:
                     if time.monotonic() >= deadline:
                         logs = subprocess.run(
-                            ["docker", "logs", container_name], capture_output=True, text=True
+                            ["docker", "logs", container_name],
+                            capture_output=True,
+                            text=True,
+                            check=False,
                         )
-                        self.fail("Collector did not open OTLP/HTTP port:\n" + logs.stdout + logs.stderr)
+                        self.fail(
+                            "Collector did not open OTLP/HTTP port:\n"
+                            + logs.stdout
+                            + logs.stderr
+                        )
                     time.sleep(0.1)
 
             endpoint = f"http://127.0.0.1:{host_port}/v1/traces"
             success = subprocess.run(
                 uv_command(
-                    [f"opentelemetry-exporter-otlp-proto-http=={OTEL_EXPORTER_VERSION}"],
+                    [
+                        f"opentelemetry-exporter-otlp-proto-http=={OTEL_EXPORTER_VERSION}"
+                    ],
                     [
                         "python",
                         str(TEXTBOOK / "07-otlp-collector" / "otlp_trace.py"),
@@ -300,6 +327,7 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
             self.assertEqual(success.returncode, 0, success.stdout + success.stderr)
             self.assertIn("checkout: business work completed", success.stdout)
@@ -308,6 +336,7 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 success.stdout,
             )
             self.assertIsNotNone(match, success.stdout)
+            assert match is not None
             trace_id, span_id = match.groups()
 
             collector_logs = ""
@@ -318,9 +347,14 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                     capture_output=True,
                     text=True,
                     timeout=10,
+                    check=False,
                 )
                 collector_logs = (logs.stdout + logs.stderr).lower()
-                if trace_id in collector_logs and span_id in collector_logs and "checkout" in collector_logs:
+                if (
+                    trace_id in collector_logs
+                    and span_id in collector_logs
+                    and "checkout" in collector_logs
+                ):
                     break
                 time.sleep(0.2)
             self.assertIn(trace_id, collector_logs)
@@ -330,7 +364,9 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
             failed_endpoint = f"http://127.0.0.1:{host_port}/not-traces"
             failed = subprocess.run(
                 uv_command(
-                    [f"opentelemetry-exporter-otlp-proto-http=={OTEL_EXPORTER_VERSION}"],
+                    [
+                        f"opentelemetry-exporter-otlp-proto-http=={OTEL_EXPORTER_VERSION}"
+                    ],
                     [
                         "python",
                         str(TEXTBOOK / "07-otlp-collector" / "otlp_trace.py"),
@@ -343,11 +379,15 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
             self.assertEqual(failed.returncode, 0, failed.stdout + failed.stderr)
             self.assertIn("checkout: business work completed", failed.stdout)
-            failed_match = re.search(r"application trace_id=([0-9a-f]{32})", failed.stdout)
+            failed_match = re.search(
+                r"application trace_id=([0-9a-f]{32})", failed.stdout
+            )
             self.assertIsNotNone(failed_match, failed.stdout)
+            assert failed_match is not None
             failed_trace_id = failed_match.group(1)
 
             time.sleep(0.5)
@@ -356,6 +396,7 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 timeout=10,
+                check=False,
             )
             self.assertNotIn(failed_trace_id, (logs.stdout + logs.stderr).lower())
         finally:
@@ -364,6 +405,7 @@ class ExternalRuntimeAcceptanceTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 timeout=20,
+                check=False,
             )
 
 

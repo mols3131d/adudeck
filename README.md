@@ -41,7 +41,7 @@ Git의 `info/exclude`를 구성한다. 생성된 Agent Assets는 Git에 추적�
 - 다른 storage는 사용자가 현재 deck 또는 작업에 대해 명시적으로 지정한 경우에만 사용한다.
 - deck의 storage와 state 원칙은 [`docs/decks.md`](docs/decks.md)를 따른다.
 - directory 사용법은 가까운 `README.md`에, repository-wide 정책은 `docs/`에 둔다.
-- 루트 `AGENTS.md`는 추적하는 repository 진입점이며, scoped Rules와 Skills의 canonical source는 `.rulesync/`다.
+- 루트 `AGENTS.md`는 추적하는 repository 진입점이며, scoped Rules·Skills·Commands·Subagents의 canonical source는 `.rulesync/`다.
   생성된 native 파일은 직접 수정하거나 Git에 추가하지 않는다.
 
 ## Automation

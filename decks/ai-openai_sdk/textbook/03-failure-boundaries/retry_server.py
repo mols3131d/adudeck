@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import threading
+from collections.abc import Generator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Iterator
 
 
 class SyntheticErrorServer:
@@ -18,14 +18,14 @@ class SyntheticErrorServer:
     def base_url(self) -> str:
         if self._server is None:
             raise RuntimeError("server is not running")
-        host, port = self._server.server_address
+        host, port = self._server.server_address[:2]
         return f"http://{host}:{port}/v1"
 
     def start(self) -> None:
         owner = self
 
         class Handler(BaseHTTPRequestHandler):
-            def do_POST(self) -> None:  # noqa: N802
+            def do_POST(self) -> None:
                 owner.request_count += 1
 
                 content_length = int(self.headers.get("Content-Length", "0"))
@@ -66,7 +66,9 @@ class SyntheticErrorServer:
 
 
 @contextmanager
-def synthetic_error_server(status_code: int) -> Iterator[SyntheticErrorServer]:
+def synthetic_error_server(
+    status_code: int,
+) -> Generator[SyntheticErrorServer, None, None]:
     server = SyntheticErrorServer(status_code)
     server.start()
     try:

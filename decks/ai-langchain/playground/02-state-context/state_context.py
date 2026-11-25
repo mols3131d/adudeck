@@ -29,7 +29,9 @@ def build_lab() -> tuple[Any, list[tuple[str, str, int]]]:
     def observe_output(state: AgentState, runtime: Runtime[RunContext]) -> None:
         observations.append(("after", runtime.context.label, len(state["messages"])))
 
-    model = GenericFakeChatModel(messages=iter(["response-1", "response-2", "response-3"]))
+    model = GenericFakeChatModel(
+        messages=iter(["response-1", "response-2", "response-3"])
+    )
     agent = create_agent(
         model=model,
         tools=[],
@@ -61,6 +63,8 @@ def run_lab() -> tuple[list[list[Any]], list[tuple[str, str, int]]]:
 if __name__ == "__main__":
     snapshots, events = run_lab()
     for index, messages in enumerate(snapshots, start=1):
-        print(f"invoke-{index}: history_length={len(messages)}, last={messages[-1].content}")
+        print(
+            f"invoke-{index}: history_length={len(messages)}, last={messages[-1].content}"
+        )
     for phase, label, count in events:
         print(f"{phase}: context={label}, history_length={count}")

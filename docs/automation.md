@@ -10,10 +10,12 @@
 | multi-step workflow | `scripts/` | formatting, testing, setup, update의 실행 순서와 failure boundary |
 | Python project | uv | dependency, lock, `.venv` |
 | Markdown | rumdl | auto-format |
+| Python | Ruff | auto-format/lint |
+| Python type check | ty | static type check |
 | JSON/JSONC | Biome | auto-format/check |
 | TOML | Tombi | auto-format/lint |
 | Git hooks | Lefthook | staged auto-fix와 local guard |
-| agent assets | Rulesync | canonical scoped Rules/Skills에서 local target-native projection 생성과 Git exclude 관리 |
+| agent assets | Rulesync | canonical Rules/Skills/Commands/Subagents에서 local target-native projection 생성과 Git exclude 관리 |
 
 ## Local
 
@@ -30,21 +32,23 @@ dependency/generated state를 갱신할 때만 `mise run update`를 사용한다
 `info/exclude`로 관리하며, `rulesync:generate`가 이를 먼저 설정한다.
 
 `ci:fast`는 formatting을 확인하고 로컬 Rulesync projection을 생성·검증한 뒤 테스트를 실행한다. tracked source는 변경하지
-않는다. 필요한 단계만 실행할 때는 `mise run format`, `mise run format:check`, `mise run test` (특정 대상만 검증할 때는
-`mise run test <target...>`) 또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
+않는다. 필요한 단계만 실행할 때는 `mise run format`, `mise run format:check`, `mise run typecheck`, `mise run test`
+(특정 대상만 검증할 때는 `mise run test <target...>`) 또는 `mise run rulesync:generate` 같은 개별 task를 사용한다.
 
 multi-step 구현은 `scripts/`가 소유하므로 필요하면 직접 호출할 수 있다.
 
 ```bash
-bash scripts/format.sh
-bash scripts/format.sh --check
-bash scripts/test.sh all
-bash scripts/test.sh smoke scripts
-bash scripts/setup.sh
-bash scripts/update.sh
+python scripts/format.py
+python scripts/format.py --check
+python scripts/typecheck.py
+python scripts/test.py all
+python scripts/test.py smoke scripts
+python scripts/setup.py
+python scripts/update.py
 ```
 
-`format.sh --check`는 파일을 수정하지 않고 Markdown, JSON/JSONC, TOML formatting과 lint drift를 검사한다.
+`format.py --check`는 파일을 수정하지 않고 Markdown, Python, JSON/JSONC, TOML formatting과 lint drift를 검사한다.
+`typecheck.py`는 root와 활성 Python subproject에 대해 `ty` 정적 타입 검사를 수행한다.
 
 local hook은 staged file의 formatting 문제를 수정하고 수정된 file을 다시 stage한다. full-repository script로 대체하지
 않는다.
@@ -54,7 +58,7 @@ local hook은 staged file의 formatting 문제를 수정하고 수정된 file을
 CI는 `ci/validated` 단일 상태 보고를 유지하면서 변경 영향 범위에 비례해 검증한다.
 
 - formatting, hook, Rulesync 로컬 projection, root `smoke`, `scripts` 검증은 모든 실행에서 수행한다.
-- branch push는 `origin/main` 대비 변경 경로(`scripts/test.sh --ci-scope`)를 계산해 영향받는 subproject test와
+- branch push는 `origin/main` 대비 변경 경로(`scripts/test.py --ci-scope`)를 계산해 영향받는 subproject test와
   OpenTelemetry external runtime acceptance만 선택 실행한다.
 - 공통 설정(`mise.toml`, `pyproject.toml`, `uv.lock`, `scripts/*`, `.github/workflows/*`)이나 미분류 경로가 변경되면,
   또는 `main` push·`workflow_dispatch`·base 비교 불가 시에는 전체 테스트와 external acceptance로 fail-safe 확장한다.
@@ -67,7 +71,7 @@ CI는 `ci/validated` 단일 상태 보고를 유지하면서 변경 영향 범�
 언어나 runtime이 실제로 사용될 때만 최소 테스트를 추가한다.
 
 - Python/TypeScript 같은 code에는 작은 smoke/unit test부터 시작한다.
-- repository shell script는 `bash -n scripts/*.sh`로 최소 syntax validation을 수행한다.
+- repository automation script(`scripts/*.py`)는 `py_compile`, `ruff`, `ty`로 구문·린트·타입 검증을 수행한다.
 - test framework, coverage, matrix는 실제 failure mode가 생길 때 확장한다.
 - 테스트 수 자체를 목표로 하지 않는다.
 

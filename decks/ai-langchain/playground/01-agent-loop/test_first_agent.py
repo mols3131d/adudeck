@@ -2,9 +2,8 @@
 
 import unittest
 
-from langchain.messages import AIMessage, HumanMessage, ToolMessage
-
 from first_agent import build_agent, run_agent, scripted_model
+from langchain.messages import AIMessage, HumanMessage, ToolMessage
 
 
 class AgentLoopTests(unittest.TestCase):
@@ -29,7 +28,9 @@ class AgentLoopTests(unittest.TestCase):
     def test_no_tool_call_means_no_tool_execution(self) -> None:
         messages, calls = run_agent("no-tool")
         self.assertEqual(calls, [])
-        self.assertEqual([type(message) for message in messages], [HumanMessage, AIMessage])
+        self.assertEqual(
+            [type(message) for message in messages], [HumanMessage, AIMessage]
+        )
         self.assertFalse(messages[-1].tool_calls)
 
     def test_unhandled_tool_failure_is_not_a_successful_response(self) -> None:

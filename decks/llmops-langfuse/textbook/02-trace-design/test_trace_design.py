@@ -9,7 +9,7 @@ from trace_design import record_trace_design
 
 @dataclass
 class FakeObservation:
-    client: "FakeLangfuse"
+    client: FakeLangfuse
     trace_id: str
     id: str
     name: str
@@ -20,7 +20,7 @@ class FakeObservation:
 
 
 class ObservationContext(AbstractContextManager[FakeObservation]):
-    def __init__(self, client: "FakeLangfuse", observation: FakeObservation) -> None:
+    def __init__(self, client: FakeLangfuse, observation: FakeObservation) -> None:
         self.client = client
         self.observation = observation
 
@@ -63,14 +63,13 @@ class FakeLangfuse:
 
 class PropagationContext(AbstractContextManager[None]):
     def __init__(
-        self, recorder: "PropagationRecorder", attributes: dict[str, object]
+        self, recorder: PropagationRecorder, attributes: dict[str, object]
     ) -> None:
         self.recorder = recorder
         self.attributes = attributes
 
     def __enter__(self) -> None:
         self.recorder.calls.append(self.attributes)
-        return None
 
     def __exit__(self, exc_type, exc, traceback) -> None:
         return None
@@ -99,7 +98,9 @@ class TraceDesignContractTest(unittest.TestCase):
         self.assertEqual(evidence["root_name"], "support-turn")
         self.assertEqual(evidence["search_name"], "search-policy")
         self.assertNotIn("user-18472", str(evidence["root_name"]))
-        self.assertEqual(client.observations[0].trace_id, client.observations[1].trace_id)
+        self.assertEqual(
+            client.observations[0].trace_id, client.observations[1].trace_id
+        )
         self.assertEqual(len(propagation.calls), 1)
         self.assertEqual(propagation.calls[0]["user_id"], "user-18472")
         self.assertEqual(propagation.calls[0]["session_id"], "session-refund-1")
@@ -128,7 +129,9 @@ class TraceDesignContractTest(unittest.TestCase):
         self.assertNotEqual(first["user_id"], second["user_id"])
         self.assertNotEqual(first["session_id"], second["session_id"])
 
-    def test_unstable_names_change_grouping_but_not_correlation_attributes(self) -> None:
+    def test_unstable_names_change_grouping_but_not_correlation_attributes(
+        self,
+    ) -> None:
         client = FakeLangfuse()
         propagation = PropagationRecorder()
 

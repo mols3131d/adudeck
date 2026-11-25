@@ -80,7 +80,9 @@ def print_state(state: dict[str, Any]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scenario", choices=("valid", "repair", "reject"), default="valid")
+    parser.add_argument(
+        "--scenario", choices=("valid", "repair", "reject"), default="valid"
+    )
     args = parser.parse_args()
 
     if args.scenario == "reject":

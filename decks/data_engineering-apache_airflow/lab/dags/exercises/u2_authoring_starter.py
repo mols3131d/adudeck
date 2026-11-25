@@ -19,7 +19,9 @@ def _observe(label: str) -> None:
         "try_number": getattr(ti, "try_number", None),
         "logical_date": None if logical_date is None else str(logical_date),
     }
-    print(f"[ADUDECK_OBSERVE] {label}: {json.dumps(snapshot, ensure_ascii=False, sort_keys=True)}")
+    print(
+        f"[ADUDECK_OBSERVE] {label}: {json.dumps(snapshot, ensure_ascii=False, sort_keys=True)}"
+    )
 
 
 @dag(

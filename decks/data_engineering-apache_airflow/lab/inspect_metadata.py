@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import os
 import sqlite3
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 LAB_DIR = Path(__file__).resolve().parent
 DEFAULT_AIRFLOW_HOME = Path(os.environ.get("AIRFLOW_HOME", LAB_DIR / ".airflow"))
@@ -26,15 +26,22 @@ def existing_columns(connection: sqlite3.Connection, table: str) -> set[str]:
 
 
 def format_table(columns: list[str], rows: Iterable[sqlite3.Row]) -> str:
-    materialized = [["" if row[column] is None else str(row[column]) for column in columns] for row in rows]
+    materialized = [
+        ["" if row[column] is None else str(row[column]) for column in columns]
+        for row in rows
+    ]
     widths = [len(column) for column in columns]
     for values in materialized:
         for index, value in enumerate(values):
             widths[index] = max(widths[index], min(len(value), 48))
 
     def line(values: list[str]) -> str:
-        clipped = [value if len(value) <= 48 else value[:45] + "..." for value in values]
-        return " | ".join(value.ljust(widths[index]) for index, value in enumerate(clipped))
+        clipped = [
+            value if len(value) <= 48 else value[:45] + "..." for value in values
+        ]
+        return " | ".join(
+            value.ljust(widths[index]) for index, value in enumerate(clipped)
+        )
 
     output = [line(columns), "-+-".join("-" * width for width in widths)]
     output.extend(line(values) for values in materialized)
@@ -66,8 +73,16 @@ def inspect_table(
         params.append(run_id)
 
     where = f" WHERE {' AND '.join(predicates)}" if predicates else ""
-    order_candidates = ["logical_date", "start_date", "queued_at", "timestamp", "run_id"]
-    order_column = next((column for column in order_candidates if column in available), None)
+    order_candidates = [
+        "logical_date",
+        "start_date",
+        "queued_at",
+        "timestamp",
+        "run_id",
+    ]
+    order_column = next(
+        (column for column in order_candidates if column in available), None
+    )
     order = f' ORDER BY "{order_column}" DESC' if order_column else ""
     quoted_columns = ", ".join(f'"{column}"' for column in columns)
     query = f'SELECT {quoted_columns} FROM "{table}"{where}{order} LIMIT ?'
@@ -90,7 +105,9 @@ def main() -> None:
         )
 
     print(f"metadata db: {db_path}")
-    print("mode: read-only observational probe; the metadata schema is an internal implementation surface")
+    print(
+        "mode: read-only observational probe; the metadata schema is an internal implementation surface"
+    )
 
     uri = f"file:{db_path}?mode=ro"
     connection = sqlite3.connect(uri, uri=True)

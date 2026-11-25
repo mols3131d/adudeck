@@ -46,7 +46,11 @@ def u5_boundaries_starter():
             for line in FIXTURE_PATH.read_text(encoding="utf-8").splitlines()
             if line.strip()
         ]
-        selected = rows if region == "all" else [row for row in rows if row["region"] == region]
+        selected = (
+            rows
+            if region == "all"
+            else [row for row in rows if row["region"] == region]
+        )
 
         # Business rows stay in external storage; TaskFlow/XCom carries only the path identifier.
         run_id = str(context["dag_run"].run_id).replace("/", "_").replace(":", "_")

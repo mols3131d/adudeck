@@ -2,21 +2,22 @@
 
 import json
 import os
-from pathlib import Path
 import re
 import selectors
 import socket
 import subprocess
 import sys
 import unittest
-
+from pathlib import Path
 
 DECK = Path(__file__).resolve().parents[1]
 TEXTBOOK = DECK / "textbook"
 
 
 def clean_env() -> dict[str, str]:
-    return {key: value for key, value in os.environ.items() if not key.startswith("OTEL_")}
+    return {
+        key: value for key, value in os.environ.items() if not key.startswith("OTEL_")
+    }
 
 
 def json_objects(output: str) -> list[dict]:
@@ -54,7 +55,11 @@ class TextbookExampleTest(unittest.TestCase):
 
     def test_failure_example_distinguishes_recovery_from_final_failure(self) -> None:
         output = self.run_script("03-span-data-failure/span_failure.py")
-        spans = [value for value in json_objects(output) if "context" in value and "name" in value]
+        spans = [
+            value
+            for value in json_objects(output)
+            if "context" in value and "name" in value
+        ]
         self.assertEqual(len(spans), 6)
 
         reserve_spans = [span for span in spans if span["name"] == "reserve_inventory"]
@@ -66,28 +71,53 @@ class TextbookExampleTest(unittest.TestCase):
             self.assertEqual(span["events"], [])
 
         payment_spans = [span for span in spans if span["name"] == "charge_payment"]
-        failed_payment = next(span for span in payment_spans if "error.type" in span["attributes"])
-        successful_payment = next(span for span in payment_spans if "error.type" not in span["attributes"])
+        failed_payment = next(
+            span for span in payment_spans if "error.type" in span["attributes"]
+        )
+        successful_payment = next(
+            span for span in payment_spans if "error.type" not in span["attributes"]
+        )
         self.assertEqual(failed_payment["status"]["status_code"], "ERROR")
-        self.assertEqual(failed_payment["status"]["description"], "issuer declined payment")
-        self.assertEqual(failed_payment["attributes"]["error.type"], "__main__.PaymentDeclined")
-        exception_events = [event for event in failed_payment["events"] if event["name"] == "exception"]
+        self.assertEqual(
+            failed_payment["status"]["description"], "issuer declined payment"
+        )
+        self.assertEqual(
+            failed_payment["attributes"]["error.type"], "__main__.PaymentDeclined"
+        )
+        exception_events = [
+            event for event in failed_payment["events"] if event["name"] == "exception"
+        ]
         self.assertEqual(len(exception_events), 1)
-        self.assertEqual(exception_events[0]["attributes"]["exception.message"], "issuer declined payment")
+        self.assertEqual(
+            exception_events[0]["attributes"]["exception.message"],
+            "issuer declined payment",
+        )
         self.assertNotEqual(successful_payment["status"]["status_code"], "ERROR")
         self.assertEqual(successful_payment["events"], [])
 
         checkout_spans = [span for span in spans if span["name"] == "checkout"]
-        failed_checkout = next(span for span in checkout_spans if span["attributes"]["checkout.result"] == "failed")
-        completed_checkout = next(span for span in checkout_spans if span["attributes"]["checkout.result"] == "completed")
+        failed_checkout = next(
+            span
+            for span in checkout_spans
+            if span["attributes"]["checkout.result"] == "failed"
+        )
+        completed_checkout = next(
+            span
+            for span in checkout_spans
+            if span["attributes"]["checkout.result"] == "completed"
+        )
         self.assertEqual(failed_checkout["status"]["status_code"], "ERROR")
         self.assertNotEqual(completed_checkout["status"]["status_code"], "ERROR")
 
     def test_resource_and_instrumentation_scope_are_independent_axes(self) -> None:
         output = self.run_script("04-resource-api-sdk/sdk_boundaries.py")
-        summaries = [line for line in output.splitlines() if line.startswith("boundary-summary ")]
+        summaries = [
+            line for line in output.splitlines() if line.startswith("boundary-summary ")
+        ]
         self.assertEqual(len(summaries), 2)
-        self.assertTrue(all("service.name=adudeck-otel-boundaries" in line for line in summaries))
+        self.assertTrue(
+            all("service.name=adudeck-otel-boundaries" in line for line in summaries)
+        )
         self.assertTrue(any("scope=adudeck.checkout" in line for line in summaries))
         self.assertTrue(any("scope=adudeck.payment" in line for line in summaries))
         self.assertTrue(all("scope.version=1.0.0" in line for line in summaries))
@@ -101,7 +131,9 @@ class TextbookExampleTest(unittest.TestCase):
                     for metric in scope_metrics.get("metrics", []):
                         latest[metric["name"]] = metric
 
-        self.assertEqual(set(latest), {"checkout.requests", "checkout.active", "checkout.duration"})
+        self.assertEqual(
+            set(latest), {"checkout.requests", "checkout.active", "checkout.duration"}
+        )
 
         request_points = latest["checkout.requests"]["data"]["data_points"]
         self.assertEqual(sum(point["value"] for point in request_points), 3)
@@ -133,14 +165,22 @@ class TextbookExampleTest(unittest.TestCase):
             text=True,
         )
         self.assertIsNotNone(server.stdout)
+        assert server.stdout is not None
         selector = selectors.DefaultSelector()
         selector.register(server.stdout, selectors.EVENT_READ)
         try:
-            self.assertTrue(selector.select(timeout=5), "service B did not announce readiness")
+            self.assertTrue(
+                selector.select(timeout=5), "service B did not announce readiness"
+            )
             ready = server.stdout.readline()
             self.assertIn(f"127.0.0.1:{port}", ready)
 
-            command = [sys.executable, str(TEXTBOOK / "06-propagation/client.py"), "--port", str(port)]
+            command = [
+                sys.executable,
+                str(TEXTBOOK / "06-propagation/client.py"),
+                "--port",
+                str(port),
+            ]
             if drop_context:
                 command.append("--drop-context")
             client = subprocess.run(
@@ -152,7 +192,10 @@ class TextbookExampleTest(unittest.TestCase):
                 check=True,
             )
             self.assertEqual(client.stderr, "")
-            self.assertEqual(re.search(r"response=ok", client.stdout).group(0), "response=ok")
+            response_match = re.search(r"response=ok", client.stdout)
+            self.assertIsNotNone(response_match)
+            assert response_match is not None
+            self.assertEqual(response_match.group(0), "response=ok")
 
             remaining_out, remaining_err = server.communicate(timeout=5)
             server_output = ready + remaining_out
@@ -170,17 +213,23 @@ class TextbookExampleTest(unittest.TestCase):
                     server.kill()
                     server.wait(timeout=3)
 
-    def test_context_propagation_connects_processes_and_drop_context_breaks_it(self) -> None:
+    def test_context_propagation_connects_processes_and_drop_context_breaks_it(
+        self,
+    ) -> None:
         normal_client, normal_server = self.run_propagation_case(drop_context=False)
         dropped_client, dropped_server = self.run_propagation_case(drop_context=True)
 
         client_pattern = r"service-a trace_id=([0-9a-f]{32}) span_id=([0-9a-f]{16})"
-        traceparent_pattern = r"traceparent=00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})"
+        traceparent_pattern = (
+            r"traceparent=00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})"
+        )
 
         normal_a = re.search(client_pattern, normal_client)
         normal_traceparent = re.search(traceparent_pattern, normal_client)
         self.assertIsNotNone(normal_a)
         self.assertIsNotNone(normal_traceparent)
+        assert normal_a is not None
+        assert normal_traceparent is not None
         self.assertEqual(normal_traceparent.group(1), normal_a.group(1))
         self.assertEqual(normal_traceparent.group(2), normal_a.group(2))
 
@@ -196,6 +245,7 @@ class TextbookExampleTest(unittest.TestCase):
 
         dropped_a = re.search(client_pattern, dropped_client)
         self.assertIsNotNone(dropped_a)
+        assert dropped_a is not None
         self.assertIn("traceparent=<not injected>", dropped_client)
 
         dropped_server_spans = [

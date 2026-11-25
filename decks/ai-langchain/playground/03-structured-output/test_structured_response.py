@@ -5,7 +5,6 @@ import unittest
 from langchain.agents.structured_output import StructuredOutputValidationError
 from langchain.messages import AIMessage, ToolMessage
 from pydantic import ValidationError
-
 from structured_response import Rating, run_scenario
 
 
@@ -19,7 +18,9 @@ class StructuredOutputTests(unittest.TestCase):
         self.assertIsInstance(state["structured_response"], Rating)
         self.assertEqual(state["structured_response"].score, 4)
         self.assertEqual(state["structured_response"].reason, "Documented evidence")
-        self.assertEqual(len([m for m in state["messages"] if isinstance(m, AIMessage)]), 1)
+        self.assertEqual(
+            len([m for m in state["messages"] if isinstance(m, AIMessage)]), 1
+        )
 
     def test_invalid_then_repair_produces_feedback_and_new_request(self) -> None:
         state = run_scenario("repair")

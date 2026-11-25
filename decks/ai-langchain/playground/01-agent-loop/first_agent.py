@@ -67,7 +67,9 @@ def describe(messages: list[Any], calls: list[int]) -> None:
                     f"args={call['args']}"
                 )
         if isinstance(message, ToolMessage):
-            print(f"   tool_result call_id={message.tool_call_id} status={message.status}")
+            print(
+                f"   tool_result call_id={message.tool_call_id} status={message.status}"
+            )
     print(f"tool_executions={calls!r}")
 
 

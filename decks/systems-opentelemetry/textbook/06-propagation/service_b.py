@@ -8,7 +8,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 from opentelemetry.trace import SpanKind
 
-
 resource = Resource.create({"service.name": "adudeck-service-b"})
 provider = TracerProvider(resource=resource)
 provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
@@ -22,9 +21,14 @@ class Handler(BaseHTTPRequestHandler):
         # Normalize the carrier before OpenTelemetry looks up "traceparent".
         carrier = {key.lower(): value for key, value in self.headers.items()}
         context = extract(carrier)
-        with tracer.start_as_current_span("service_b.handle", context=context, kind=SpanKind.SERVER) as span:
+        with tracer.start_as_current_span(
+            "service_b.handle", context=context, kind=SpanKind.SERVER
+        ) as span:
             ctx = span.get_span_context()
-            print(f"service-b trace_id={ctx.trace_id:032x} span_id={ctx.span_id:016x}", flush=True)
+            print(
+                f"service-b trace_id={ctx.trace_id:032x} span_id={ctx.span_id:016x}",
+                flush=True,
+            )
             body = b"ok\n"
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")

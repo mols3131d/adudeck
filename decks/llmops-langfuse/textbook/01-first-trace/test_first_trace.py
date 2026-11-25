@@ -9,7 +9,7 @@ from first_trace import record_support_turn
 
 @dataclass
 class FakeObservation:
-    client: "FakeLangfuse"
+    client: FakeLangfuse
     trace_id: str
     id: str
     name: str
@@ -20,7 +20,7 @@ class FakeObservation:
 
 
 class ObservationContext(AbstractContextManager[FakeObservation]):
-    def __init__(self, client: "FakeLangfuse", observation: FakeObservation) -> None:
+    def __init__(self, client: FakeLangfuse, observation: FakeObservation) -> None:
         self.client = client
         self.observation = observation
 
@@ -73,7 +73,9 @@ class FirstTraceContractTest(unittest.TestCase):
             evidence["current_after_search"], evidence["root_observation_id"]
         )
 
-    def test_detached_search_starts_new_trace_and_leaves_no_current_context(self) -> None:
+    def test_detached_search_starts_new_trace_and_leaves_no_current_context(
+        self,
+    ) -> None:
         evidence = record_support_turn(FakeLangfuse(), detach_search=True)
 
         self.assertNotEqual(evidence["root_trace_id"], evidence["search_trace_id"])

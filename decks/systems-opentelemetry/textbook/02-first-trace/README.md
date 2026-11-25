@@ -153,9 +153,9 @@ resource.attributes.service.name
 
 | span | trace_id | span_id | parent_id |
 | --- | --- | --- | --- |
-| checkout |  |  |  |
-| validate_cart |  |  |  |
-| charge_payment |  |  |  |
+| checkout | | | |
+| validate_cart | | | |
+| charge_payment | | | |
 
 다음 관계가 실제 출력에서 성립하는지 확인한다.
 

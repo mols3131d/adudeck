@@ -17,7 +17,9 @@ class RegressionCase:
 
     def as_langfuse_item(self, *, dataset_name: str) -> dict[str, Any]:
         # Include dataset identity: the same logical case in another dataset is distinct.
-        item_id = str(uuid5(NAMESPACE_URL, f"adudeck-langfuse-lab:{dataset_name}:{self.case_id}"))
+        item_id = str(
+            uuid5(NAMESPACE_URL, f"adudeck-langfuse-lab:{dataset_name}:{self.case_id}")
+        )
         payload: dict[str, Any] = {
             "id": item_id,
             "dataset_name": dataset_name,

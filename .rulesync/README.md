@@ -1,15 +1,18 @@
 # Rulesync
 
-`.rulesync/` owns portable scoped Rules and task-selected Skills. The checked-in root `AGENTS.md` owns repository-wide
-guidance; it is not a Rulesync projection. Generated native rule/skill files stay local and are not checked into Git.
+`.rulesync/` owns portable scoped Rules, Skills, Commands, and Subagents. The checked-in root `AGENTS.md` owns
+repository-wide guidance; it is not a Rulesync projection. Generated native agent asset files stay local and are not
+checked into Git.
 
 ## Sources and generated outputs
 
 - `.rulesync/rules/` — canonical scoped Rules; Rulesync generates supported native scoped instructions.
 - `.rulesync/skills/` — canonical local Skills; external selection lives in `rulesync.jsonc`.
+- `.rulesync/commands/` — canonical Commands (created when needed); projected to targets with native project-scope command support (`claudecode`, `copilot`, `antigravity-ide`, `antigravity-cli`).
+- `.rulesync/subagents/` — canonical Subagents (created when needed); projected to targets with native subagent support (`claudecode`, `codexcli`, `copilot`, `copilotcli`, `antigravity-ide`, `antigravity-cli`).
 - `rulesync.lock` — committed external Skill revision and integrity selection.
-- Native projections under `.agents/`, `.github/`, `.claude/`, `.codex/`, and scoped `AGENTS.md` are generated, not
-  independently edited.
+- Native projections under `.agents/`, `.github/`, `.claude/`, `.codex/`, `.copilot/`, and scoped `AGENTS.md` are
+  generated, not independently edited.
 
 Rulesync writes generated path exclusions to Git's local `info/exclude`, **not** `.gitignore`. Antigravity does not load
 agent assets when their paths are ignored by `.gitignore`. `info/exclude` is not committed or copied by Git clone; every

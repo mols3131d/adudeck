@@ -59,7 +59,7 @@ Repository root에서 다음 중 하나를 실행한다.
 ```bash
 mise run test:langfuse-deck
 # 또는
-bash scripts/test.sh langfuse-deck
+python scripts/test.py langfuse-deck
 ```
 
 이 target은 `decks/llmops-langfuse/pyproject.toml`과 [deck-local `uv.lock`](uv.lock)을 사용해

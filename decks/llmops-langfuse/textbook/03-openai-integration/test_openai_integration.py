@@ -54,7 +54,9 @@ class FakeOpenAI:
 
 
 class OpenAIIntegrationContractTest(unittest.TestCase):
-    def test_application_span_wraps_provider_call_without_reimplementing_generation(self) -> None:
+    def test_application_span_wraps_provider_call_without_reimplementing_generation(
+        self,
+    ) -> None:
         langfuse = FakeLangfuse()
         openai_client = FakeOpenAI()
 

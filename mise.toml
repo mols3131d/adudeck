@@ -5,6 +5,8 @@ uv = "0.13.7"
 biome = "2.6.5"
 tombi = "1.10.0"
 rumdl = "0.3.2"
+ruff = "0.17.6"
+ty = "0.0.107"
 lefthook = "2.2.2"
 
 [env]
@@ -42,27 +44,31 @@ rulesync generate
 
 [tasks.format]
 description = "Auto-format repository-owned text formats"
-run = "bash scripts/format.sh"
+run = "python scripts/format.py"
 
 [tasks."format:check"]
 description = "Check repository-owned text formatting without writing"
-run = "bash scripts/format.sh --check"
+run = "python scripts/format.py --check"
+
+[tasks.typecheck]
+description = "Run Python type checks across repository projects (default: all; or project dir)"
+run = "python scripts/typecheck.py"
 
 [tasks."test:opentelemetry-acceptance"]
 description = "Run Flask zero-code and OTLP/Collector end-to-end textbook acceptance"
-run = "bash scripts/test.sh opentelemetry-acceptance"
+run = "python scripts/test.py opentelemetry-acceptance"
 
 [tasks.test]
 description = "Run repository tests (default: all; or target name)"
-run = "bash scripts/test.sh"
+run = "python scripts/test.py"
 
 [tasks.setup]
 description = "Set up the local workspace"
-run = "bash scripts/setup.sh"
+run = "python scripts/setup.py"
 
 [tasks.update]
 description = "Update toolchain, dependencies, and agent projections"
-run = "bash scripts/update.sh"
+run = "python scripts/update.py"
 
 [tasks."ci:fast"]
 description = "Check tracked sources and run cheap deterministic verification"

@@ -1,0 +1,73 @@
+[global]
+flavor = "gfm"
+respect-gitignore = true
+disable = ["MD013", "MD025", "MD033", "MD041"]
+exclude = [
+  "**/.git/",
+  "**/.tmp/",
+  "**/tmp/",
+  "**/archive/",
+  "decks/_archive/**",
+  "**/*.tmp.*",
+  # --- Generated / Agent Assets ---
+  "AGENTS.md",
+  "**/AGENTS.md",
+  "AGENTS.override.md",
+  "**/AGENTS.override.md",
+  ".agents/**",
+  ".claude/**",
+  ".codex/**",
+  ".copilot/**",
+  ".github/copilot-instructions.md",
+  ".github/agents/**",
+  ".github/instructions/**",
+  ".github/prompts/**",
+  ".github/skills/**",
+  ".rulesync/*/.curated/**",
+  # --- Build / Tool Caches ---
+  ".rumdl_cache/**",
+  "node_modules/",
+  "vendor/",
+  "dist/",
+  "build/",
+  "target/**",
+  "coverage/**",
+  "site/**",
+  "**/generated/**",
+]
+
+extend-enable = [
+  "MD060",
+  "MD070",
+  "MD073",
+  "MD080",
+]
+
+[MD003]
+style = "atx"
+
+[MD029]
+style = "ordered"
+
+[MD033]
+disallowed-elements = ["gfm"]
+fix = false
+
+[MD046]
+style = "fenced"
+
+[MD048]
+style = "backtick"
+
+[MD049]
+style = "asterisk"
+
+[MD050]
+style = "asterisk"
+
+[MD057]
+compact-paths = false
+
+[MD060]
+style = "compact"
+loose-last-column = true

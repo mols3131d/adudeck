@@ -19,7 +19,7 @@ LangGraph와 Deep Agents를 미리 공부할 필요는 없다.
 Python 3.14 환경에서도 검증한다.
 
 ```bash
-bash scripts/test.sh langchain-deck
+python scripts/test.py langchain-deck
 ```
 
 단원별로 직접 재현하려면 committed lockfile 그대로 다음을 실행한다.
@@ -65,7 +65,7 @@ structured output은 schema 검증을 제공할 뿐 **최종 답변의 사실성
 
 - **실행 검증 범위:** fake의 고정 응답을 입력으로 사용하는 실제 LangChain Python runtime에서
   모델 호출·도구 호출·상태 누적·middleware·structured output·stream 제어를 검사한다.
-  `scripts/test.sh langchain-deck`는 각 실행 경로와 테스트를 자동으로 실행한다.
+  `scripts/test.py langchain-deck`는 각 실행 경로와 테스트를 자동으로 실행한다.
 - **선택 가능한 live 실습:** [05. 실제 provider 연동](textbook/05-live-provider/README.md)은
   명시적 `--execute`와 `OPENAI_API_KEY`가 있어야 외부 요청을 시작한다. 환경 확인·도구 호출 ID
   검증용 코드를 제공하지만 **실제 provider 요청을 자동 실행하거나 검증 완료로 표시하지 않는다**.

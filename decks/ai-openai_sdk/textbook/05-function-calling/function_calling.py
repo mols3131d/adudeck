@@ -3,6 +3,7 @@ import os
 from typing import Any
 
 from openai import OpenAI
+from openai.types.responses import FunctionToolParam, ResponseInputItemParam
 
 ORDERS = {
     "A-101": {"order_id": "A-101", "status": "processing"},
@@ -10,7 +11,7 @@ ORDERS = {
     "A-103": {"order_id": "A-103", "status": "delivered"},
 }
 
-LOOKUP_ORDER_TOOL: dict[str, Any] = {
+LOOKUP_ORDER_TOOL: FunctionToolParam = {
     "type": "function",
     "name": "lookup_order",
     "description": "Look up one order in the application's local teaching dataset.",
@@ -51,7 +52,7 @@ print("model proposal:", call.name, arguments, call.call_id)
 result = lookup_order(arguments["order_id"])
 print("local result:", result)
 
-tool_output = {
+tool_output: ResponseInputItemParam = {
     "type": "function_call_output",
     "call_id": call.call_id,
     "output": json.dumps(result),

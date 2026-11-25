@@ -54,11 +54,11 @@ itself is sufficient.
 ## Start and Calibrate
 
 1. Load applicable repository/deck guidance and the current deck curriculum baseline.
-1. Inspect existing material; accepted work is state, not a prompt to regenerate it.
-1. If the baseline is missing or materially inconsistent, route to `adudeck-deck-curriculum` before
+2. Inspect existing material; accepted work is state, not a prompt to regenerate it.
+3. If the baseline is missing or materially inconsistent, route to `adudeck-deck-curriculum` before
    substantial authoring.
-1. Reconstruct the minimum current Build State from persisted deck state and accepted decisions.
-1. Select the smallest next slice that advances the curriculum without undeclared dependencies.
+4. Reconstruct the minimum current Build State from persisted deck state and accepted decisions.
+5. Select the smallest next slice that advances the curriculum without undeclared dependencies.
 
 For a new deck, build one **calibration slice** end to end before scaling across chapters. Prefer an
 early reachable slice that exercises a high-risk recurring teaching pattern while respecting
@@ -87,15 +87,15 @@ widely. Do not turn incidental choices from any calibration slice into rigid tem
 For each slice:
 
 1. **Select** a bounded objective covered by the current baseline.
-1. **Plan** learner prerequisites, target competence, explanation, practice, and assessment
+2. **Plan** learner prerequisites, target competence, explanation, practice, and assessment
    obligations; apply `adudeck-textbook` when a quality decision is needed, including whether
    hands-on evidence materially improves competence.
-1. **Build** through `adudeck-textbook-write` and `adudeck-playground` as required.
-1. **Validate** that owning skills established the correctness or runtime boundary actually claimed;
+3. **Build** through `adudeck-textbook-write` and `adudeck-playground` as required.
+4. **Validate** that owning skills established the correctness or runtime boundary actually claimed;
    syntax or CI does not become learner-visible runtime evidence.
-1. **Review** the slice with `adudeck-textbook` and against already accepted material.
-1. **Classify** findings as local material gaps or curriculum delta candidates.
-1. **Accept** only when required obligations are met at the claimed validation level. Preserve that
+5. **Review** the slice with `adudeck-textbook` and against already accepted material.
+6. **Classify** findings as local material gaps or curriculum delta candidates.
+7. **Accept** only when required obligations are met at the claimed validation level. Preserve that
    validation boundary and any material unverified caveat in Build State; if higher-level validation
    is required for a learning outcome, keep it as a completion gap rather than silently upgrading the
    claim.

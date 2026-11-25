@@ -2,11 +2,15 @@ from time import sleep
 
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics.export import (
+    ConsoleMetricExporter,
+    PeriodicExportingMetricReader,
+)
 from opentelemetry.sdk.resources import Resource
 
-
-reader = PeriodicExportingMetricReader(ConsoleMetricExporter(), export_interval_millis=500)
+reader = PeriodicExportingMetricReader(
+    ConsoleMetricExporter(), export_interval_millis=500
+)
 provider = MeterProvider(
     resource=Resource.create({"service.name": "adudeck-otel-metrics"}),
     metric_readers=[reader],

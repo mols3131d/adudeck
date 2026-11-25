@@ -11,7 +11,9 @@ MIN_PYTHON = (3, 10)
 DECK_ROOT = Path(__file__).resolve().parent.parent
 PROJECT_FILE = DECK_ROOT / "pyproject.toml"
 LOCK_FILE = DECK_ROOT / "uv.lock"
-FIRST_PLAYGROUND = DECK_ROOT / "textbook" / "01-client-request-response" / "request_response.py"
+FIRST_PLAYGROUND = (
+    DECK_ROOT / "textbook" / "01-client-request-response" / "request_response.py"
+)
 
 
 def main() -> int:

@@ -6,7 +6,6 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
 
-
 app = Flask(__name__)
 resource = Resource.create({"service.name": "adudeck-otel-manual"})
 provider = TracerProvider(resource=resource)

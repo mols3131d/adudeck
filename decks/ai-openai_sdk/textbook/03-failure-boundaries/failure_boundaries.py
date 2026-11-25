@@ -1,6 +1,5 @@
 import openai
 from openai import OpenAI
-
 from retry_server import synthetic_error_server
 
 STATUS = 429

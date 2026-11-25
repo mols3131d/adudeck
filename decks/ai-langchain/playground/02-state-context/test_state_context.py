@@ -3,7 +3,6 @@
 import unittest
 
 from langchain.messages import AIMessage, HumanMessage
-
 from state_context import run_lab
 
 
@@ -25,20 +24,24 @@ class StateContextTests(unittest.TestCase):
 
     def test_runtime_context_is_per_invocation(self) -> None:
         _, events = run_lab()
-        self.assertEqual([event[1] for event in events], [
-            "run-1", "run-1", "run-2", "run-2", "run-3", "run-3"
-        ])
+        self.assertEqual(
+            [event[1] for event in events],
+            ["run-1", "run-1", "run-2", "run-2", "run-3", "run-3"],
+        )
 
     def test_before_and_after_hooks_inspect_different_state(self) -> None:
         _, events = run_lab()
-        self.assertEqual(events, [
-            ("before", "run-1", 1),
-            ("after", "run-1", 2),
-            ("before", "run-2", 3),
-            ("after", "run-2", 4),
-            ("before", "run-3", 1),
-            ("after", "run-3", 2),
-        ])
+        self.assertEqual(
+            events,
+            [
+                ("before", "run-1", 1),
+                ("after", "run-1", 2),
+                ("before", "run-2", 3),
+                ("after", "run-2", 4),
+                ("before", "run-3", 1),
+                ("after", "run-3", 2),
+            ],
+        )
 
 
 if __name__ == "__main__":
