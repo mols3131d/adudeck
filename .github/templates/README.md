@@ -4,7 +4,7 @@ description: GitHub Issue·PR·Review·Comment 양식의 선택과 작성자 표
 
 # GitHub Templates
 
-GitHub 기본 [Issue 양식](../ISSUE_TEMPLATE/issue.md)과 [상세 PR 양식](../pull_request_template.md)을 사용한다. [간결형 PR 후보](../PULL_REQUEST_TEMPLATE/compact-candidate.md)는 `template=compact-candidate.md`로 명시적으로 선택할 수 있다.
+GitHub 기본 [Issue 양식](../ISSUE_TEMPLATE/issue.md)과 [상세 PR 양식](../pull_request_template.md)을 사용한다.
 
 | Surface | Template |
 | --- | --- |
